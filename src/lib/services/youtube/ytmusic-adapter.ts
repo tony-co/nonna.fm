@@ -1,6 +1,5 @@
-import type { ITrack, ILibraryData } from "@/types/library";
+import type { ITrack } from "@/types/library";
 import { getYouTubeAuthData } from "./auth";
-import { VideoDetailed } from "ytmusic-api";
 
 // Define types for the search result items from ytmusic-api
 interface YTMusicSearchItem {
@@ -10,31 +9,6 @@ interface YTMusicSearchItem {
   album?: { name: string; albumId: string };
   thumbnails?: Array<{ url: string; width: number; height: number }>;
   type?: "SONG" | "VIDEO" | "ALBUM";
-}
-
-interface YTMusicPlaylistTrack {
-  videoId: string;
-  name: string;
-  artist?: { artistId: string | null; name: string };
-  album?: { name: string; albumId: string };
-  thumbnails?: Array<{ url: string; width: number; height: number }>;
-}
-
-interface YTMusicPlaylist {
-  playlistId: string;
-  name: string;
-  videoCount?: number;
-  artist?: { artistId: string | null; name: string };
-  thumbnails?: Array<{ url: string; width: number; height: number }>;
-  songs?: YTMusicPlaylistTrack[];
-}
-
-interface YTMusicAlbum {
-  albumId: string;
-  name: string;
-  artist?: { artistId: string | null; name: string };
-  thumbnails?: Array<{ url: string; width: number; height: number }>;
-  songs?: YTMusicPlaylistTrack[];
 }
 
 interface YTMusicApiParams {
@@ -172,81 +146,6 @@ export class YTMusicAdapter {
   }
 
   /**
-   * Get playlist details with better music metadata
-   */
-  async getPlaylist(playlistId: string): Promise<ITrack[]> {
-    if (!this.initialized) {
-      await this.initialize("source");
-    }
-
-    try {
-      const authData = await getYouTubeAuthData(this.currentRole || "source");
-      if (!authData) throw new Error("Not authenticated with YouTube");
-
-      const playlist = await this.makeApiCall<YTMusicPlaylist>(
-        "getPlaylist",
-        { playlistId },
-        authData.accessToken
-      );
-
-      // Map YTMusic tracks to our format
-      return (playlist.songs || []).map((track: YTMusicPlaylistTrack) => ({
-        id: track.videoId || "",
-        name: track.name || "Unknown Track",
-        artist: track.artist?.name || "Unknown Artist",
-        album: track.album?.name || "Unknown Album",
-        artwork: track.thumbnails?.[0]?.url,
-      }));
-    } catch (error) {
-      console.error(`Error fetching playlist ${playlistId}:`, error);
-      return [];
-    }
-  }
-
-  /**
-   * Get user's library with better structured data
-   */
-  async fetchUserLibrary(): Promise<ILibraryData> {
-    if (!this.initialized) {
-      await this.initialize("source");
-    }
-
-    try {
-      const authData = await getYouTubeAuthData(this.currentRole || "source");
-      if (!authData) throw new Error("Not authenticated with YouTube");
-
-      // Get playlists
-      const playlists = await this.makeApiCall("getLibraryPlaylists", {}, authData.accessToken);
-
-      // Get liked songs
-      const likedSongs = await this.makeApiCall("getLikedSongs", {}, authData.accessToken);
-
-      // Map to our format
-      return {
-        playlists: (playlists || []).map((p: YTMusicPlaylist) => ({
-          id: p.playlistId || "",
-          name: p.name || "Unknown Playlist",
-          trackCount: p.videoCount || 0,
-          ownerId: p.artist?.artistId || "",
-          ownerName: p.artist?.name || "Unknown Owner",
-          tracks: [],
-          artwork: p.thumbnails?.[0]?.url,
-        })),
-        likedSongs: (likedSongs?.songs || []).map((track: YTMusicPlaylistTrack) => ({
-          id: track.videoId || "",
-          name: track.name || "Unknown Track",
-          artist: track.artist?.name || "Unknown Artist",
-          album: track.album?.name || "Unknown Album",
-        })),
-        albums: [], // Not implemented yet
-      };
-    } catch (error) {
-      console.error("Error fetching user library:", error);
-      return { playlists: [], likedSongs: [], albums: [] };
-    }
-  }
-
-  /**
    * Get user's library with better structured data
    */
   async getLikedSongs(): Promise<ITrack[]> {
@@ -294,46 +193,6 @@ export class YTMusicAdapter {
   }
 
   /**
-   * Get user's liked songs using the YouTube Music API directly
-   * This provides better music metadata compared to the YouTube Data API
-   */
-  async getLikedSongsYT(): Promise<ITrack[]> {
-    if (!this.initialized) {
-      await this.initialize("source");
-    }
-
-    try {
-      const authData = await getYouTubeAuthData(this.currentRole || "source");
-      if (!authData) throw new Error("Not authenticated with YouTube");
-
-      // Get liked songs using the YouTube Music API's getPlaylistVideos method
-      // For YouTube Music, we need to use the special Liked Music playlist ID
-      const likedSongs = await this.makeApiCall<{ items: VideoDetailed[] }>(
-        "getPlaylistVideos",
-        {
-          browseId: "RDCLAK5uy_np8ltVbJHo3CNR_wQSn9NafnugX9o9s50",
-          params: "Eg-KAQwIABABGAAgACgAMABqChAEEAMQCRAFEAo%3D",
-        },
-        authData.accessToken
-      );
-
-      console.log("likedSongs", likedSongs);
-
-      // Map to our format with better music metadata
-      return (likedSongs.items || []).map(track => ({
-        id: track.videoId || "",
-        name: track.name || "Unknown Track",
-        artist: track.artist?.name || "Unknown Artist",
-        album: "Unknown Album",
-        artwork: track.thumbnails?.[0]?.url,
-      }));
-    } catch (error) {
-      console.error("Error fetching liked songs from YouTube Music:", error);
-      return [];
-    }
-  }
-
-  /**
    * Get songs matching search criteria for a batch of tracks
    * Used for matching source tracks to YouTube Music tracks
    */
@@ -376,38 +235,6 @@ export class YTMusicAdapter {
         }
       })
     );
-  }
-
-  /**
-   * Get album details with better music metadata
-   */
-  async getAlbum(albumId: string): Promise<ITrack[]> {
-    if (!this.initialized) {
-      await this.initialize("source");
-    }
-
-    try {
-      const authData = await getYouTubeAuthData(this.currentRole || "source");
-      if (!authData) throw new Error("Not authenticated with YouTube");
-
-      const album = await this.makeApiCall<YTMusicAlbum>(
-        "getAlbum",
-        { albumId },
-        authData.accessToken
-      );
-
-      // Map YTMusic tracks to our format
-      return (album.songs || []).map((track: YTMusicPlaylistTrack) => ({
-        id: track.videoId || "",
-        name: track.name || "Unknown Track",
-        artist: track.artist?.name || "Unknown Artist",
-        album: track.album?.name || "Unknown Album",
-        artwork: track.thumbnails?.[0]?.url,
-      }));
-    } catch (error) {
-      console.error(`Error fetching album ${albumId}:`, error);
-      return [];
-    }
   }
 }
 
