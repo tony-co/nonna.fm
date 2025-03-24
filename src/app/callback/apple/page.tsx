@@ -4,8 +4,9 @@ import { handleAppleCallback } from "@/lib/services/apple/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { getServiceType } from "@/lib/auth/constants";
+import { Suspense } from "react";
 
-export default function AppleCallback() {
+function AppleCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -55,4 +56,12 @@ export default function AppleCallback() {
 
   // Return null while the effect is running
   return null;
+}
+
+export default function AppleCallback() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AppleCallbackContent />
+    </Suspense>
+  );
 }

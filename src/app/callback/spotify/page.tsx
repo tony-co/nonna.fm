@@ -4,8 +4,9 @@ import { handleSpotifyCallback } from "@/lib/services/spotify/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { getServiceType } from "@/lib/auth/constants";
+import { Suspense } from "react";
 
-export default function SpotifyCallback() {
+function SpotifyCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -55,4 +56,12 @@ export default function SpotifyCallback() {
 
   // Return null while the effect is running
   return null;
+}
+
+export default function SpotifyCallback() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SpotifyCallbackContent />
+    </Suspense>
+  );
 }

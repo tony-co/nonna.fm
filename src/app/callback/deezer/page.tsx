@@ -4,8 +4,9 @@ import { handleDeezerCallback } from "@/lib/services/deezer/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { getServiceType } from "@/lib/auth/constants";
+import { Suspense } from "react";
 
-export default function DeezerCallback() {
+function DeezerCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -55,4 +56,12 @@ export default function DeezerCallback() {
 
   // Return null while the effect is running
   return null;
+}
+
+export default function DeezerCallback() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DeezerCallbackContent />
+    </Suspense>
+  );
 }

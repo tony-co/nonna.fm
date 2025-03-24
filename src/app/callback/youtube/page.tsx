@@ -4,8 +4,9 @@ import { handleYouTubeCallback } from "@/lib/services/youtube/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { getServiceType } from "@/lib/auth/constants";
+import { Suspense } from "react";
 
-export default function YouTubeCallback() {
+function YouTubeCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -55,4 +56,12 @@ export default function YouTubeCallback() {
 
   // Return null while the effect is running
   return null;
+}
+
+export default function YouTubeCallback() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <YouTubeCallbackContent />
+    </Suspense>
+  );
 }
