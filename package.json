@@ -1,0 +1,62 @@
+{
+  "name": "nonna.fm",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbo",
+    "dev:https": "next dev --turbo --experimental-https --hostname nonnalocal.fm",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "format": "prettier --write .",
+    "type-check": "tsc --noEmit",
+    "test": "vitest",
+    "test:integration": "vitest integration",
+    "test:e2e": "playwright test",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@types/crypto-js": "^4.2.2",
+    "crypto-js": "^4.2.0",
+    "next": "^15.2.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "ytmusic-api": "^5.3.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@next/env": "^15.2.3",
+    "@playwright/test": "^1.41.2",
+    "@tailwindcss/postcss": "^4.0.14",
+    "@tailwindcss/vite": "^4.0.14",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
+    "@types/jsdom": "^21.1.7",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/node": "^20.11.17",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@typescript-eslint/eslint-plugin": "^8.26.1",
+    "@typescript-eslint/parser": "^8.26.1",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.22.0",
+    "eslint-config-next": "^15.2.2",
+    "eslint-config-prettier": "^10.1.1",
+    "https-localhost": "^4.7.1",
+    "husky": "^9.1.7",
+    "jsdom": "^24.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "lint-staged": "^15.2.2",
+    "postcss": "^8.5.3",
+    "prettier": "^3.2.5",
+    "prettier-plugin-tailwindcss": "^0.5.11",
+    "tailwindcss": "^4.0.14",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.8"
+  },
+  "engines": {
+    "node": ">=18.17.0"
+  }
+}

@@ -1,0 +1,15 @@
+@keyframes success {
+  0% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.8;
+  }
+}
+
+.animate-success {
+  animation: success 2s ease-in-out infinite;
+}
