@@ -1,28 +1,19 @@
 "use client";
 
 import { handleAppleCallback } from "@/lib/services/apple/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { getServiceType } from "@/lib/auth/constants";
 
-interface SearchParams {
-  [key: string]: string | string[] | undefined;
-}
-
-interface AppleCallbackProps {
-  searchParams: Promise<SearchParams>;
-}
-
-export default function AppleCallback({ searchParams }: AppleCallbackProps) {
+export default function AppleCallback() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const handleCallback = async (): Promise<void> => {
       try {
-        // Convert search params to string for the callback handler
-        const searchString = Object.entries(await searchParams)
-          .map(([key, value]) => `${key}=${value}`)
-          .join("&");
+        // Get the raw search string from the URL
+        const searchString = searchParams.toString();
 
         // Handle the callback and get the result
         const { success, role } = await handleAppleCallback(searchString);
@@ -37,10 +28,6 @@ export default function AppleCallback({ searchParams }: AppleCallbackProps) {
 
         // Get service types for both source and target
         const sourceService = getServiceType("source");
-        const targetService = getServiceType("target");
-
-        console.log("Source service:", sourceService);
-        console.log("Target service:", targetService);
 
         // For target role, ensure we have a source service
         if (role === "target" && !sourceService) {
@@ -56,7 +43,6 @@ export default function AppleCallback({ searchParams }: AppleCallbackProps) {
             : `/source?source=apple`;
 
         console.log("Redirecting to:", redirectUrl);
-
         router.push(redirectUrl);
       } catch (error) {
         console.error("Error during Apple Music callback:", error);

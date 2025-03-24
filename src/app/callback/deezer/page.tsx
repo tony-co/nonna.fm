@@ -1,27 +1,58 @@
+"use client";
+
 import { handleDeezerCallback } from "@/lib/services/deezer/auth";
-import { redirect } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import { getServiceType } from "@/lib/auth/constants";
 
-interface PageProps {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}
+export default function DeezerCallback() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-export default async function DeezerCallback({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const searchString = Object.entries(params)
-    .map(([key, value]) => `${key}=${value}`)
-    .join("&");
+  useEffect(() => {
+    const handleCallback = async (): Promise<void> => {
+      try {
+        // Get the raw search string from the URL
+        const searchString = searchParams.toString();
 
-  const { success, role } = await handleDeezerCallback(searchString);
+        // Handle the callback and get the result
+        const { success, role } = await handleDeezerCallback(searchString);
 
-  if (!success) {
-    console.error("Failed to handle Deezer callback");
-    redirect("/");
-  }
+        console.log("Deezer callback result:", success, role);
 
-  // Redirect based on role
-  if (role === "target") {
-    redirect("/transfer");
-  }
+        if (!success) {
+          console.error("Failed to handle Deezer callback");
+          router.push("/");
+          return;
+        }
 
-  redirect("/source");
+        // Get service types for both source and target
+        const sourceService = getServiceType("source");
+
+        // For target role, ensure we have a source service
+        if (role === "target" && !sourceService) {
+          console.error("Cannot redirect to transfer: no source service configured");
+          router.push("/");
+          return;
+        }
+
+        // Build redirect URL with service parameters
+        const redirectUrl =
+          role === "target"
+            ? `/transfer?source=${sourceService}&target=deezer`
+            : `/source?source=deezer`;
+
+        console.log("Redirecting to:", redirectUrl);
+        router.push(redirectUrl);
+      } catch (error) {
+        console.error("Error during Deezer callback:", error);
+        router.push("/");
+      }
+    };
+
+    handleCallback();
+  }, [searchParams, router]);
+
+  // Return null while the effect is running
+  return null;
 }

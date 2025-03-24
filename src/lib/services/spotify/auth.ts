@@ -248,8 +248,6 @@ export async function handleSpotifyCallback(
   // Clear state and verifier
   clearAuthData(storedState.role);
 
-  console.log("tony", tokenData);
-
   // Store auth data
   try {
     const authData: AuthData = {

@@ -1,33 +1,24 @@
 "use client";
 
 import { handleSpotifyCallback } from "@/lib/services/spotify/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { getServiceType } from "@/lib/auth/constants";
 
-interface SearchParams {
-  [key: string]: string | string[] | undefined;
-}
-
-interface SpotifyCallbackProps {
-  searchParams: Promise<SearchParams>;
-}
-
-export default function SpotifyCallback({ searchParams }: SpotifyCallbackProps) {
+export default function SpotifyCallback() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const handleCallback = async (): Promise<void> => {
       try {
-        // Convert search params to string for the callback handler
-        const searchString = Object.entries(await searchParams)
-          .map(([key, value]) => `${key}=${value}`)
-          .join("&");
+        // Get the raw search string from the URL
+        const searchString = searchParams.toString();
 
         // Handle the callback and get the result
         const { success, role } = await handleSpotifyCallback(searchString);
 
-        console.log("tony handle callback", success, role);
+        console.log("Callback result:", success, role);
 
         if (!success) {
           console.error("Failed to handle Spotify callback");
@@ -51,10 +42,8 @@ export default function SpotifyCallback({ searchParams }: SpotifyCallbackProps) 
             ? `/transfer?source=${sourceService}&target=spotify`
             : `/source?source=spotify`;
 
-        console.log("tony redirect url", redirectUrl);
-
+        console.log("Redirecting to:", redirectUrl);
         router.push(redirectUrl);
-        console.log("tony redirected");
       } catch (error) {
         console.error("Error during Spotify callback:", error);
         router.push("/");
