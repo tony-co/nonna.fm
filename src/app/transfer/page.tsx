@@ -17,6 +17,7 @@ import {
 import { useSearchTracks } from "@/hooks/useSearchTracks";
 import { MatchingProvider } from "@/contexts/MatchingContext";
 import { useMatching } from "@/contexts/MatchingContext";
+import { fetchPlaylistCurator } from "@/lib/services/apple/api";
 
 interface LibraryState {
   likedSongs: Array<ITrack>;
@@ -203,11 +204,22 @@ function TransferPageContent() {
         const playlist = libraryState.playlists.find(p => p.id === id);
         if (!playlist) return;
 
+        // Fetch owner for Apple Music playlists
+        let curatorName = "";
+        if (sourceService === "apple") {
+          const curator = await fetchPlaylistCurator(id);
+          curatorName = curator?.data?.[0]?.attributes?.curatorName || "";
+        }
+
         const tracks = await fetchPlaylistTracks(id, sourceService);
 
         setLibraryState(prev => {
           if (!prev) return prev;
-          const updatedPlaylist = { ...playlist, tracks };
+          const updatedPlaylist = {
+            ...playlist,
+            tracks,
+            ...(sourceService === "apple" && curatorName ? { ownerName: curatorName } : {}),
+          };
           return {
             ...prev,
             playlists: prev.playlists.map(p => (p.id === id ? updatedPlaylist : p)),

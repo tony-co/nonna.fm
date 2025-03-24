@@ -108,6 +108,24 @@ interface AppleAlbum {
   };
 }
 
+interface CuratorResponse {
+  data?: Array<{
+    attributes?: {
+      curatorName: string;
+    };
+    relationships?: {
+      curator?: {
+        data: {
+          id: string;
+          attributes: {
+            name: string;
+          };
+        };
+      };
+    };
+  }>;
+}
+
 interface AppleMusicSearchResponse {
   results: {
     songs?: {
@@ -861,6 +879,32 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
     likedSongs: songs,
     albums,
   };
+}
+
+export async function fetchPlaylistCurator(playlistId: string): Promise<CuratorResponse | null> {
+  const authData = await getAppleAuthData("source");
+  if (!authData) throw new Error("Not authenticated with Apple Music");
+
+  try {
+    const curatorResponse = await fetch(
+      `https://api.music.apple.com/v1/me/library/playlists/${playlistId}/catalog?include=curator`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
+          "Music-User-Token": authData.accessToken,
+        },
+      }
+    );
+
+    if (curatorResponse.ok) {
+      const curatorData = await curatorResponse.json();
+      return curatorData;
+    }
+    return null;
+  } catch (error) {
+    console.warn("Failed to fetch curator information:", error);
+    return null;
+  }
 }
 
 export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]> {

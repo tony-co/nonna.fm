@@ -421,7 +421,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
         name: playlist.snippet.title,
         trackCount: playlist.contentDetails?.itemCount || 0,
         ownerId: authData.userId,
-        ownerName: authData.displayName,
+        ownerName: playlist.snippet.channelTitle || "",
         tracks: [],
         artwork:
           playlist.snippet.thumbnails?.high?.url ||

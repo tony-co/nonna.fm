@@ -13,6 +13,7 @@ export interface ServiceConfig {
   image: FC<{ className?: string; size?: number }>;
   color: string;
   status: "Available" | "Coming Soon" | "Beta" | "Maintenance";
+  getPlaylistUrl: (id: string) => string;
 }
 
 export const SERVICES: Record<string, ServiceConfig> = {
@@ -22,6 +23,7 @@ export const SERVICES: Record<string, ServiceConfig> = {
     image: SpotifyLogo,
     color: "#1ed760",
     status: "Available",
+    getPlaylistUrl: (id: string) => `https://open.spotify.com/playlist/${id}`,
   },
   youtube: {
     id: "youtube",
@@ -29,6 +31,7 @@ export const SERVICES: Record<string, ServiceConfig> = {
     image: YouTubeMusicLogo,
     color: "#FF0000",
     status: "Available",
+    getPlaylistUrl: (id: string) => `https://music.youtube.com/playlist?list=${id}`,
   },
   deezer: {
     id: "deezer",
@@ -36,6 +39,7 @@ export const SERVICES: Record<string, ServiceConfig> = {
     image: DeezerLogo,
     color: "#A238FF",
     status: "Available",
+    getPlaylistUrl: (id: string) => `https://www.deezer.com/playlist/${id}`,
   },
   apple: {
     id: "apple",
@@ -43,6 +47,7 @@ export const SERVICES: Record<string, ServiceConfig> = {
     image: AppleMusicLogo,
     color: "#FA243C",
     status: "Available",
+    getPlaylistUrl: (id: string) => `https://music.apple.com/library/playlist/${id}`,
   },
   amazonMusic: {
     id: "amazonMusic",
@@ -50,6 +55,7 @@ export const SERVICES: Record<string, ServiceConfig> = {
     image: AmazonMusicLogo,
     color: "#00A8E1",
     status: "Coming Soon",
+    getPlaylistUrl: (id: string) => `https://music.amazon.com/playlists/${id}`,
   },
   tidal: {
     id: "tidal",
@@ -57,6 +63,7 @@ export const SERVICES: Record<string, ServiceConfig> = {
     image: TidalLogo,
     color: "#000000",
     status: "Coming Soon",
+    getPlaylistUrl: (id: string) => `https://tidal.com/playlist/${id}`,
   },
   pandora: {
     id: "pandora",
@@ -64,6 +71,7 @@ export const SERVICES: Record<string, ServiceConfig> = {
     image: PandoraLogo,
     color: "#3668FF",
     status: "Coming Soon",
+    getPlaylistUrl: (id: string) => `https://www.pandora.com/playlist/${id}`,
   },
 } as const;
 

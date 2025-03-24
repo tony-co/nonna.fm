@@ -1,7 +1,7 @@
 import { IAlbum, IPlaylist, ITrack } from "@/types/library";
-import Image from "next/image";
 import { useSelection } from "@/contexts/SelectionContext";
 import { IndeterminateCheckbox } from "./IndeterminateCheckbox";
+import { ArtworkImage } from "./ArtworkImage";
 
 // Types
 interface LibrarySidebarProps {
@@ -111,13 +111,7 @@ const AlbumsItem = ({
     </div>
     {albums.length > 0 && albums[0].artwork ? (
       <div className="h-10 w-10 overflow-hidden rounded-lg">
-        <Image
-          src={albums[0].artwork}
-          alt="First Album"
-          width={40}
-          height={40}
-          className="object-cover"
-        />
+        <ArtworkImage src={albums[0].artwork} alt="First Album" size={40} className="rounded-lg" />
       </div>
     ) : (
       <div className="from-primary-500 to-primary-700 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br">
@@ -207,12 +201,11 @@ const PlaylistsSection = ({
             </div>
             {playlist.artwork ? (
               <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg">
-                <Image
+                <ArtworkImage
                   src={playlist.artwork}
                   alt={playlist.name}
-                  width={40}
-                  height={40}
-                  className="object-cover"
+                  size={40}
+                  className="rounded-lg"
                 />
               </div>
             ) : (

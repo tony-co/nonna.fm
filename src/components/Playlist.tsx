@@ -1,9 +1,10 @@
 import { FC, useLayoutEffect } from "react";
-import Image from "next/image";
 import { IPlaylist } from "@/types/library";
 import { TrackList } from "./TrackList";
 import { useSelection } from "@/contexts/SelectionContext";
 import { useMatching } from "@/contexts/MatchingContext";
+import { PlayOnButton } from "./PlayOnButton";
+import { ArtworkImage } from "./ArtworkImage";
 
 interface PlaylistProps {
   playlist: IPlaylist;
@@ -23,7 +24,6 @@ export const Playlist: FC<PlaylistProps> = ({ playlist, mode }) => {
     requestAnimationFrame(() => {
       // Only scroll the main content area
       const mainContent = document.querySelector(".main-content");
-      console.log("scrooo", mainContent);
       if (mainContent) {
         try {
           // First scroll into view
@@ -53,15 +53,14 @@ export const Playlist: FC<PlaylistProps> = ({ playlist, mode }) => {
       <div className="p-6">
         <div className="flex items-start gap-6">
           {playlist.artwork ? (
-            <Image
+            <ArtworkImage
               src={playlist.artwork}
               alt={`${playlist.name} artwork`}
-              width={128}
-              height={128}
-              className="rounded-md object-cover shadow-lg"
+              size={162}
+              className="rounded-md shadow-lg"
             />
           ) : (
-            <div className="flex h-32 w-32 items-center justify-center rounded-md bg-gray-700 shadow-lg">
+            <div className="flex h-[162px] w-[162px] items-center justify-center rounded-md bg-gray-700 shadow-lg">
               <svg
                 className="h-12 w-12 text-gray-500"
                 fill="none"
@@ -77,19 +76,30 @@ export const Playlist: FC<PlaylistProps> = ({ playlist, mode }) => {
               </svg>
             </div>
           )}
-          <div className="flex-1">
-            <h1 className="mb-5 text-4xl font-bold">{playlist.name}</h1>
-            <p className="mb-4 text-gray-400">Created by {playlist.ownerName}</p>
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-gray-400">
+          <div className="flex h-[162px] flex-1 flex-col justify-between py-2">
+            <h1 className={`font-bold ${playlist.name.length > 30 ? "text-4xl" : "text-5xl"}`}>
+              {playlist.name}
+            </h1>
+            <div className="flex items-center gap-2 text-gray-400">
+              {playlist.ownerName && (
+                <>
+                  <span>{playlist.ownerName}</span>
+                  <span>•</span>
+                </>
+              )}
+              <span>
                 {playlist.tracks.length} {playlist.tracks.length === 1 ? "track" : "tracks"}
-              </div>
+              </span>
               {mode !== "select" && unmatchedCount > 0 && (
-                <span className="rounded-full bg-red-500/10 px-3 py-1 text-sm text-red-500">
-                  {unmatchedCount} unmatched
-                </span>
+                <>
+                  <span>•</span>
+                  <span className="rounded-full bg-red-500/10 px-3 py-1 text-sm text-red-500">
+                    {unmatchedCount} unmatched
+                  </span>
+                </>
               )}
             </div>
+            <PlayOnButton playlistId={playlist.id} />
           </div>
         </div>
       </div>
