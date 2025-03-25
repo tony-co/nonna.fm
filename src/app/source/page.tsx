@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { ServiceSelector } from "@/components/ServiceSelector";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
+import { ServiceSelector } from "@/components/shared/ServiceSelector";
 import { useAppleMusic } from "@/hooks/useAppleMusic";
 import { initiateSpotifyAuth } from "@/lib/services/spotify/auth";
 import { useState, Suspense } from "react";

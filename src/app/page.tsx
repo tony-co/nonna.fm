@@ -5,9 +5,9 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { AudioEqualizer } from "@/components/AudioEqualizer";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
+import { AudioEqualizer } from "@/components/shared/AudioEqualizer";
 import { initializeEncryption } from "@/lib/auth/crypto";
 import { clearAllServiceData } from "@/lib/auth/utils";
 import { initiateSpotifyAuth } from "@/lib/services/spotify/auth";
@@ -18,7 +18,7 @@ import { SERVICES, getAvailableServices } from "@/config/services";
 import { createPortal } from "react-dom";
 
 // Dynamically import components that are not needed for initial render
-const DialogComponent = dynamic(() => import("@/components/Dialog"), { ssr: false });
+const DialogComponent = dynamic(() => import("@/components/shared/Dialog"), { ssr: false });
 
 function HomePageContent() {
   const router = useRouter();

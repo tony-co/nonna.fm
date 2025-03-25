@@ -27,7 +27,7 @@ interface SelectionProviderProps {
     playlists: Array<IPlaylist>;
   };
   mode: "select" | "matching" | "review" | "transfer" | "completed";
-  onSearchTracks: (item: IAlbum | IPlaylist) => void;
+  onSearchTracks: (item: IAlbum | IPlaylist | "liked" | "albums") => void;
 }
 
 const SelectionContext = createContext<SelectionContextType | null>(null);
@@ -53,13 +53,16 @@ export const SelectionProvider: FC<SelectionProviderProps> = ({
 
   const isSelectionDisabled = mode == "matching" || mode == "transfer";
 
+  // Toggle all liked songs
   const toggleLikedSongs = useCallback(() => {
+    onSearchTracks("liked");
     setSelection(prev => {
       const newLikedSongs = prev.likedSongs.size > 0 ? new Set<ITrack>() : new Set(data.likedSongs);
       return { ...prev, likedSongs: newLikedSongs };
     });
-  }, [data.likedSongs]);
+  }, [data.likedSongs, onSearchTracks]);
 
+  // Toggle a single liked song
   const toggleLikedSong = useCallback((track: ITrack) => {
     setSelection(prev => {
       const newLikedSongs = new Set(prev.likedSongs);
@@ -75,6 +78,16 @@ export const SelectionProvider: FC<SelectionProviderProps> = ({
     });
   }, []);
 
+  // Toggle all albums
+  const toggleAllAlbums = useCallback(() => {
+    onSearchTracks("albums");
+    setSelection(prev => {
+      const newAlbums = prev.albums.size > 0 ? new Set<IAlbum>() : new Set(data.albums);
+      return { ...prev, albums: newAlbums };
+    });
+  }, [data.albums, onSearchTracks]);
+
+  // Toggle a single album
   const toggleAlbum = useCallback(
     (album: IAlbum) => {
       onSearchTracks(album);
@@ -154,13 +167,6 @@ export const SelectionProvider: FC<SelectionProviderProps> = ({
       return { ...prev, playlists: newPlaylists };
     });
   }, []);
-
-  const toggleAllAlbums = useCallback(() => {
-    setSelection(prev => {
-      const newAlbums = prev.albums.size > 0 ? new Set<IAlbum>() : new Set(data.albums);
-      return { ...prev, albums: newAlbums };
-    });
-  }, [data.albums]);
 
   const toggleAllPlaylists = useCallback(() => {
     setSelection(prev => {

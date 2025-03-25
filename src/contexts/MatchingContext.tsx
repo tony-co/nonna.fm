@@ -1,6 +1,6 @@
 import { createContext, useContext, ReactNode, FC, useState } from "react";
 
-interface MatchingState {
+export interface MatchingState {
   tracks: Map<string, { status: "pending" | "matched" | "unmatched"; targetId?: string }>;
   albums: Map<string, { status: "pending" | "matched" | "unmatched"; targetId?: string }>;
 }
@@ -35,13 +35,16 @@ export const useMatching = (): MatchingContextType => {
 
 interface MatchingProviderProps {
   children: ReactNode;
+  initialState?: MatchingState;
 }
 
-export const MatchingProvider: FC<MatchingProviderProps> = ({ children }) => {
-  const [matchingState, setMatchingState] = useState<MatchingState>({
-    tracks: new Map(),
-    albums: new Map(),
-  });
+export const MatchingProvider: FC<MatchingProviderProps> = ({ children, initialState }) => {
+  const [matchingState, setMatchingState] = useState<MatchingState>(
+    initialState || {
+      tracks: new Map(),
+      albums: new Map(),
+    }
+  );
 
   const setTrackStatus = (
     trackId: string,

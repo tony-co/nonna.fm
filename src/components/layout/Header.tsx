@@ -1,8 +1,8 @@
 "use client";
 
-import { ThemeToggle } from "./ThemeToggle";
-import { LanguageSwitch } from "./LanguageSwitch";
-import { NonnaLogo } from "./icons/NonnaLogo";
+import { ThemeToggle } from "./header/ThemeToggle";
+import { LanguageSwitch } from "./header/LanguageSwitch";
+import { NonnaLogo } from "../icons/NonnaLogo";
 import { Inter } from "next/font/google";
 
 const inter = Inter({

@@ -4,9 +4,9 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { IAlbum, IPlaylist, ITrack, ISelectionState } from "@/types/library";
 import { MusicService } from "@/types/services";
-import { Library } from "@/components/Library";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { Library } from "@/components/library/Library";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 import {
   fetchUserLibrary,
   fetchPlaylistTracks,
@@ -252,14 +252,15 @@ function TransferPageContent() {
                 /transfer?source=spotify&target=apple)
               </div>
             )}
-            <Library
-              data={libraryState || { likedSongs: [], albums: [], playlists: [] }}
-              mode={mode}
-              isLoading={isLoading || isSearchLoading}
-              onItemClick={handleItemClick}
-              onStartTransfer={handleStartTransfer}
-              onSearchTracks={handleSearchTracks}
-            />
+            {!isLoading && (
+              <Library
+                data={libraryState || { likedSongs: [], albums: [], playlists: [] }}
+                mode={mode}
+                onItemClick={handleItemClick}
+                onStartTransfer={handleStartTransfer}
+                onSearchTracks={handleSearchTracks}
+              />
+            )}
           </div>
         </main>
         <Footer />

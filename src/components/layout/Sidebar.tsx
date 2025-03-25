@@ -1,7 +1,7 @@
 import { IAlbum, IPlaylist, ITrack } from "@/types/library";
 import { useSelection } from "@/contexts/SelectionContext";
-import { IndeterminateCheckbox } from "./IndeterminateCheckbox";
-import { ArtworkImage } from "./ArtworkImage";
+import { IndeterminateCheckbox } from "@/components/shared/IndeterminateCheckbox";
+import { ArtworkImage } from "@/components/shared/ArtworkImage";
 
 // Types
 interface LibrarySidebarProps {
@@ -43,6 +43,7 @@ const LikedSongsItem = ({
         : "hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
     }`}
     onClick={onClick}
+    data-testid="liked-songs-section"
   >
     <div onClick={e => e.stopPropagation()}>
       <IndeterminateCheckbox
@@ -52,6 +53,8 @@ const LikedSongsItem = ({
         onClick={e => e.stopPropagation()}
         disabled={isDisabled}
         className="flex-shrink-0"
+        label="Liked Songs"
+        testId="liked-songs-checkbox"
       />
     </div>
     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-300">
@@ -107,6 +110,8 @@ const AlbumsItem = ({
         onClick={e => e.stopPropagation()}
         disabled={isDisabled}
         className="flex-shrink-0"
+        label="Albums"
+        testId="albums-checkbox"
       />
     </div>
     {albums.length > 0 && albums[0].artwork ? (
@@ -116,7 +121,7 @@ const AlbumsItem = ({
     ) : (
       <div className="from-primary-500 to-primary-700 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br">
         <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5S9.51 7.5 12 7.5s4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5zm0-5.5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z" />
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5S9.51 7.5 12 7.5s4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5zm0-5.5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1-1z" />
         </svg>
       </div>
     )}
@@ -165,6 +170,8 @@ const PlaylistsSection = ({
           onChange={onToggleAll}
           disabled={isDisabled}
           className="flex-shrink-0"
+          label="All Playlists"
+          testId="all-playlists-checkbox"
         />
       </div>
       <div className="px-2">
@@ -197,6 +204,8 @@ const PlaylistsSection = ({
                 onClick={e => e.stopPropagation()}
                 disabled={isDisabled}
                 className="flex-shrink-0"
+                label={playlist.name}
+                testId={`playlist-${playlist.id}-checkbox`}
               />
             </div>
             {playlist.artwork ? (

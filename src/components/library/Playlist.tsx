@@ -3,8 +3,8 @@ import { IPlaylist } from "@/types/library";
 import { TrackList } from "./TrackList";
 import { useSelection } from "@/contexts/SelectionContext";
 import { useMatching } from "@/contexts/MatchingContext";
-import { PlayOnButton } from "./PlayOnButton";
-import { ArtworkImage } from "./ArtworkImage";
+import { PlayOnButton } from "@/components/shared/PlayOnButton";
+import { ArtworkImage } from "@/components/shared/ArtworkImage";
 
 interface PlaylistProps {
   playlist: IPlaylist;

@@ -58,7 +58,7 @@ interface TrackListProps {
   isSelectionDisabled?: boolean;
 }
 
-const TrackItem: FC<{
+const TrackRow: FC<{
   track: ITrack;
   index: number;
   isSelected: boolean;
@@ -72,11 +72,13 @@ const TrackItem: FC<{
 
   return (
     <div
+      ref={ref}
       className={`group grid grid-cols-[32px_32px_1fr_231px_32px] items-center gap-4 rounded-md p-2 transition-colors duration-200 ${
         isSelected
           ? "bg-indigo-50 dark:bg-indigo-950/30"
           : "bg-transparent hover:bg-indigo-50/70 dark:bg-transparent dark:hover:bg-indigo-950/20"
       }`}
+      role="row"
     >
       <div>
         <input
@@ -86,6 +88,7 @@ const TrackItem: FC<{
           checked={isSelected}
           onChange={() => onToggleTrack?.(track)}
           disabled={isSelectionDisabled}
+          aria-label={`Select ${track.name} by ${track.artist}`}
         />
       </div>
 
@@ -93,10 +96,7 @@ const TrackItem: FC<{
 
       <div className="flex min-w-0 items-center gap-4">
         {/* Artwork with intersection observer */}
-        <div
-          ref={ref}
-          className="h-10 w-10 flex-shrink-0 rounded bg-indigo-50 shadow dark:bg-indigo-950/30"
-        >
+        <div className="h-10 w-10 flex-shrink-0 rounded bg-indigo-50 shadow dark:bg-indigo-950/30">
           {track.artwork ? (
             isVisible ? (
               <Image
@@ -186,10 +186,13 @@ export const TrackList: FC<TrackListProps> = ({
   };
 
   return (
-    <div className="relative bg-transparent dark:bg-transparent">
+    <div className="relative bg-transparent dark:bg-transparent" role="tracklist">
       {/* Header */}
-      <div className="sticky top-0 mb-4 grid grid-cols-[32px_32px_1fr_231px_32px] gap-4 border-b border-slate-200 bg-white/80 p-2 py-2 text-sm font-normal text-slate-500 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400">
-        <div className="flex items-center">
+      <div
+        className="sticky top-0 mb-4 grid grid-cols-[32px_32px_1fr_231px_32px] gap-4 border-b border-slate-200 bg-white/80 p-2 py-2 text-sm font-normal text-slate-500 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400"
+        role="row"
+      >
+        <div className="flex items-center" role="columnheader">
           <input
             type="checkbox"
             className="h-4 w-4 cursor-pointer rounded-sm transition-colors duration-200"
@@ -205,10 +208,18 @@ export const TrackList: FC<TrackListProps> = ({
             aria-label="Select all tracks"
           />
         </div>
-        <div className="flex items-center">#</div>
-        <div className="flex items-center">Title</div>
-        <div className="flex items-center">Album</div>
-        <div className="flex items-center justify-end">Status</div>
+        <div className="flex items-center" role="columnheader">
+          #
+        </div>
+        <div className="flex items-center" role="columnheader">
+          Title
+        </div>
+        <div className="flex items-center" role="columnheader">
+          Album
+        </div>
+        <div className="flex items-center justify-end" role="columnheader">
+          Status
+        </div>
       </div>
 
       {/* Tracks */}
@@ -218,7 +229,7 @@ export const TrackList: FC<TrackListProps> = ({
           const isSelected = isTrackSelected(track);
 
           return (
-            <TrackItem
+            <TrackRow
               key={track.id + index}
               track={track}
               index={index}

@@ -4,11 +4,10 @@ import { useMatching } from "@/contexts/MatchingContext";
 
 interface ProgressProps {
   mode: "select" | "matching" | "review" | "transfer" | "completed";
-  isLoading?: boolean;
   onStartTransfer: () => void;
 }
 
-export const Progress: FC<ProgressProps> = ({ mode, isLoading, onStartTransfer }) => {
+export const Progress: FC<ProgressProps> = ({ mode, onStartTransfer }) => {
   const { selection } = useSelection();
   const { matchingState } = useMatching();
 
@@ -51,7 +50,7 @@ export const Progress: FC<ProgressProps> = ({ mode, isLoading, onStartTransfer }
   });
 
   // In matching mode, set processing to total to show progress
-  if (mode === "matching" && isLoading) {
+  if (mode === "matching") {
     progress.processing = progress.total;
   }
 
@@ -132,11 +131,11 @@ export const Progress: FC<ProgressProps> = ({ mode, isLoading, onStartTransfer }
           onClick={onStartTransfer}
           disabled={!buttonEnabled}
           aria-label={buttonText}
-          role="button"
+          role="transfer-button"
           tabIndex={buttonEnabled ? 0 : -1}
         >
           {/* Progress Overlay */}
-          {(mode === "matching" || mode === "transfer") && isLoading && (
+          {(mode === "matching" || mode === "transfer") && (
             <div
               className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
               style={{
@@ -165,7 +164,7 @@ export const Progress: FC<ProgressProps> = ({ mode, isLoading, onStartTransfer }
             }
           `}</style>
           <span className="relative z-10 flex items-center justify-center gap-2">
-            {(mode === "matching" || mode === "transfer") && isLoading ? (
+            {mode === "matching" || mode === "transfer" ? (
               <>
                 <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
                   <circle

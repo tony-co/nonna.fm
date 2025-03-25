@@ -1,11 +1,11 @@
 import { FC, useEffect } from "react";
 import { IAlbum, IPlaylist, ITrack, ISelectionState } from "@/types/library";
-import { Progress } from "./Progress";
-import { LikedSongs } from "./LikedSongs";
-import { AlbumList } from "./AlbumList";
-import { Playlist } from "./Playlist";
+import { Progress } from "@/components/shared/Progress";
+import { LikedSongs } from "@/components/library/LikedSongs";
+import { AlbumList } from "@/components/library/AlbumList";
+import { Playlist } from "@/components/library/Playlist";
 import { SelectionProvider, useSelection } from "@/contexts/SelectionContext";
-import { LibrarySidebar } from "./Sidebar";
+import { LibrarySidebar } from "@/components/layout/Sidebar";
 
 interface LibraryProps {
   data: {
@@ -14,7 +14,6 @@ interface LibraryProps {
     playlists: Array<IPlaylist>;
   };
   mode: "select" | "matching" | "review" | "transfer" | "completed";
-  isLoading?: boolean;
   onItemClick?: (type: "playlist" | "album", id: string) => Promise<void>;
   onStartTransfer: (selection: ISelectionState) => Promise<void>;
   onSearchTracks: (itemOrCategory?: IAlbum | IPlaylist | "liked" | "albums") => void;
@@ -23,16 +22,11 @@ interface LibraryProps {
 const LibraryContent: FC<LibraryProps> = ({
   data,
   mode,
-  isLoading,
   onItemClick,
   onStartTransfer,
   onSearchTracks,
 }) => {
   const { selection, selectedView, setSelectedView } = useSelection();
-
-  useEffect(() => {
-    console.log("Library loading state:", isLoading);
-  }, [isLoading]);
 
   // Add beforeunload handler when in transfer mode with selections
   useEffect(() => {
@@ -81,19 +75,25 @@ const LibraryContent: FC<LibraryProps> = ({
 
   return (
     <div className="fade-in relative flex h-full flex-col">
-      <Progress
-        mode={mode}
-        isLoading={isLoading}
-        onStartTransfer={() => onStartTransfer(selection)}
-      />
+      <Progress mode={mode} onStartTransfer={() => onStartTransfer(selection)} />
 
       {/* Content Container */}
       <div className="flex min-h-0 flex-1">
         {/* Sidebar */}
-        <LibrarySidebar data={data} onItemClick={handleItemClick} />
+        <aside
+          role="complementary"
+          aria-label="Library Selection"
+          className="sticky bottom-[20px] top-[20px] h-[calc(100vh-40px)] w-80 flex-shrink-0 overflow-y-auto"
+        >
+          <LibrarySidebar data={data} onItemClick={handleItemClick} />
+        </aside>
 
         {/* Main Content */}
-        <div className="main-content flex-1 overflow-y-auto scroll-smooth">
+        <main
+          role="main"
+          aria-label="Selected Content"
+          className="main-content flex-1 overflow-y-auto scroll-smooth"
+        >
           <div className="overflow-hidden rounded-xl bg-indigo-50/20 p-6 shadow-sm ring-1 ring-indigo-100 dark:bg-indigo-950/20 dark:ring-indigo-300/10">
             {/* Switch on view type */}
             {{
@@ -108,12 +108,13 @@ const LibraryContent: FC<LibraryProps> = ({
                   )
                 : null,
             }[(selectedView?.type || "") as "liked" | "album" | "playlist"] ?? (
-              <div className="p-8 text-center">
+              <div className="p-8 text-center" role="status" aria-label="Empty State">
                 <svg
                   className="mx-auto mb-4 h-16 w-16 text-indigo-500 dark:text-indigo-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -131,7 +132,7 @@ const LibraryContent: FC<LibraryProps> = ({
               </div>
             )}
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
