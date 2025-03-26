@@ -8,10 +8,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "jsdom",
-    setupFiles: "./test/setup.ts",
+    setupFiles: "./src/__tests__/setup.ts",
     include: ["**/__tests__/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
     exclude: [
-      "**/src/test/**",
+      "**/src/__tests__/services/**",
       "**/node_modules/**",
       "**/dist/**",
       "**/cypress/**",
