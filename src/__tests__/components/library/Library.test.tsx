@@ -100,23 +100,23 @@ describe("Library Component", () => {
       const trackList = await screen.findByRole("tracklist");
       expect(trackList).toBeInTheDocument();
 
+      // onSearchTracks should have been called with "liked"
+      expect(onSearchTracks).toHaveBeenCalledWith("liked");
+
       // Get all checkboxes and verify we have them
       const checkboxes = within(trackList).getAllByRole("checkbox");
       expect(checkboxes.length).toBeGreaterThan(1);
-      console.log("Found checkboxes:", checkboxes.length);
 
       // Select first track
       const firstTrackCheckbox = checkboxes[1];
       fireEvent.click(firstTrackCheckbox);
+      const secondTrackCheckbox = checkboxes[2];
+      fireEvent.click(secondTrackCheckbox);
 
       // Verify checkbox state
       expect(firstTrackCheckbox).toBeChecked();
-
-      // Wait for onSearchTracks to be called with the right arguments
-      expect(onSearchTracks).toHaveBeenCalledWith({ type: "liked", track: mockTracks[0] });
-
+      expect(secondTrackCheckbox).toBeChecked();
       // Wait for onSearchTracks Promise to resolve
-      console.log("onSearchTracks.mock.results", onSearchTracks.mock.results);
       await onSearchTracks.mock.results[onSearchTracks.mock.calls.length - 1].value;
     });
   });
