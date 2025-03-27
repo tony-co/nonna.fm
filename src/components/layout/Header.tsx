@@ -2,6 +2,7 @@
 
 import { ThemeToggle } from "./header/ThemeToggle";
 import { LanguageSwitch } from "./header/LanguageSwitch";
+import { MobileMenu } from "./header/MobileMenu";
 import { NonnaLogo } from "../icons/NonnaLogo";
 import { Inter } from "next/font/google";
 
@@ -19,24 +20,26 @@ export const Header = () => {
       `}
       style={{ zIndex: 50 }}
     >
-      <div className="container mx-auto px-4">
-        <div className="relative flex h-16 items-center justify-between">
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-2">
-              <NonnaLogo className="size-8 font-black dark:text-white" />
-              <div className="flex items-center gap-2">
+      <div className="container mx-auto px-2 sm:px-4">
+        <div className="relative flex h-14 items-center justify-between sm:h-16">
+          <div className="flex items-center gap-4 sm:gap-8">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <NonnaLogo className="size-6 font-black sm:size-8 dark:text-white" />
+              <div className="flex items-center gap-1 sm:gap-2">
                 <span
-                  className={`${inter.className} text-2xl font-black uppercase italic text-gray-900 dark:text-white`}
+                  className={`${inter.className} text-xl font-black uppercase italic text-gray-900 sm:text-2xl dark:text-white`}
                 >
                   nonna.fm
                 </span>
-                <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
+                <span className="hidden rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-indigo-700 sm:inline-block dark:bg-indigo-900/50 dark:text-indigo-300">
                   Beta
                 </span>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-8">
+
+          {/* Desktop Navigation */}
+          <div className="hidden items-center gap-8 sm:flex">
             <LanguageSwitch />
             <ThemeToggle />
 
@@ -57,6 +60,9 @@ export const Header = () => {
               </svg>
             </a>
           </div>
+
+          {/* Mobile Menu */}
+          <MobileMenu />
         </div>
       </div>
     </header>
