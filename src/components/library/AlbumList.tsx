@@ -1,32 +1,13 @@
-import { FC, useEffect, useState, useRef } from "react";
+import { FC, useRef } from "react";
 import { IAlbum } from "@/types/library";
 import { useSelection } from "@/contexts/SelectionContext";
 import { useMatching } from "@/contexts/MatchingContext";
-import Image from "next/image";
+import { useIsVisible } from "@/hooks/useIsVisible";
+import { ArtworkImage } from "@/components/shared/ArtworkImage";
 
 interface AlbumListProps {
   albums: Array<IAlbum>;
 }
-
-const useIsVisible = (ref: React.RefObject<HTMLElement | null>): boolean => {
-  const [isIntersecting, setIntersecting] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      setIntersecting(entry.isIntersecting);
-    });
-
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [ref]);
-
-  return isIntersecting;
-};
 
 const StatusIcon: FC<{ status: string | undefined }> = ({ status }) => {
   switch (status) {
@@ -73,35 +54,10 @@ const AlbumItem: FC<{ album: IAlbum }> = ({ album }) => {
         disabled={isSelectionDisabled}
       />
       <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded">
-        {album.artwork ? (
-          isVisible ? (
-            <Image
-              src={album.artwork}
-              alt={`${album.name} artwork`}
-              className="h-full w-full object-cover"
-              width={48}
-              height={48}
-              priority={false}
-            />
-          ) : (
-            <div className="h-full w-full bg-indigo-200 dark:bg-indigo-800" />
-          )
+        {isVisible ? (
+          <ArtworkImage src={album.artwork} alt={`${album.name} artwork`} size={48} type="album" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-indigo-200 dark:bg-indigo-800">
-            <svg
-              className="h-6 w-6 text-indigo-500 dark:text-indigo-300"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-              />
-            </svg>
-          </div>
+          <div className="h-full w-full bg-indigo-200 dark:bg-indigo-800" />
         )}
       </div>
       <div className="flex-grow">

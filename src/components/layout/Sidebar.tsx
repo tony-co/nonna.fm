@@ -37,7 +37,7 @@ const LikedSongsItem = ({
   isDisabled: boolean;
 }) => (
   <div
-    className={`group flex cursor-pointer items-center gap-3 rounded-lg p-2.5 transition-all duration-200 ${
+    className={`group flex cursor-pointer items-center gap-4 rounded-lg p-3 transition-all duration-200 ${
       isSelected
         ? "bg-indigo-100 dark:bg-indigo-950/90"
         : "hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
@@ -95,7 +95,7 @@ const AlbumsItem = ({
   isDisabled: boolean;
 }) => (
   <div
-    className={`group flex cursor-pointer items-center gap-3 rounded-lg p-2.5 transition-all duration-200 ${
+    className={`group flex cursor-pointer items-center gap-4 rounded-lg p-3 transition-all duration-200 ${
       isSelected
         ? "bg-indigo-100 dark:bg-indigo-950/90"
         : "hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
@@ -114,17 +114,15 @@ const AlbumsItem = ({
         testId="albums-checkbox"
       />
     </div>
-    {albums.length > 0 && albums[0].artwork ? (
-      <div className="h-10 w-10 overflow-hidden rounded-lg">
-        <ArtworkImage src={albums[0].artwork} alt="First Album" size={40} className="rounded-lg" />
-      </div>
-    ) : (
-      <div className="from-primary-500 to-primary-700 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br">
-        <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5S9.51 7.5 12 7.5s4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5zm0-5.5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1-1z" />
-        </svg>
-      </div>
-    )}
+    <div className="h-10 w-10 overflow-hidden rounded-lg">
+      <ArtworkImage
+        src={albums[0]?.artwork}
+        alt="First Album"
+        size={40}
+        type="album"
+        className="rounded-lg"
+      />
+    </div>
     <div className="min-w-0">
       <p
         className={`truncate font-normal ${
@@ -162,7 +160,7 @@ const PlaylistsSection = ({
   selection: Map<string, Set<ITrack>>;
 }) => (
   <>
-    <div className="mb-1 flex items-center gap-3 px-2 py-2">
+    <div className="mb-1 flex items-center gap-4 px-3 py-3">
       <div onClick={e => e.stopPropagation()}>
         <IndeterminateCheckbox
           selectedCount={selectedCount}
@@ -189,7 +187,7 @@ const PlaylistsSection = ({
         return (
           <div
             key={playlist.id}
-            className={`group flex cursor-pointer items-center gap-3 rounded-lg p-2.5 transition-all duration-200 ${
+            className={`group flex cursor-pointer items-center gap-4 rounded-lg p-3 transition-all duration-200 ${
               isSelected
                 ? "bg-indigo-100 dark:bg-indigo-950/90"
                 : "hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
@@ -208,22 +206,15 @@ const PlaylistsSection = ({
                 testId={`playlist-${playlist.id}-checkbox`}
               />
             </div>
-            {playlist.artwork ? (
-              <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg">
-                <ArtworkImage
-                  src={playlist.artwork}
-                  alt={playlist.name}
-                  size={40}
-                  className="rounded-lg"
-                />
-              </div>
-            ) : (
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-300">
-                <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z" />
-                </svg>
-              </div>
-            )}
+            <div className="h-10 w-10 overflow-hidden rounded-lg">
+              <ArtworkImage
+                src={playlist.artwork}
+                alt={playlist.name}
+                size={40}
+                type="playlist"
+                className="rounded-lg"
+              />
+            </div>
             <div className="min-w-0 flex-1">
               <p
                 className={`truncate font-normal ${
@@ -258,8 +249,8 @@ export const LibrarySidebar = ({ data, onItemClick }: LibrarySidebarProps) => {
   } = useSelection();
 
   return (
-    <div className="sticky bottom-[20px] top-[20px] h-[calc(100vh-40px)] w-80 flex-shrink-0 overflow-y-auto">
-      <div className="flex flex-col space-y-4">
+    <div className="h-full w-80 flex-shrink-0">
+      <div className="flex h-full flex-col space-y-4 px-4 md:sticky md:top-0">
         <SidebarHeader />
 
         {/* Liked Songs Section */}
@@ -301,6 +292,8 @@ export const LibrarySidebar = ({ data, onItemClick }: LibrarySidebarProps) => {
             selection={selection.playlists}
           />
         </div>
+
+        {/* Add bottom padding on mobile */}
       </div>
     </div>
   );

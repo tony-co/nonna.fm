@@ -100,6 +100,9 @@ describe("Library Component", () => {
       const trackList = await screen.findByRole("tracklist");
       expect(trackList).toBeInTheDocument();
 
+      // Wait for the setTimeout to complete
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       // onSearchTracks should have been called with "liked"
       expect(onSearchTracks).toHaveBeenCalledWith("liked");
 
@@ -209,7 +212,7 @@ describe("Library Component", () => {
 
       // Check main landmarks
       expect(screen.getByRole("main")).toBeInTheDocument();
-      expect(screen.getByRole("complementary")).toBeInTheDocument();
+      expect(screen.getByRole("sidebar")).toBeInTheDocument();
 
       // Check interactive elements
       const checkboxes = screen.getAllByRole("checkbox");
@@ -219,7 +222,9 @@ describe("Library Component", () => {
 
       // Check headings hierarchy
       const headings = screen.getAllByRole("heading");
-      expect(headings[0]).toHaveTextContent(/select tracks to transfer/i);
+      expect(headings[0]).toHaveTextContent(/library/i);
+      const sidebar = screen.getByRole("sidebar");
+      expect(within(sidebar).getByText("Select items to transfer")).toBeInTheDocument();
     });
   });
 });

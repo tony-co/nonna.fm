@@ -6,6 +6,7 @@ interface DialogProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  closeOnBackdropClick?: boolean;
 }
 
 /**
@@ -15,19 +16,25 @@ interface DialogProps {
  * @param onClose - Function to call when the dialog should close
  * @param title - The title displayed in the dialog header
  * @param children - Content to render inside the dialog
+ * @param closeOnBackdropClick - Whether clicking outside the dialog should close it (defaults to true)
  */
 export default function Dialog({
   isOpen,
   onClose,
   title,
   children,
+  closeOnBackdropClick = true,
 }: DialogProps): JSX.Element | null {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   // Handle clicking outside to close
   useEffect(() => {
     function handleClickOutside(event: MouseEvent): void {
-      if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
+      if (
+        closeOnBackdropClick &&
+        dialogRef.current &&
+        !dialogRef.current.contains(event.target as Node)
+      ) {
         onClose();
       }
     }
@@ -49,7 +56,7 @@ export default function Dialog({
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, closeOnBackdropClick]);
 
   // Prevent scrolling when dialog is open
   useEffect(() => {

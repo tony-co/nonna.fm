@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, ReactNode, FC } from "react";
 import { useSearchParams } from "next/navigation";
 import { IAlbum, IPlaylist, ITrack, ISelectionState } from "@/types/library";
-import { MusicService } from "@/types/services";
+import { MusicService, TransferResult } from "@/types/services";
 import { Library } from "@/components/library/Library";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -18,11 +18,19 @@ import { useSearchTracks } from "@/hooks/useSearchTracks";
 import { MatchingProvider } from "@/contexts/MatchingContext";
 import { useMatching } from "@/contexts/MatchingContext";
 import { fetchPlaylistCurator } from "@/lib/services/apple/api";
+import { TransferSuccessModal } from "@/components/shared/TransferSuccessModal";
+import { SelectionProvider } from "@/contexts/SelectionContext";
 
 interface LibraryState {
   likedSongs: Array<ITrack>;
   albums: IAlbum[];
   playlists: Array<IPlaylist>;
+}
+
+interface TransferResults {
+  likedSongs?: TransferResult;
+  albums?: TransferResult;
+  playlists: Map<string, TransferResult>;
 }
 
 // LoadingOverlay component with indigo styling
@@ -38,6 +46,38 @@ const LoadingOverlay: React.FC = () => (
   </div>
 );
 
+const PageLayout: FC<{ children: ReactNode }> = ({ children }) => (
+  <>
+    <Header />
+    <div className="flex min-h-screen flex-col">
+      <main className="container mx-auto flex-grow pt-4">
+        <div className="h-full">{children}</div>
+      </main>
+      <Footer />
+    </div>
+  </>
+);
+
+const StatusMessages: FC<{
+  error: string | null;
+  sourceService: MusicService | null;
+  targetService: MusicService | null;
+}> = ({ error, sourceService, targetService }) => (
+  <>
+    {error && (
+      <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-red-500">
+        {error}
+      </div>
+    )}
+    {(!sourceService || !targetService) && (
+      <div className="mb-4 rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-4 text-yellow-500">
+        Please specify both source and target services in the URL parameters (e.g.,
+        /transfer?source=spotify&target=apple)
+      </div>
+    )}
+  </>
+);
+
 function TransferPageContent() {
   const searchParams = useSearchParams();
   const [libraryState, setLibraryState] = useState<LibraryState | null>(null);
@@ -47,6 +87,8 @@ function TransferPageContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { matchingState } = useMatching();
+  const [transferResults, setTransferResults] = useState<TransferResults | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Get source and target services from URL parameters
   const sourceService = searchParams.get("source") as MusicService;
@@ -134,6 +176,10 @@ function TransferPageContent() {
 
       setMode("transfer");
 
+      const results: TransferResults = {
+        playlists: new Map<string, TransferResult>(),
+      };
+
       // Transfer liked songs
       const matchedLikedSongs = Array.from(selection.likedSongs)
         .filter(track => matchingState.tracks.get(track.id)?.status === "matched")
@@ -143,7 +189,7 @@ function TransferPageContent() {
         }));
 
       if (matchedLikedSongs.length > 0) {
-        await addTracksToLibrary(matchedLikedSongs, targetService);
+        results.likedSongs = await addTracksToLibrary(matchedLikedSongs, targetService);
       }
 
       // Transfer matched albums
@@ -160,7 +206,7 @@ function TransferPageContent() {
           albumsWithIds.map(a => ({ name: a.name, targetId: a.targetId }))
         );
         const albumsSet = new Set<IAlbum>(albumsWithIds);
-        await addAlbumsToLibrary(albumsSet, targetService);
+        results.albums = await addAlbumsToLibrary(albumsSet, targetService);
       }
 
       // Transfer playlists
@@ -176,17 +222,19 @@ function TransferPageContent() {
           }));
 
         if (matchedTracks.length > 0) {
-          await createPlaylistWithTracks(
+          const result = await createPlaylistWithTracks(
             playlist.name,
             matchedTracks,
             `Imported from ${sourceService} on ${new Date().toLocaleDateString()}`,
             targetService
           );
+          results.playlists.set(playlistId, result);
         }
       }
 
+      setTransferResults(results);
       setMode("completed");
-      // todo success modal
+      setShowSuccessModal(true);
     } catch (err) {
       console.error("handleStartTransfer - error:", err);
       setError("Failed to transfer tracks. Please try again.");
@@ -234,39 +282,46 @@ function TransferPageContent() {
     }
   };
 
-  return (
-    <>
-      <Header />
-      <div className="flex min-h-screen flex-col">
-        <main className="container mx-auto flex-grow pt-4">
-          <div className="h-full">
-            {isLoading && <LoadingOverlay />}
-            {error && (
-              <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-red-500">
-                {error}
-              </div>
-            )}
-            {(!sourceService || !targetService) && (
-              <div className="mb-4 rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-4 text-yellow-500">
-                Please specify both source and target services in the URL parameters (e.g.,
-                /transfer?source=spotify&target=apple)
-              </div>
-            )}
-            {!isLoading && (
-              <Library
-                data={libraryState || { likedSongs: [], albums: [], playlists: [] }}
-                mode={mode}
-                onItemClick={handleItemClick}
-                onStartTransfer={handleStartTransfer}
-                onSearchTracks={handleSearchTracks}
-              />
-            )}
-          </div>
-        </main>
-        <Footer />
-      </div>
-    </>
-  );
+  const renderContent = () => {
+    if (isLoading) {
+      return <LoadingOverlay />;
+    }
+
+    if (!libraryState) {
+      return (
+        <StatusMessages error={error} sourceService={sourceService} targetService={targetService} />
+      );
+    }
+
+    return (
+      <SelectionProvider data={libraryState} mode={mode} onSearchTracks={handleSearchTracks}>
+        <>
+          <StatusMessages
+            error={error}
+            sourceService={sourceService}
+            targetService={targetService}
+          />
+          <Library
+            data={libraryState}
+            mode={mode}
+            onItemClick={handleItemClick}
+            onStartTransfer={handleStartTransfer}
+            onSearchTracks={handleSearchTracks}
+          />
+          {transferResults && (
+            <TransferSuccessModal
+              isOpen={showSuccessModal}
+              onClose={() => setShowSuccessModal(false)}
+              targetServiceId={targetService}
+              results={transferResults}
+            />
+          )}
+        </>
+      </SelectionProvider>
+    );
+  };
+
+  return <PageLayout>{renderContent()}</PageLayout>;
 }
 
 export default function TransferPage() {
