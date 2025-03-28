@@ -65,16 +65,22 @@
 
 /* Base styles */
 @layer base {
+  html {
+    min-height: 100%;
+    background-color: var(--color-surface);
+  }
+
   body {
     color: var(--color-text);
     position: relative;
+    min-height: 100vh;
     isolation: isolate;
   }
 
   body::before,
   body::after {
     content: "";
-    position: absolute;
+    position: fixed;
     inset: 0;
     z-index: -1;
     transition: opacity var(--duration-normal) ease;

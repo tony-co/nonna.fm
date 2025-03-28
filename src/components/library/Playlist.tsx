@@ -50,37 +50,22 @@ export const Playlist: FC<PlaylistProps> = ({ playlist, mode }) => {
 
   return (
     <div className="space-y-6">
-      <div className="p-6">
-        <div className="flex items-start gap-6">
-          {playlist.artwork ? (
-            <ArtworkImage
-              src={playlist.artwork}
-              alt={`${playlist.name} artwork`}
-              size={162}
-              className="rounded-md shadow-lg"
-            />
-          ) : (
-            <div className="flex h-[162px] w-[162px] items-center justify-center rounded-md bg-gray-700 shadow-lg">
-              <svg
-                className="h-12 w-12 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-                />
-              </svg>
-            </div>
-          )}
-          <div className="flex h-[162px] flex-1 flex-col justify-between py-2">
-            <h1 className={`font-bold ${playlist.name.length > 30 ? "text-4xl" : "text-5xl"}`}>
+      <div className="p-4 md:p-6">
+        <div className="flex flex-col items-center gap-6 md:flex-row md:items-start">
+          <ArtworkImage
+            src={playlist.artwork}
+            alt={`${playlist.name} artwork`}
+            size={162}
+            type="playlist"
+            className="h-[120px] w-[120px] shadow-lg md:h-[162px] md:w-[162px]"
+          />
+          <div className="flex flex-1 flex-col items-center py-2 text-center md:h-[162px] md:items-start md:justify-between md:text-left">
+            <h1
+              className={`font-bold ${playlist.name.length > 30 ? "text-3xl md:text-4xl" : "text-4xl md:text-5xl"}`}
+            >
               {playlist.name}
             </h1>
-            <div className="flex items-center gap-2 text-gray-400">
+            <div className="flex flex-wrap items-center justify-center gap-2 text-gray-400 md:justify-start">
               {playlist.ownerName && (
                 <>
                   <span>{playlist.ownerName}</span>
