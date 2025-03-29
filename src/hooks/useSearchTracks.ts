@@ -1,27 +1,13 @@
 import { useState, useCallback, useRef } from "react";
-import { IAlbum, IPlaylist, ITrack } from "@/types/library";
+import { IAlbum, IPlaylist } from "@/types/library";
 import { MusicService } from "@/types/services";
 import { musicServiceFactory } from "@/lib/services/factory";
 import { useMatching } from "@/contexts/MatchingContext";
-
-export interface LibraryState {
-  likedSongs: Array<ITrack>;
-  albums: Array<IAlbum>;
-  playlists: Array<IPlaylist>;
-}
-
-export interface ProgressState {
-  matched: number;
-  unmatched: number;
-  total: number;
-  processing: number;
-}
+import { useLibrary } from "@/contexts/LibraryContext";
+import { useSearchParams } from "next/navigation";
 
 interface UseSearchTracksOptions {
-  libraryState: LibraryState | null;
-  setLibraryState: React.Dispatch<React.SetStateAction<LibraryState | null>>;
   onModeChange: (mode: "select" | "matching" | "review" | "transfer" | "completed") => void;
-  targetService?: MusicService;
 }
 
 interface UseSearchTracksReturn {
@@ -32,14 +18,15 @@ interface UseSearchTracksReturn {
 }
 
 export const useSearchTracks = ({
-  libraryState,
   onModeChange,
-  targetService,
 }: UseSearchTracksOptions): UseSearchTracksReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const { setTrackStatus, setAlbumStatus } = useMatching();
+  const { libraryState } = useLibrary();
+  const searchParams = useSearchParams();
+  const targetService = searchParams.get("target") as MusicService;
 
   const cancelSearch = useCallback(() => {
     if (abortControllerRef.current) {

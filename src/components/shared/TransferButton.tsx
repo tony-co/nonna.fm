@@ -69,7 +69,8 @@ export const TransferButton: FC<TransferButtonProps> = ({ mode, onStartTransfer 
   switch (mode) {
     case "select":
       buttonText = "Select items to transfer";
-      buttonEnabled = false;
+      buttonEnabled =
+        selection.likedSongs.size > 0 || selection.albums.size > 0 || selection.playlists.size > 0;
       break;
     case "matching":
       buttonText = "Matching in progress...";

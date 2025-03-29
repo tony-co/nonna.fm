@@ -2,12 +2,9 @@ import { FC, useRef } from "react";
 import { IAlbum } from "@/types/library";
 import { useSelection } from "@/contexts/SelectionContext";
 import { useMatching } from "@/contexts/MatchingContext";
+import { useLibrary } from "@/contexts/LibraryContext";
 import { useIsVisible } from "@/hooks/useIsVisible";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
-
-interface AlbumListProps {
-  albums: Array<IAlbum>;
-}
 
 const StatusIcon: FC<{ status: string | undefined }> = ({ status }) => {
   switch (status) {
@@ -69,8 +66,13 @@ const AlbumItem: FC<{ album: IAlbum }> = ({ album }) => {
   );
 };
 
-export const AlbumList: FC<AlbumListProps> = ({ albums }) => {
+export const AlbumList: FC = () => {
+  const { libraryState } = useLibrary();
   const { getAlbumStatus } = useMatching();
+
+  if (!libraryState) return null;
+
+  const { albums } = libraryState;
   const unmatchedCount = albums.filter(album => getAlbumStatus(album.id) === "unmatched").length;
 
   return (
