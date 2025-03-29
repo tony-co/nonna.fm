@@ -1,22 +1,22 @@
 import { FC, useEffect, useState } from "react";
-import { IAlbum, IPlaylist, ITrack, ISelectionState } from "@/types/library";
+import { useSearchParams } from "next/navigation";
+import { MusicService } from "@/types/services";
+import { IAlbum, IPlaylist } from "@/types/library";
 import { LikedSongs } from "@/components/library/LikedSongs";
 import { AlbumList } from "@/components/library/AlbumList";
 import { Playlist } from "@/components/library/Playlist";
 import { useSelection } from "@/contexts/SelectionContext";
 import { LibrarySidebar } from "@/components/layout/Sidebar";
 import { TransferButton } from "@/components/shared/TransferButton";
+import { usePlaylistTracks } from "@/hooks/usePlaylistTracks";
+import { useTransfer } from "@/hooks/useTransfer";
+import { useLibrary } from "@/contexts/LibraryContext";
+import { TransferSuccessModal } from "@/components/shared/TransferSuccessModal";
 
 interface LibraryProps {
-  data: {
-    likedSongs: Array<ITrack>;
-    albums: Array<IAlbum>;
-    playlists: Array<IPlaylist>;
-  };
   mode: "select" | "matching" | "review" | "transfer" | "completed";
-  onItemClick?: (type: "playlist" | "album", id: string) => Promise<void>;
-  onStartTransfer: (selection: ISelectionState) => Promise<void>;
-  onSearchTracks: (itemOrCategory?: IAlbum | IPlaylist | "liked" | "albums") => void;
+  onSearchTracks: (itemOrCategory?: IAlbum | IPlaylist | "liked" | "albums") => Promise<void>;
+  onCancel: () => void;
 }
 
 const BackButton: FC<{ onClick: () => void }> = ({ onClick }) => (
@@ -41,16 +41,27 @@ const BackButton: FC<{ onClick: () => void }> = ({ onClick }) => (
   </button>
 );
 
-const LibraryContent: FC<LibraryProps> = ({
-  data,
-  mode,
-  onItemClick,
-  onStartTransfer,
-  onSearchTracks,
-}) => {
+export const Library: FC<LibraryProps> = ({ mode, onSearchTracks, onCancel }) => {
+  const { libraryState } = useLibrary();
   const { selection, selectedView, setSelectedView } = useSelection();
-  // Add state to cache the current view data
   const [cachedView, setCachedView] = useState(selectedView);
+  const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const targetService = searchParams.get("target") as MusicService;
+
+  const { handleLoadPlaylistTracks } = usePlaylistTracks({
+    onCancel,
+  });
+
+  const {
+    handleStartTransfer,
+    transferResults,
+    showSuccessModal,
+    setShowSuccessModal,
+    error: transferError,
+  } = useTransfer({
+    onSearchTracks,
+  });
 
   // Update cached view when selectedView changes (forward navigation)
   useEffect(() => {
@@ -63,14 +74,6 @@ const LibraryContent: FC<LibraryProps> = ({
   useEffect(() => {
     const hasSelections =
       selection.likedSongs.size > 0 || selection.albums.size > 0 || selection.playlists.size > 0;
-
-    console.log("Selection state:", {
-      hasSelections,
-      mode,
-      likedSongs: selection.likedSongs.size,
-      albums: selection.albums.size,
-      playlists: selection.playlists.size,
-    });
 
     const handleBeforeUnload = (e: BeforeUnloadEvent): void => {
       if (mode === "transfer" || hasSelections) {
@@ -87,18 +90,28 @@ const LibraryContent: FC<LibraryProps> = ({
     return (): void => {};
   }, [mode, selection]);
 
-  const handleItemClick = (type: "playlist" | "album" | "liked", id?: string): void => {
-    console.log("handleItemClick", { type, id });
+  const handleItemClick = async (
+    type: "playlist" | "album" | "liked",
+    id?: string
+  ): Promise<void> => {
     setSelectedView({ type, id });
+    setError(null);
 
     // Delay the data loading to allow animation to complete
-    setTimeout(() => {
-      if (type === "liked") {
-        onSearchTracks("liked");
-      } else if (type === "album" && !id) {
-        onSearchTracks("albums");
-      } else if (onItemClick && id) {
-        onItemClick(type as "playlist" | "album", id);
+    setTimeout(async () => {
+      try {
+        if (type === "liked") {
+          await onSearchTracks("liked");
+        } else if (type === "album" && !id) {
+          await onSearchTracks("albums");
+        } else if (type === "playlist" && id && libraryState) {
+          const updatedPlaylist = await handleLoadPlaylistTracks(id);
+          await onSearchTracks(updatedPlaylist);
+        }
+      } catch (err) {
+        console.error("Error handling item click:", err);
+        setError(err instanceof Error ? err.message : "An unexpected error occurred");
+        setSelectedView(null);
       }
     }, 300);
   };
@@ -106,6 +119,7 @@ const LibraryContent: FC<LibraryProps> = ({
   const handleBackClick = () => {
     // First trigger the slide animation
     setSelectedView(null);
+    setError(null);
 
     // Clear the cached view after animation completes
     setTimeout(() => {
@@ -113,12 +127,22 @@ const LibraryContent: FC<LibraryProps> = ({
     }, 300);
   };
 
+  if (!libraryState) {
+    return null;
+  }
+
   // Use cachedView for rendering content to maintain it during back transition
   const viewToRender = selectedView || cachedView;
 
   return (
     <div className="fade-in relative flex h-[calc(100vh-40px)] flex-col">
-      <TransferButton mode={mode} onStartTransfer={() => onStartTransfer(selection)} />
+      <TransferButton mode={mode} onStartTransfer={() => handleStartTransfer(selection)} />
+
+      {(error || transferError) && (
+        <div className="mx-6 mb-4 rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-red-500">
+          {error || transferError}
+        </div>
+      )}
 
       {/* Content Container */}
       <div className="relative flex flex-1 flex-col overflow-hidden md:flex-row">
@@ -130,7 +154,7 @@ const LibraryContent: FC<LibraryProps> = ({
             selectedView ? "-translate-x-full md:translate-x-0" : "translate-x-0"
           }`}
         >
-          <LibrarySidebar data={data} onItemClick={handleItemClick} />
+          <LibrarySidebar onItemClick={handleItemClick} />
         </aside>
 
         {/* Main Content */}
@@ -145,16 +169,15 @@ const LibraryContent: FC<LibraryProps> = ({
           <div className="overflow-hidden rounded-xl bg-indigo-50/20 p-6 shadow-sm ring-1 ring-indigo-100 dark:bg-indigo-950/20 dark:ring-indigo-300/10">
             {/* Switch on view type */}
             {{
-              liked: <LikedSongs tracks={data.likedSongs} mode={mode} />,
-              album: <AlbumList albums={data.albums} />,
-              playlist: viewToRender?.id
-                ? data.playlists.find(p => p.id === viewToRender.id) && (
-                    <Playlist
-                      playlist={data.playlists.find(p => p.id === viewToRender.id)!}
-                      mode={mode}
-                    />
-                  )
-                : null,
+              liked: <LikedSongs mode={mode} />,
+              album: <AlbumList />,
+              playlist: viewToRender?.id &&
+                libraryState?.playlists.find(p => p.id === viewToRender.id) && (
+                  <Playlist
+                    playlist={libraryState.playlists.find(p => p.id === viewToRender.id)!}
+                    mode={mode}
+                  />
+                ),
             }[(viewToRender?.type || "") as "liked" | "album" | "playlist"] ?? (
               <div className="p-8 text-center" role="status" aria-label="Empty State">
                 <svg
@@ -184,10 +207,15 @@ const LibraryContent: FC<LibraryProps> = ({
           <div className="h-18 md:h-0" />
         </main>
       </div>
+
+      {transferResults && (
+        <TransferSuccessModal
+          isOpen={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          targetServiceId={targetService}
+          results={transferResults}
+        />
+      )}
     </div>
   );
-};
-
-export const Library: FC<LibraryProps> = props => {
-  return <LibraryContent {...props} />;
 };

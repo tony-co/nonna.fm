@@ -3,6 +3,7 @@ import { IPlaylist } from "@/types/library";
 import { TrackList } from "./TrackList";
 import { useSelection } from "@/contexts/SelectionContext";
 import { useMatching } from "@/contexts/MatchingContext";
+import { useLibrary } from "@/contexts/LibraryContext";
 import { PlayOnButton } from "@/components/shared/PlayOnButton";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 
@@ -14,6 +15,7 @@ interface PlaylistProps {
 export const Playlist: FC<PlaylistProps> = ({ playlist, mode }) => {
   const { selection, isSelectionDisabled, togglePlaylistTrack } = useSelection();
   const { getTrackStatus } = useMatching();
+  const { libraryState } = useLibrary();
 
   // Scroll to top when playlist and tracks are loaded
   useLayoutEffect(() => {
@@ -40,6 +42,8 @@ export const Playlist: FC<PlaylistProps> = ({ playlist, mode }) => {
     });
   }, [playlist.id, playlist.tracks?.length]); // Reset when playlist or tracks change
 
+  if (!libraryState) return null;
+
   // Create a Set of selected tracks for this playlist
   const selectedTracks = selection.playlists.get(playlist.id) || new Set();
 
@@ -61,7 +65,9 @@ export const Playlist: FC<PlaylistProps> = ({ playlist, mode }) => {
           />
           <div className="flex flex-1 flex-col items-center py-2 text-center md:h-[162px] md:items-start md:justify-between md:text-left">
             <h1
-              className={`font-bold ${playlist.name.length > 30 ? "text-3xl md:text-4xl" : "text-4xl md:text-5xl"}`}
+              className={`font-bold ${
+                playlist.name.length > 30 ? "text-3xl md:text-4xl" : "text-4xl md:text-5xl"
+              }`}
             >
               {playlist.name}
             </h1>

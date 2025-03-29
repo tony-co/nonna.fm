@@ -42,10 +42,16 @@ export function clearAuthData(role: "source" | "target"): void {
   Object.values(keys).forEach(key => localStorage.removeItem(key));
 }
 
-export function getServiceType(role: "source" | "target"): string | null {
+export function getServiceType(role: "source" | "target"): string {
   const key =
     role === "source" ? AUTH_STORAGE_KEYS.SOURCE.SERVICE : AUTH_STORAGE_KEYS.TARGET.SERVICE;
-  return localStorage.getItem(key);
+  const serviceType = localStorage.getItem(key);
+
+  if (!serviceType) {
+    throw new Error(`No service type found for role: ${role}`);
+  }
+
+  return serviceType;
 }
 
 export function setServiceType(role: "source" | "target", serviceId: string): void {

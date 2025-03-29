@@ -27,14 +27,9 @@ function SourcePageContent() {
       if (source) transferParams.set("source", source);
       transferParams.set("target", serviceId);
 
-      console.log(serviceId);
-
       if (serviceId === "apple") {
-        console.log("apple1");
         await authorizeAppleMusic();
-        console.log("apple2");
         router.push(`/transfer?${transferParams.toString()}`);
-        console.log("apple3");
       } else if (serviceId === "spotify") {
         await initiateSpotifyAuth("target");
         router.push(`/transfer?${transferParams.toString()}`);

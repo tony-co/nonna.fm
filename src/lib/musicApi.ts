@@ -6,33 +6,20 @@ import { getSpotifyAuthData } from "./services/spotify/auth";
 import { getAppleMusicAuthData } from "./services/apple/auth";
 import type { ILibraryData, ITrack, IAlbum } from "@/types/library";
 
-export type ServiceType =
-  | "spotify"
-  | "youtube"
-  | "deezer"
-  | "apple"
-  | "amazonMusic"
-  | "tidal"
-  | "pandora";
-
 async function getCurrentService(service?: MusicService): Promise<IMusicServiceProvider> {
   if (service) {
     return musicServiceFactory.getProvider(service);
   }
 
   const sourceService = await getActiveService("source");
-  if (!sourceService || !isActiveMusicService(sourceService)) {
+  if (!sourceService) {
     throw new Error("No active service found");
   }
 
   return musicServiceFactory.getProvider(sourceService);
 }
 
-function isActiveMusicService(service: ServiceType): service is MusicService {
-  return ["spotify", "youtube", "apple", "deezer"].includes(service);
-}
-
-export async function getActiveService(role: "source" | "target"): Promise<ServiceType | null> {
+async function getActiveService(role: "source" | "target"): Promise<MusicService> {
   try {
     // Check Apple Music
     const appleAuth = getAppleMusicAuthData(role);
@@ -57,19 +44,19 @@ export async function getActiveService(role: "source" | "target"): Promise<Servi
     // Special case for Deezer - only works as source
     if (role === "source" && isDeezerSource()) return "deezer";
 
-    return null;
+    throw new Error("No active service found");
   } catch (error) {
     console.error("Error getting active service:", error);
-    return null;
+    throw new Error("Error getting active service");
   }
 }
 
-export async function getSourceService(): Promise<ServiceType | null> {
-  return getActiveService("source");
+export async function getSourceService(): Promise<MusicService> {
+  return await getActiveService("source");
 }
 
-export async function getTargetService(): Promise<ServiceType | null> {
-  return getActiveService("target");
+export async function getTargetService(): Promise<MusicService> {
+  return await getActiveService("target");
 }
 
 export async function fetchUserLibrary(service?: MusicService): Promise<ILibraryData> {
@@ -111,10 +98,7 @@ export async function addAlbumsToLibrary(
   return provider.addAlbumsToLibrary(albums);
 }
 
-export async function getLibraryData(service: ServiceType): Promise<ILibraryData> {
-  if (!isActiveMusicService(service)) {
-    throw new Error(`Service ${service} not implemented yet`);
-  }
+export async function getLibraryData(service: MusicService): Promise<ILibraryData> {
   const provider = musicServiceFactory.getProvider(service);
   return provider.fetchUserLibrary();
 }
