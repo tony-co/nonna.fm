@@ -1,165 +1,219 @@
-import { FC } from "react";
-import { useSelection } from "@/contexts/SelectionContext";
+"use client";
+
+import { useParams, useSearchParams } from "next/navigation";
+import { useLibrary } from "@/contexts/LibraryContext";
 import { useMatching } from "@/contexts/MatchingContext";
+import { useTransfer } from "@/hooks/useTransfer";
+import { useState } from "react";
+import { TransferSuccessModal } from "./TransferSuccessModal";
+import { MusicService } from "@/types/services";
 
-interface TransferButtonProps {
-  mode: "select" | "matching" | "review" | "transfer" | "completed";
-  onStartTransfer: () => void;
-}
-
-export const TransferButton: FC<TransferButtonProps> = ({ mode, onStartTransfer }) => {
-  const { selection } = useSelection();
+export function TransferButton() {
+  const searchParams = useSearchParams();
+  const { state } = useLibrary();
   const { matchingState } = useMatching();
+  const [isTransferring, setIsTransferring] = useState(false);
 
-  // Compute progress from selection and matching state
-  const progress = {
-    total: 0,
-    matched: 0,
-    unmatched: 0,
-    processing: 0,
+  // Get target service from URL parameters
+  const params = useParams();
+  const targetServiceId = params.target as MusicService;
+
+  const { handleStartTransfer, transferResults, showSuccessModal, setShowSuccessModal, error } =
+    useTransfer({ onSearchTracks: () => Promise.resolve() });
+
+  // Check if any items are selected
+  const hasSelections =
+    state.selectedItems.tracks.size > 0 ||
+    state.selectedItems.albums.size > 0 ||
+    state.selectedItems.playlists.size > 0;
+
+  // Check if any items are currently being matched
+  const isMatching =
+    Array.from(matchingState.tracks.values()).some(track => track.status === "pending") ||
+    Array.from(matchingState.albums.values()).some(album => album.status === "pending");
+
+  // Get current mode from URL
+  const mode = searchParams.get("step") || "select";
+  const isCompleted = mode === "completed";
+
+  // Determine button text based on state
+  const buttonText = isMatching
+    ? "Finding Matches..."
+    : isTransferring
+      ? "Transferring..."
+      : isCompleted
+        ? "Transfer Complete"
+        : mode === "review"
+          ? "Begin Transfer"
+          : "Start Transfer";
+
+  // Determine button state
+  const isDisabled = isTransferring || isCompleted || !hasSelections;
+
+  // Format summary text of selected items
+  const getSummaryText = () => {
+    const parts = [];
+    if (state.selectedItems.tracks.size > 0) {
+      parts.push(`${state.selectedItems.tracks.size} liked tracks`);
+    }
+    if (state.selectedItems.albums.size > 0) {
+      parts.push(`${state.selectedItems.albums.size} albums`);
+    }
+    if (state.selectedItems.playlists.size > 0) {
+      parts.push(`${state.selectedItems.playlists.size} playlists`);
+    }
+    return parts.join(", ");
   };
 
-  // Count liked songs
-  if (selection.likedSongs.size > 0) {
-    progress.total += selection.likedSongs.size;
-    Array.from(selection.likedSongs).forEach(track => {
-      const matchInfo = matchingState.tracks.get(track.id);
-      if (matchInfo?.status === "matched") progress.matched++;
-      else if (matchInfo?.status === "unmatched") progress.unmatched++;
-    });
-  }
+  // Prepare selected data for the success modal
+  const getSelectedData = () => {
+    const selectedLikedSongs = Array.from(state.likedSongs).filter(track =>
+      state.selectedItems.tracks.has(track.id)
+    );
 
-  // Count albums
-  if (selection.albums.size > 0) {
-    progress.total += selection.albums.size;
-    Array.from(selection.albums).forEach(album => {
-      const matchInfo = matchingState.albums.get(album.id);
-      if (matchInfo?.status === "matched") progress.matched++;
-      else if (matchInfo?.status === "unmatched") progress.unmatched++;
-    });
-  }
+    const selectedAlbums = Array.from(state.albums).filter(album =>
+      state.selectedItems.albums.has(album.id)
+    );
 
-  // Count playlist tracks
-  Array.from(selection.playlists).forEach(([_, selectedTracks]) => {
-    progress.total += selectedTracks.size;
-    Array.from(selectedTracks).forEach(track => {
-      const matchInfo = matchingState.tracks.get(track.id);
-      if (matchInfo?.status === "matched") progress.matched++;
-      else if (matchInfo?.status === "unmatched") progress.unmatched++;
-    });
-  });
+    const selectedPlaylists = new Map();
+    for (const playlistId of state.selectedItems.playlists) {
+      const playlist = state.playlists.get(playlistId);
+      if (playlist) {
+        selectedPlaylists.set(playlistId, playlist);
+      }
+    }
 
-  // In matching mode, set processing to total to show progress
-  if (mode === "matching") {
-    progress.processing = progress.total;
-  }
+    return {
+      likedSongs: selectedLikedSongs,
+      albums: selectedAlbums,
+      playlists: selectedPlaylists,
+    };
+  };
 
-  // Compute percentage for progress bar
-  const progressPercent =
-    mode === "transfer" && progress.total > 0
-      ? Math.round(((progress.matched + progress.unmatched) / progress.total) * 100)
-      : mode === "completed"
-        ? 100
-        : 0;
+  // Handle button click
+  const handleClick = async () => {
+    if (!hasSelections) return;
+    setIsTransferring(true);
 
-  // Determine button text and state based on mode and progress
-  let buttonText = "";
-  let buttonEnabled = false;
+    try {
+      // Create selection state from the selected items
+      const selection = {
+        likedSongs: new Set(
+          Array.from(state.likedSongs).filter(track => state.selectedItems.tracks.has(track.id))
+        ),
+        albums: new Set(
+          Array.from(state.albums).filter(album => state.selectedItems.albums.has(album.id))
+        ),
+        playlists: new Map(),
+      };
 
-  switch (mode) {
-    case "select":
-      buttonText = "Select items to transfer";
-      buttonEnabled =
-        selection.likedSongs.size > 0 || selection.albums.size > 0 || selection.playlists.size > 0;
-      break;
-    case "matching":
-      buttonText = "Matching in progress...";
-      buttonEnabled = false;
-      break;
-    case "review":
-      buttonText = `Transfer ${progress.matched} matched items`;
-      buttonEnabled = progress.matched > 0;
-      break;
-    case "transfer":
-      buttonText = `Transferring ${progressPercent}%`;
-      buttonEnabled = false;
-      break;
-    case "completed":
-      buttonText = "Transfer completed";
-      buttonEnabled = false;
-      break;
-  }
+      // Add selected playlists to the selection
+      for (const playlistId of state.selectedItems.playlists) {
+        const playlist = state.playlists.get(playlistId);
+        if (playlist) {
+          selection.playlists.set(playlistId, new Set(playlist.tracks));
+        }
+      }
+
+      await handleStartTransfer(selection);
+    } finally {
+      setIsTransferring(false);
+    }
+  };
 
   return (
-    <button
-      className={`fixed bottom-6 right-6 z-40 flex items-center gap-2 whitespace-nowrap rounded-full px-6 py-4 text-base font-medium shadow-lg transition-all duration-200 md:bottom-8 md:right-8 md:px-8 md:py-4 ${
-        buttonEnabled
-          ? "transform cursor-pointer bg-gradient-to-r from-indigo-600 to-indigo-500 text-white hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-200/50 active:scale-[0.98] dark:hover:shadow-indigo-900/30"
-          : "cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
-      }`}
-      onClick={onStartTransfer}
-      disabled={!buttonEnabled}
-      aria-label={buttonText}
-      role="transfer-button"
-      tabIndex={buttonEnabled ? 0 : -1}
-    >
-      {/* Progress Overlay */}
-      {(mode === "matching" || mode === "transfer") && (
-        <div
-          className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/20 to-transparent"
-          style={{
-            animation: "shimmer 2s linear infinite",
-            backgroundSize: "200% 100%",
-          }}
+    <>
+      <button
+        className={`fixed bottom-6 right-6 z-40 flex items-center gap-2 whitespace-nowrap rounded-full px-6 py-4 text-base font-medium shadow-lg transition-all duration-200 md:bottom-8 md:right-8 md:px-8 md:py-4 ${
+          hasSelections
+            ? "transform cursor-pointer bg-gradient-to-r from-indigo-600 to-indigo-500 text-white hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-200/50 active:scale-[0.98] dark:hover:shadow-indigo-900/30"
+            : "cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
+        }`}
+        onClick={handleClick}
+        disabled={isDisabled}
+        aria-label={`${buttonText}${hasSelections ? ` - ${getSummaryText()}` : ""}`}
+        role="transfer-button"
+        tabIndex={hasSelections ? 0 : -1}
+      >
+        {/* Progress Overlay */}
+        {(isMatching || isTransferring) && (
+          <div
+            className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/20 to-transparent"
+            style={{
+              animation: "shimmer 2s linear infinite",
+              backgroundSize: "200% 100%",
+            }}
+          />
+        )}
+        <style jsx>{`
+          @keyframes shimmer {
+            0% {
+              background-position: 100% 0;
+            }
+            100% {
+              background-position: -100% 0;
+            }
+          }
+        `}</style>
+        <span className="relative z-10 flex flex-col items-center justify-center">
+          <span className="flex items-center justify-center gap-2">
+            {isMatching || isTransferring ? (
+              <>
+                <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+                {buttonText}
+              </>
+            ) : isCompleted ? (
+              <>
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                {buttonText}
+              </>
+            ) : (
+              buttonText
+            )}
+          </span>
+          {hasSelections && !isCompleted && (
+            <span className="text-sm opacity-90">{getSummaryText()}</span>
+          )}
+        </span>
+      </button>
+
+      {showSuccessModal && transferResults && (
+        <TransferSuccessModal
+          isOpen={true}
+          onClose={() => setShowSuccessModal(false)}
+          targetServiceId={targetServiceId}
+          results={transferResults}
+          selectedData={getSelectedData()}
         />
       )}
-      <style jsx>{`
-        @keyframes shimmer {
-          0% {
-            background-position: 100% 0;
-          }
-          100% {
-            background-position: -100% 0;
-          }
-        }
-      `}</style>
-      <span className="relative z-10 flex items-center justify-center gap-2">
-        {mode === "matching" || mode === "transfer" ? (
-          <>
-            <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-            {buttonText}
-          </>
-        ) : mode === "completed" ? (
-          <>
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-            {buttonText}
-          </>
-        ) : (
-          buttonText
-        )}
-      </span>
-    </button>
+
+      {error && (
+        <div className="fixed bottom-24 left-0 right-0 mx-auto w-full max-w-md rounded-lg bg-red-50 p-4 text-red-800 shadow-lg dark:bg-red-900/30 dark:text-red-200">
+          <p>{error}</p>
+        </div>
+      )}
+    </>
   );
-};
+}

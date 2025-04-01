@@ -1,9 +1,9 @@
-import { FC } from "react";
+import { FC, useEffect } from "react";
 import Dialog from "./Dialog";
-import { useSelection } from "@/contexts/SelectionContext";
 import { getServiceById } from "@/config/services";
 import { TransferResult } from "@/types/services";
 import { ArtworkImage } from "./ArtworkImage";
+import { ITrack, IAlbum, IPlaylist } from "@/types/library";
 
 interface TransferSuccessModalProps {
   isOpen: boolean;
@@ -14,6 +14,11 @@ interface TransferSuccessModalProps {
     albums?: TransferResult;
     playlists: Map<string, TransferResult>;
   };
+  selectedData: {
+    likedSongs: ITrack[];
+    albums: IAlbum[];
+    playlists: Map<string, IPlaylist>;
+  };
 }
 
 export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
@@ -21,11 +26,35 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
   onClose,
   targetServiceId,
   results,
+  selectedData,
 }) => {
-  const { selection } = useSelection();
+  // Log when the modal is rendered
+  useEffect(() => {
+    console.log("TransferSuccessModal rendered:", {
+      isOpen,
+      targetServiceId,
+      hasResults: !!results,
+      resultsPlaylists: results?.playlists?.size || 0,
+      likedSongsResult: !!results?.likedSongs,
+      albumsResult: !!results?.albums,
+      hasSelectedData: {
+        likedSongs: selectedData?.likedSongs?.length || 0,
+        albums: selectedData?.albums?.length || 0,
+        playlists: selectedData?.playlists?.size || 0,
+      },
+    });
+
+    return () => {
+      console.log("TransferSuccessModal unmounting");
+    };
+  }, [isOpen, targetServiceId, results, selectedData]);
+
   const targetService = getServiceById(targetServiceId);
 
-  if (!targetService) return null;
+  if (!targetService) {
+    console.log("Target service not found:", targetServiceId);
+    return null;
+  }
 
   const hasLikedSongs = results.likedSongs && results.likedSongs.playlistId;
   const hasAlbums = results.albums && results.albums.playlistId;
@@ -79,7 +108,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
             Your transferred music is ready!
           </h3>
           <div className="flex flex-col gap-3">
-            {hasLikedSongs && (
+            {hasLikedSongs && selectedData.likedSongs.length > 0 && (
               <a
                 href={targetService.getPlaylistUrl(results.likedSongs!.playlistId!)}
                 target="_blank"
@@ -87,15 +116,13 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
                 className="group flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 transition-all duration-200 hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-gray-800 dark:bg-gray-900/50 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/50"
               >
                 <div className="flex items-center gap-4">
-                  {selection.likedSongs.size > 0 && (
-                    <ArtworkImage
-                      src={Array.from(selection.likedSongs)[0].artwork}
-                      alt="Liked Songs"
-                      size={48}
-                      type="liked"
-                      className="group-hover:scale-105"
-                    />
-                  )}
+                  <ArtworkImage
+                    src={selectedData.likedSongs[0]?.artwork}
+                    alt="Liked Songs"
+                    size={48}
+                    type="liked"
+                    className="group-hover:scale-105"
+                  />
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white">Liked Songs</div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -119,7 +146,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
               </a>
             )}
 
-            {hasAlbums && (
+            {hasAlbums && selectedData.albums.length > 0 && (
               <a
                 href={targetService.getPlaylistUrl(results.albums!.playlistId!)}
                 target="_blank"
@@ -127,15 +154,13 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
                 className="group flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 transition-all duration-200 hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-gray-800 dark:bg-gray-900/50 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/50"
               >
                 <div className="flex items-center gap-4">
-                  {selection.albums.size > 0 && (
-                    <ArtworkImage
-                      src={Array.from(selection.albums)[0].artwork}
-                      alt="Albums"
-                      size={48}
-                      type="album"
-                      className="group-hover:scale-105"
-                    />
-                  )}
+                  <ArtworkImage
+                    src={selectedData.albums[0]?.artwork}
+                    alt="Albums"
+                    size={48}
+                    type="album"
+                    className="group-hover:scale-105"
+                  />
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white">Albums</div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -160,10 +185,11 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
             )}
 
             {successfulPlaylists.map(([playlistId, result]) => {
-              const tracks = selection.playlists.get(playlistId);
-              if (!tracks || !result.playlistId) return null;
+              const playlist = selectedData.playlists.get(playlistId);
+              if (!playlist || !result.playlistId) return null;
 
-              const firstTrack = Array.from(tracks)[0];
+              const tracks = playlist.tracks || [];
+              const firstTrack = tracks[0];
 
               return (
                 <a
@@ -176,14 +202,14 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
                   <div className="flex items-center gap-4">
                     <ArtworkImage
                       src={firstTrack?.artwork}
-                      alt={firstTrack?.name || "Playlist"}
+                      alt={playlist.name || "Playlist"}
                       size={48}
                       type="playlist"
                       className="group-hover:scale-105"
                     />
                     <div>
                       <div className="font-medium text-gray-900 dark:text-white">
-                        {firstTrack?.name || "Playlist"}
+                        {playlist.name || "Playlist"}
                       </div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
                         {result.added} songs transferred

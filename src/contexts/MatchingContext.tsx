@@ -1,3 +1,5 @@
+"use client";
+
 import { createContext, useContext, ReactNode, FC, useState } from "react";
 
 export interface MatchingState {

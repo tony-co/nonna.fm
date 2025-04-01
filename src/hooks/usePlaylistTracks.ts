@@ -1,42 +1,44 @@
-import { useState, useCallback } from "react";
-import { IPlaylist, ILibraryData } from "@/types/library";
+import { useState, useEffect } from "react";
+import { IPlaylist } from "@/types/library";
 import { fetchPlaylistCurator } from "@/lib/services/apple/api";
 import { fetchPlaylistTracks as fetchPlaylistTracksApi, getSourceService } from "@/lib/musicApi";
 import { useLibrary } from "@/contexts/LibraryContext";
 
-interface UsePlaylistTracksOptions {
-  onCancel: () => void;
-}
-
 interface UsePlaylistTracksReturn {
-  error: string | null;
+  playlist: IPlaylist | undefined;
   isLoading: boolean;
-  handleLoadPlaylistTracks: (playlistId: string) => Promise<IPlaylist>;
+  error: string | null;
 }
 
-export const usePlaylistTracks = ({
-  onCancel,
-}: UsePlaylistTracksOptions): UsePlaylistTracksReturn => {
-  const [error, setError] = useState<string | null>(null);
+export const usePlaylistTracks = (playlistId: string): UsePlaylistTracksReturn => {
   const [isLoading, setIsLoading] = useState(false);
-  const { libraryState, setLibraryState } = useLibrary();
+  const [error, setError] = useState<string | null>(null);
+  const { state, actions } = useLibrary();
 
-  const handleLoadPlaylistTracks = useCallback(
-    async (playlistId: string): Promise<IPlaylist> => {
-      if (!libraryState) {
-        throw new Error("Library not available");
+  // Fetch tracks if they don't exist
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchTracks = async (): Promise<void> => {
+      if (!state) return;
+
+      // Get the existing playlist
+      const existingPlaylist = state.playlists.get(playlistId);
+      if (!existingPlaylist) {
+        setError("Playlist not found");
+        return;
       }
 
-      const sourceService = await getSourceService();
-      const playlist = libraryState.playlists.find(p => p.id === playlistId);
-      if (!playlist) {
-        throw new Error("Playlist not found");
+      // Only fetch if tracks array is empty or undefined
+      if (existingPlaylist.tracks && existingPlaylist.tracks.length > 0) {
+        return;
       }
 
       try {
-        setError(null);
         setIsLoading(true);
-        onCancel();
+        setError(null);
+
+        const sourceService = await getSourceService();
 
         // Fetch owner for Apple Music playlists
         let curatorName = "";
@@ -47,36 +49,39 @@ export const usePlaylistTracks = ({
 
         const tracks = await fetchPlaylistTracksApi(playlistId, sourceService);
 
+        if (!isMounted) return;
+
         const updatedPlaylist = {
-          ...playlist,
+          ...existingPlaylist,
           tracks,
           ...(sourceService === "apple" && curatorName ? { ownerName: curatorName } : {}),
         };
 
-        setLibraryState((prev: ILibraryData | null) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            playlists: prev.playlists.map(p => (p.id === playlistId ? updatedPlaylist : p)),
-          };
-        });
-
-        return updatedPlaylist;
+        const updatedPlaylists = new Map(state.playlists);
+        updatedPlaylists.set(playlistId, updatedPlaylist);
+        actions.setPlaylists(updatedPlaylists);
       } catch (err) {
+        if (!isMounted) return;
         const errorMessage = "Failed to fetch tracks. Please try again.";
         console.error("Error fetching playlist tracks:", err);
         setError(errorMessage);
-        throw new Error(errorMessage);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
-    },
-    [libraryState, onCancel, setLibraryState]
-  );
+    };
+
+    fetchTracks();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [playlistId, state, actions]);
 
   return {
-    error,
+    playlist: state?.playlists.get(playlistId),
     isLoading,
-    handleLoadPlaylistTracks,
+    error,
   };
 };

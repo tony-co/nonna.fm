@@ -1,6 +1,8 @@
+"use client";
+
 import { FC, useRef } from "react";
-import { ITrack } from "@/types/library";
 import { useMatching } from "@/contexts/MatchingContext";
+import type { ITrack } from "@/types/library";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import { useIsVisible } from "@/hooks/useIsVisible";
 
@@ -32,21 +34,15 @@ const StatusIcon: FC<{ status: string | undefined }> = ({ status }) => {
 
 interface TrackListProps {
   tracks: Array<ITrack>;
-  mode?: "select" | "transfer";
   selection?: Set<ITrack>;
-  onToggleTrack?: (track: ITrack) => void;
-  isSelectionDisabled?: boolean;
 }
 
 const TrackRow: FC<{
   track: ITrack;
   index: number;
   isSelected: boolean;
-  onToggleTrack?: (track: ITrack) => void;
-  isSelectionDisabled?: boolean;
-  mode?: "select" | "transfer";
   status?: string;
-}> = ({ track, index, isSelected, onToggleTrack, isSelectionDisabled, mode, status }) => {
+}> = ({ track, index, isSelected, status }) => {
   const ref = useRef<HTMLDivElement>(null);
   const isVisible = useIsVisible(ref as React.RefObject<HTMLElement>);
 
@@ -60,51 +56,35 @@ const TrackRow: FC<{
       }`}
       role="row"
     >
-      <div>
-        <input
-          type="checkbox"
-          className="h-3.5 w-3.5 cursor-pointer rounded-sm transition-colors duration-200 md:h-4 md:w-4"
-          style={{ accentColor: "#6366f1" }}
-          checked={isSelected}
-          onChange={() => onToggleTrack?.(track)}
-          disabled={isSelectionDisabled}
-          aria-label={`Select ${track.name} by ${track.artist}`}
-        />
-      </div>
-
+      {/* Index number */}
       <div className="hidden text-sm font-normal text-slate-500 md:block dark:text-slate-400">
         {index + 1}
       </div>
 
-      <div className="flex min-w-0 items-center gap-4">
-        {/* Artwork with intersection observer */}
-        <div className="h-10 w-10 flex-shrink-0 rounded">
-          {isVisible ? (
-            <ArtworkImage
-              src={track.artwork}
-              alt={`${track.name} artwork`}
-              size={40}
-              type="album"
-            />
-          ) : (
-            <div className="h-full w-full rounded bg-slate-100 dark:bg-slate-800" />
-          )}
-        </div>
+      {/* Artwork */}
+      <div className="h-10 w-10 flex-shrink-0 rounded">
+        {isVisible ? (
+          <ArtworkImage src={track.artwork} alt={`${track.name} artwork`} size={40} type="album" />
+        ) : (
+          <div className="h-full w-full rounded bg-slate-100 dark:bg-slate-800" />
+        )}
+      </div>
 
-        {/* Track info */}
-        <div className="min-w-0 flex-1">
-          <div
-            className={`truncate font-medium ${
-              mode === "transfer" && status === "unmatched"
-                ? "text-red-500 dark:text-red-400"
-                : mode === "transfer" && status === "matched"
-                  ? "text-gray-800 dark:text-indigo-50"
-                  : "text-slate-900 dark:text-slate-100"
-            }`}
-          >
-            {track.name}
-          </div>
-          <div className="truncate text-sm text-slate-500 dark:text-slate-400">{track.artist}</div>
+      {/* Track info */}
+      <div className="min-w-0">
+        <div
+          className={`ml-4 truncate font-medium ${
+            status === "unmatched"
+              ? "text-red-500 dark:text-red-400"
+              : status === "matched"
+                ? "text-gray-800 dark:text-indigo-50"
+                : "text-slate-900 dark:text-slate-100"
+          }`}
+        >
+          {track.name}
+        </div>
+        <div className="ml-4 truncate text-sm text-slate-500 dark:text-slate-400">
+          {track.artist}
         </div>
       </div>
 
@@ -113,6 +93,7 @@ const TrackRow: FC<{
         {track.album}
       </div>
 
+      {/* Status */}
       <div>
         <StatusIcon status={status} />
       </div>
@@ -120,46 +101,8 @@ const TrackRow: FC<{
   );
 };
 
-export const TrackList: FC<TrackListProps> = ({
-  tracks,
-  mode = "select",
-  selection = new Set(),
-  onToggleTrack,
-  isSelectionDisabled,
-}) => {
+export const TrackList: FC<TrackListProps> = ({ tracks, selection = new Set() }) => {
   const { getTrackStatus } = useMatching();
-
-  // Helper function to check if a track is selected by ID
-  const isTrackSelected = (track: ITrack): boolean => {
-    return Array.from(selection).some(selectedTrack => selectedTrack.id === track.id);
-  };
-
-  // Calculate if all tracks are selected
-  const allTracksSelected = tracks.length > 0 && tracks.every(track => isTrackSelected(track));
-  const someTracksSelected = tracks.some(track => isTrackSelected(track));
-
-  // Handle select all toggle
-  const handleSelectAll = (): void => {
-    if (!onToggleTrack) return;
-
-    // If all tracks are selected, deselect all
-    // If some or no tracks are selected, select all remaining unselected tracks
-    if (allTracksSelected) {
-      // Deselect all tracks
-      tracks.forEach(track => {
-        if (isTrackSelected(track)) {
-          onToggleTrack(track);
-        }
-      });
-    } else {
-      // Select all unselected tracks
-      tracks.forEach(track => {
-        if (!isTrackSelected(track)) {
-          onToggleTrack(track);
-        }
-      });
-    }
-  };
 
   return (
     <div className="relative bg-transparent dark:bg-transparent" role="tracklist">
@@ -168,28 +111,13 @@ export const TrackList: FC<TrackListProps> = ({
         className="sticky top-0 mb-4 grid grid-cols-[32px_1fr_32px] gap-2 border-b border-slate-200 bg-white/80 p-1.5 py-2 text-xs font-normal text-slate-500 backdrop-blur-sm md:grid-cols-[32px_32px_1fr_231px_32px] md:gap-4 md:p-2 md:text-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400"
         role="row"
       >
-        <div className="flex items-center" role="columnheader">
-          <input
-            type="checkbox"
-            className="h-3.5 w-3.5 cursor-pointer rounded-sm transition-colors duration-200 md:h-4 md:w-4"
-            style={{ accentColor: "#6366f1" }}
-            checked={allTracksSelected}
-            ref={checkbox => {
-              if (checkbox) {
-                checkbox.indeterminate = someTracksSelected && !allTracksSelected;
-              }
-            }}
-            onChange={handleSelectAll}
-            disabled={isSelectionDisabled}
-            aria-label="Select all tracks"
-          />
-        </div>
         <div className="hidden items-center md:flex" role="columnheader">
           #
         </div>
         <div className="flex items-center" role="columnheader">
           Title
         </div>
+        <div className="flex items-center" role="columnheader"></div>
         <div className="hidden items-center md:flex" role="columnheader">
           Album
         </div>
@@ -202,7 +130,9 @@ export const TrackList: FC<TrackListProps> = ({
       <div className="space-y-2">
         {tracks.map((track, index) => {
           const status = getTrackStatus(track.id);
-          const isSelected = isTrackSelected(track);
+          const isSelected = Array.from(selection).some(
+            selectedTrack => selectedTrack.id === track.id
+          );
 
           return (
             <TrackRow
@@ -210,9 +140,6 @@ export const TrackList: FC<TrackListProps> = ({
               track={track}
               index={index}
               isSelected={isSelected}
-              onToggleTrack={onToggleTrack}
-              isSelectionDisabled={isSelectionDisabled}
-              mode={mode}
               status={status}
             />
           );

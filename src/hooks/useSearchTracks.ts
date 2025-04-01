@@ -1,175 +1,127 @@
 import { useState, useCallback, useRef } from "react";
-import { IAlbum, IPlaylist } from "@/types/library";
+import { ITrack, IAlbum, IPlaylist } from "@/types/library";
 import { MusicService } from "@/types/services";
 import { musicServiceFactory } from "@/lib/services/factory";
 import { useMatching } from "@/contexts/MatchingContext";
 import { useLibrary } from "@/contexts/LibraryContext";
-import { useSearchParams } from "next/navigation";
-
-interface UseSearchTracksOptions {
-  onModeChange: (mode: "select" | "matching" | "review" | "transfer" | "completed") => void;
-}
 
 interface UseSearchTracksReturn {
   isLoading: boolean;
   error: string | null;
-  handleSearchTracks: (itemOrCategory?: IAlbum | IPlaylist | "liked" | "albums") => Promise<void>;
-  cancelSearch: () => void;
+  matchLikedSongs: (tracks: ITrack[], targetService: MusicService) => Promise<void>;
+  matchAlbums: (albums: IAlbum[], targetService: MusicService) => Promise<void>;
+  matchPlaylistTracks: (playlist: IPlaylist, targetService: MusicService) => Promise<void>;
+  cancelMatching: () => void;
 }
 
-export const useSearchTracks = ({
-  onModeChange,
-}: UseSearchTracksOptions): UseSearchTracksReturn => {
+export const useSearchTracks = (): UseSearchTracksReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const matchedItemsRef = useRef<Set<string>>(new Set());
   const { setTrackStatus, setAlbumStatus } = useMatching();
-  const { libraryState } = useLibrary();
-  const searchParams = useSearchParams();
-  const targetService = searchParams.get("target") as MusicService;
+  const { state, actions } = useLibrary();
 
-  const cancelSearch = useCallback(() => {
+  const cancelMatching = useCallback(() => {
     if (abortControllerRef.current) {
+      console.log("Cancelling matching from:", new Error().stack);
       abortControllerRef.current.abort();
       setIsLoading(false);
-      console.log("Search cancelled");
     }
   }, []);
 
-  const handleSearchTracks = useCallback(
-    async (itemOrCategory?: IAlbum | IPlaylist | "liked" | "albums") => {
-      if (!libraryState || !targetService) {
-        setError("Target service not specified");
-        return;
+  // Helper function to process tracks in batches
+  const processTrackBatch = useCallback(
+    async (
+      tracks: ITrack[],
+      provider: ReturnType<typeof musicServiceFactory.getProvider>,
+      signal: AbortSignal,
+      batchSize: number = 20
+    ) => {
+      const processedTracks = new Map<string, { track: ITrack; targetId: string | null }>();
+
+      for (let i = 0; i < tracks.length; i += batchSize) {
+        if (signal.aborted) {
+          console.log("Signal was aborted before search");
+          return processedTracks;
+        }
+
+        const batch = tracks.slice(i, i + batchSize);
+        batch.forEach(track => {
+          setTrackStatus(track.id, "pending");
+          matchedItemsRef.current.add(track.id);
+        });
+
+        const results = await provider.search(batch, batchSize);
+
+        if (signal.aborted) {
+          console.log("Signal was aborted after search");
+          return processedTracks;
+        }
+
+        batch.forEach(track => {
+          const matchedTrack = results.tracks?.find(t => (t as ITrack).id === track.id);
+
+          if (matchedTrack && "targetId" in matchedTrack) {
+            setTrackStatus(
+              track.id,
+              matchedTrack.targetId ? "matched" : "unmatched",
+              matchedTrack.targetId
+            );
+
+            processedTracks.set(track.id, {
+              track,
+              targetId: matchedTrack.targetId || null,
+            });
+          } else {
+            setTrackStatus(track.id, "unmatched");
+            processedTracks.set(track.id, { track, targetId: null });
+          }
+        });
+
+        // Small delay to prevent rate limiting
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
 
-      // Cancel any existing search
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+      return processedTracks;
+    },
+    [setTrackStatus]
+  );
 
-      // Create new abort controller for this search
+  const matchLikedSongs = useCallback(
+    async (tracks: ITrack[], targetService: MusicService) => {
+      if (!tracks.length) return;
+
+      cancelMatching();
       abortControllerRef.current = new AbortController();
       const signal = abortControllerRef.current.signal;
 
       setIsLoading(true);
-      onModeChange("matching");
+      setError(null);
 
       try {
         const provider = musicServiceFactory.getProvider(targetService);
+        const unprocessedTracks = tracks.filter(track => !track.targetId);
+        const processedTracks = await processTrackBatch(unprocessedTracks, provider, signal);
 
-        // Handle category-based searches
-        if (itemOrCategory === "liked") {
-          // Search only liked songs
-          const BATCH_SIZE = 20;
-          for (let i = 0; i < libraryState.likedSongs.length; i += BATCH_SIZE) {
-            if (signal.aborted) {
-              console.log("Search operation cancelled");
-              return;
+        if (!signal.aborted && processedTracks) {
+          // Update library state with the new tracks
+          const updatedTracks = new Set(state.likedSongs);
+
+          processedTracks.forEach(({ track, targetId }) => {
+            if (targetId) {
+              const updatedTrack = { ...track, targetId };
+              updatedTracks.delete(track);
+              updatedTracks.add(updatedTrack);
             }
-            const batch = libraryState.likedSongs.slice(i, i + BATCH_SIZE);
-            batch.forEach(track => setTrackStatus(track.id, "pending"));
+          });
 
-            const results = await provider.search(batch, BATCH_SIZE);
-
-            if (signal.aborted) return;
-
-            batch.forEach(originalTrack => {
-              const matchedTrack = results.tracks?.find(
-                t => t.name === originalTrack.name && t.artist === originalTrack.artist
-              );
-              setTrackStatus(
-                originalTrack.id,
-                matchedTrack?.targetId ? "matched" : "unmatched",
-                matchedTrack?.targetId
-              );
-            });
-
-            await new Promise(resolve => setTimeout(resolve, 50));
-          }
-        } else if (itemOrCategory === "albums") {
-          // Search albums in batches
-          const BATCH_SIZE = 20;
-          for (let i = 0; i < libraryState.albums.length; i += BATCH_SIZE) {
-            if (signal.aborted) {
-              console.log("Search operation cancelled");
-              return;
-            }
-            const batch = libraryState.albums.slice(i, i + BATCH_SIZE);
-            batch.forEach(album => setAlbumStatus(album.id, "pending"));
-
-            const results = await provider.searchAlbums(batch);
-
-            if (signal.aborted) return;
-
-            batch.forEach(album => {
-              const matchedAlbum = results.albums?.find(a => a.id === album.id);
-              setAlbumStatus(
-                album.id,
-                matchedAlbum?.targetId ? "matched" : "unmatched",
-                matchedAlbum?.targetId
-              );
-            });
-
-            await new Promise(resolve => setTimeout(resolve, 50));
-          }
-        } else if (typeof itemOrCategory === "object") {
-          if ("tracks" in itemOrCategory) {
-            // Playlist logic
-            const BATCH_SIZE = 20;
-            for (let i = 0; i < itemOrCategory.tracks.length; i += BATCH_SIZE) {
-              if (signal.aborted) {
-                console.log("Search operation cancelled");
-                return;
-              }
-              const batch = itemOrCategory.tracks.slice(i, i + BATCH_SIZE);
-              batch.forEach(track => setTrackStatus(track.id, "pending"));
-
-              const results = await provider.search(batch, BATCH_SIZE);
-
-              if (signal.aborted) return;
-
-              batch.forEach(originalTrack => {
-                const matchedTrack = results.tracks?.find(
-                  t => t.name === originalTrack.name && t.artist === originalTrack.artist
-                );
-                setTrackStatus(
-                  originalTrack.id,
-                  matchedTrack?.targetId ? "matched" : "unmatched",
-                  matchedTrack?.targetId
-                );
-              });
-
-              await new Promise(resolve => setTimeout(resolve, 50));
-            }
-          } else {
-            // Single album logic
-            if (signal.aborted) {
-              console.log("Search operation cancelled");
-              return;
-            }
-            setAlbumStatus(itemOrCategory.id, "pending");
-            const results = await provider.searchAlbums([itemOrCategory]);
-
-            if (signal.aborted) return;
-
-            if (results.albums?.[0]) {
-              setAlbumStatus(
-                itemOrCategory.id,
-                results.albums[0].targetId ? "matched" : "unmatched",
-                results.albums[0].targetId
-              );
-            }
-          }
-        }
-
-        if (!signal.aborted) {
-          onModeChange("review");
+          actions.setLikedSongs(updatedTracks);
         }
       } catch (error) {
         if (!signal.aborted) {
-          console.error("Error searching tracks:", error);
-          setError("Failed to search tracks. Please try again.");
+          console.error("Error matching liked songs:", error);
+          setError("Failed to match liked songs. Please try again.");
         }
       } finally {
         if (!signal.aborted) {
@@ -177,13 +129,132 @@ export const useSearchTracks = ({
         }
       }
     },
-    [libraryState, onModeChange, targetService, setTrackStatus, setAlbumStatus]
+    [cancelMatching, processTrackBatch, state.likedSongs, actions]
+  );
+
+  const matchAlbums = useCallback(
+    async (albums: IAlbum[], targetService: MusicService) => {
+      if (!albums.length) return;
+
+      cancelMatching();
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const provider = musicServiceFactory.getProvider(targetService);
+        const unprocessedAlbums = albums.filter(
+          album => !matchedItemsRef.current.has(album.id) && !album.targetId
+        );
+
+        if (!unprocessedAlbums.length) {
+          console.log("No unprocessed albums found, skipping");
+          return;
+        }
+
+        unprocessedAlbums.forEach(album => {
+          setAlbumStatus(album.id, "pending");
+          matchedItemsRef.current.add(album.id);
+        });
+
+        const results = await provider.searchAlbums(unprocessedAlbums);
+        if (signal.aborted) return;
+
+        const updatedAlbums = new Set(state.albums);
+        unprocessedAlbums.forEach(album => {
+          const match = results.albums?.find(
+            a => a.name === album.name && a.artist === album.artist
+          );
+          setAlbumStatus(album.id, match?.targetId ? "matched" : "unmatched", match?.targetId);
+
+          // Update the album in our library state
+          if (match?.targetId) {
+            const updatedAlbum = { ...album, targetId: match.targetId };
+            updatedAlbums.delete(album);
+            updatedAlbums.add(updatedAlbum);
+          }
+        });
+
+        // Update library state with the new albums
+        actions.setAlbums(updatedAlbums);
+      } catch (error) {
+        if (!signal.aborted) {
+          console.error("Error matching albums:", error);
+          setError("Failed to match albums. Please try again.");
+        }
+      } finally {
+        if (!signal.aborted) {
+          setIsLoading(false);
+        }
+      }
+    },
+    [cancelMatching, setAlbumStatus, state.albums, actions]
+  );
+
+  const matchPlaylistTracks = useCallback(
+    async (playlist: IPlaylist, targetService: MusicService) => {
+      if (!playlist.tracks.length) return;
+
+      cancelMatching();
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const provider = musicServiceFactory.getProvider(targetService);
+        const unprocessedTracks = playlist.tracks.filter(track => !track.targetId);
+
+        if (!unprocessedTracks.length) {
+          console.log("No unprocessed tracks found in playlist, skipping");
+          return;
+        }
+
+        // Create a map of existing tracks for easy lookup
+        const tracksMap = new Map(playlist.tracks.map(track => [track.id, track]));
+
+        // Process the unprocessed tracks
+        const processedTracks = await processTrackBatch(unprocessedTracks, provider, signal);
+
+        if (!signal.aborted && processedTracks) {
+          // Update the tracks with their new target IDs
+          processedTracks.forEach(({ track, targetId }) => {
+            if (targetId) {
+              const updatedTrack = { ...track, targetId };
+              tracksMap.set(track.id, updatedTrack);
+            }
+          });
+
+          // Create updated playlist with matched tracks
+          const updatedPlaylist = {
+            ...playlist,
+            tracks: Array.from(tracksMap.values()),
+          };
+          actions.updatePlaylist(updatedPlaylist);
+        }
+      } catch (error) {
+        if (!signal.aborted) {
+          console.error("Error matching playlist tracks:", error);
+          setError("Failed to match playlist tracks. Please try again.");
+        }
+      } finally {
+        if (!signal.aborted) {
+          setIsLoading(false);
+        }
+      }
+    },
+    [cancelMatching, processTrackBatch, actions]
   );
 
   return {
     isLoading,
     error,
-    handleSearchTracks,
-    cancelSearch,
+    matchLikedSongs,
+    matchAlbums,
+    matchPlaylistTracks,
+    cancelMatching,
   };
 };

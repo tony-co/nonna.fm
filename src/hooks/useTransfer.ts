@@ -4,7 +4,7 @@ import { MusicService, TransferResult } from "@/types/services";
 import { useMatching } from "@/contexts/MatchingContext";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { addTracksToLibrary, addAlbumsToLibrary, createPlaylistWithTracks } from "@/lib/musicApi";
-import { useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 
 interface TransferResults {
   likedSongs?: TransferResult;
@@ -26,7 +26,7 @@ interface UseTransferReturn {
 }
 
 export function useTransfer({ onSearchTracks }: UseTransferProps): UseTransferReturn {
-  const { libraryState } = useLibrary();
+  const { state } = useLibrary();
   const { matchingState } = useMatching();
   const searchParams = useSearchParams();
   const [transferResults, setTransferResults] = useState<TransferResults | null>(null);
@@ -35,11 +35,14 @@ export function useTransfer({ onSearchTracks }: UseTransferProps): UseTransferRe
 
   // Get source and target services from URL parameters
   const sourceService = searchParams.get("source") as MusicService;
-  const targetService = searchParams.get("target") as MusicService;
+  //const targetService = searchParams.get("target") as MusicService;
+
+  const params = useParams();
+  const targetService = params.target as MusicService;
 
   const handleStartTransfer = async (selection: ISelectionState): Promise<void> => {
-    if (!libraryState || !targetService) {
-      console.error("handleStartTransfer - missing required data", { libraryState, targetService });
+    if (!state || !targetService) {
+      console.error("handleStartTransfer - missing required data", { state, targetService });
       setError("Target service not specified");
       return;
     }
@@ -95,7 +98,7 @@ export function useTransfer({ onSearchTracks }: UseTransferProps): UseTransferRe
 
       // Transfer playlists
       for (const [playlistId, selectedTracks] of Array.from(selection.playlists.entries())) {
-        const playlist = libraryState.playlists.find(p => p.id === playlistId);
+        const playlist = state.playlists.get(playlistId);
         if (!playlist) continue;
 
         const matchedTracks = Array.from(selectedTracks)
@@ -116,8 +119,10 @@ export function useTransfer({ onSearchTracks }: UseTransferProps): UseTransferRe
         }
       }
 
+      console.log("Transfer completed successfully:", results);
       setTransferResults(results);
       setShowSuccessModal(true);
+      console.log("Success modal should show now:", { showModal: true });
     } catch (err) {
       console.error("handleStartTransfer - error:", err);
       setError("Failed to transfer tracks. Please try again.");
@@ -128,9 +133,9 @@ export function useTransfer({ onSearchTracks }: UseTransferProps): UseTransferRe
     playlist: IPlaylist,
     selection: ISelectionState
   ): Promise<void> => {
-    if (!libraryState || !targetService) {
+    if (!state || !targetService) {
       console.error("handleTransferPlaylist - missing required data", {
-        libraryState,
+        state,
         targetService,
       });
       setError("Target service not specified");
@@ -163,10 +168,14 @@ export function useTransfer({ onSearchTracks }: UseTransferProps): UseTransferRe
         targetService
       );
 
-      setTransferResults({
+      const results: TransferResults = {
         playlists: new Map([[playlist.id, result]]),
-      });
+      };
+
+      console.log("Playlist transfer completed successfully:", results);
+      setTransferResults(results);
       setShowSuccessModal(true);
+      console.log("Success modal should show now:", { showModal: true });
     } catch (err) {
       console.error("handleTransferPlaylist - error:", err);
       setError("Failed to transfer playlist. Please try again.");

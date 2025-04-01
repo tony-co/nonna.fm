@@ -2,21 +2,15 @@ import { FC, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { MusicService } from "@/types/services";
 import { IAlbum, IPlaylist } from "@/types/library";
-import { LikedSongs } from "@/components/library/LikedSongs";
-import { AlbumList } from "@/components/library/AlbumList";
-import { Playlist } from "@/components/library/Playlist";
-import { useSelection } from "@/contexts/SelectionContext";
 import { LibrarySidebar } from "@/components/layout/Sidebar";
 import { TransferButton } from "@/components/shared/TransferButton";
-import { usePlaylistTracks } from "@/hooks/usePlaylistTracks";
 import { useTransfer } from "@/hooks/useTransfer";
-import { useLibrary } from "@/contexts/LibraryContext";
+import { useLibrary, useLibrarySelection } from "@/contexts/LibraryContext";
 import { TransferSuccessModal } from "@/components/shared/TransferSuccessModal";
+import { LibraryContent } from "@/components/library/LibraryContent";
 
 interface LibraryProps {
-  mode: "select" | "matching" | "review" | "transfer" | "completed";
   onSearchTracks: (itemOrCategory?: IAlbum | IPlaylist | "liked" | "albums") => Promise<void>;
-  onCancel: () => void;
 }
 
 const BackButton: FC<{ onClick: () => void }> = ({ onClick }) => (
@@ -41,20 +35,19 @@ const BackButton: FC<{ onClick: () => void }> = ({ onClick }) => (
   </button>
 );
 
-export const Library: FC<LibraryProps> = ({ mode, onSearchTracks, onCancel }) => {
-  const { libraryState } = useLibrary();
-  const { selection, selectedView, setSelectedView } = useSelection();
+export const Library: FC<LibraryProps> = ({ onSearchTracks }) => {
+  const { state } = useLibrary();
+  const { selectedItems } = useLibrarySelection();
+  const [selectedView, setSelectedView] = useState<{
+    type: "playlist" | "album" | "liked";
+    id?: string;
+  } | null>(null);
   const [cachedView, setCachedView] = useState(selectedView);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const targetService = searchParams.get("target") as MusicService;
 
-  const { handleLoadPlaylistTracks } = usePlaylistTracks({
-    onCancel,
-  });
-
   const {
-    handleStartTransfer,
     transferResults,
     showSuccessModal,
     setShowSuccessModal,
@@ -70,13 +63,15 @@ export const Library: FC<LibraryProps> = ({ mode, onSearchTracks, onCancel }) =>
     }
   }, [selectedView]);
 
-  // Add beforeunload handler when in transfer mode with selections
+  // Add beforeunload handler when user has selections
   useEffect(() => {
     const hasSelections =
-      selection.likedSongs.size > 0 || selection.albums.size > 0 || selection.playlists.size > 0;
+      selectedItems.tracks.size > 0 ||
+      selectedItems.albums.size > 0 ||
+      selectedItems.playlists.size > 0;
 
     const handleBeforeUnload = (e: BeforeUnloadEvent): void => {
-      if (mode === "transfer" || hasSelections) {
+      if (hasSelections) {
         e.preventDefault();
         e.returnValue = "Are you sure you want to leave before transferring?";
       }
@@ -88,33 +83,7 @@ export const Library: FC<LibraryProps> = ({ mode, onSearchTracks, onCancel }) =>
     }
 
     return (): void => {};
-  }, [mode, selection]);
-
-  const handleItemClick = async (
-    type: "playlist" | "album" | "liked",
-    id?: string
-  ): Promise<void> => {
-    setSelectedView({ type, id });
-    setError(null);
-
-    // Delay the data loading to allow animation to complete
-    setTimeout(async () => {
-      try {
-        if (type === "liked") {
-          await onSearchTracks("liked");
-        } else if (type === "album" && !id) {
-          await onSearchTracks("albums");
-        } else if (type === "playlist" && id && libraryState) {
-          const updatedPlaylist = await handleLoadPlaylistTracks(id);
-          await onSearchTracks(updatedPlaylist);
-        }
-      } catch (err) {
-        console.error("Error handling item click:", err);
-        setError(err instanceof Error ? err.message : "An unexpected error occurred");
-        setSelectedView(null);
-      }
-    }, 300);
-  };
+  }, [selectedItems]);
 
   const handleBackClick = () => {
     // First trigger the slide animation
@@ -127,7 +96,7 @@ export const Library: FC<LibraryProps> = ({ mode, onSearchTracks, onCancel }) =>
     }, 300);
   };
 
-  if (!libraryState) {
+  if (!state) {
     return null;
   }
 
@@ -136,7 +105,7 @@ export const Library: FC<LibraryProps> = ({ mode, onSearchTracks, onCancel }) =>
 
   return (
     <div className="fade-in relative flex h-[calc(100vh-40px)] flex-col">
-      <TransferButton mode={mode} onStartTransfer={() => handleStartTransfer(selection)} />
+      <TransferButton />
 
       {(error || transferError) && (
         <div className="mx-6 mb-4 rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-red-500">
@@ -154,7 +123,7 @@ export const Library: FC<LibraryProps> = ({ mode, onSearchTracks, onCancel }) =>
             selectedView ? "-translate-x-full md:translate-x-0" : "translate-x-0"
           }`}
         >
-          <LibrarySidebar onItemClick={handleItemClick} />
+          <LibrarySidebar />
         </aside>
 
         {/* Main Content */}
@@ -167,41 +136,7 @@ export const Library: FC<LibraryProps> = ({ mode, onSearchTracks, onCancel }) =>
         >
           {viewToRender && <BackButton onClick={handleBackClick} />}
           <div className="overflow-hidden rounded-xl bg-indigo-50/20 p-6 shadow-sm ring-1 ring-indigo-100 dark:bg-indigo-950/20 dark:ring-indigo-300/10">
-            {/* Switch on view type */}
-            {{
-              liked: <LikedSongs mode={mode} />,
-              album: <AlbumList />,
-              playlist: viewToRender?.id &&
-                libraryState?.playlists.find(p => p.id === viewToRender.id) && (
-                  <Playlist
-                    playlist={libraryState.playlists.find(p => p.id === viewToRender.id)!}
-                    mode={mode}
-                  />
-                ),
-            }[(viewToRender?.type || "") as "liked" | "album" | "playlist"] ?? (
-              <div className="p-8 text-center" role="status" aria-label="Empty State">
-                <svg
-                  className="mx-auto mb-4 h-16 w-16 text-indigo-500 dark:text-indigo-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-                  />
-                </svg>
-                <p className="text-lg font-normal text-indigo-700 dark:text-indigo-400">
-                  Select a playlist or album to view its tracks
-                </p>
-                <p className="mt-2 text-sm text-indigo-600 dark:text-indigo-300/70">
-                  Choose from your library on the left
-                </p>
-              </div>
-            )}
+            {state && <LibraryContent viewToRender={viewToRender} />}
           </div>
           {/* Add bottom padding on mobile */}
           <div className="h-18 md:h-0" />

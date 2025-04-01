@@ -1,39 +1,32 @@
+"use client";
 import { FC } from "react";
-import { useSelection } from "@/contexts/SelectionContext";
 import { useMatching } from "@/contexts/MatchingContext";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { TrackList } from "./TrackList";
 
-interface LikedSongsProps {
-  mode: "select" | "matching" | "review" | "transfer" | "completed";
-}
+export const LikedSongs: FC = () => {
+  const { state } = useLibrary();
+  const { getTrackStatus } = useMatching();
 
-export const LikedSongs: FC<LikedSongsProps> = ({ mode }) => {
-  const { libraryState } = useLibrary();
-  const { selection, isSelectionDisabled, toggleLikedSong } = useSelection();
-  const { matchingState } = useMatching();
+  if (!state.likedSongs) return null;
 
-  if (!libraryState) return null;
-
-  const matchedCount = libraryState.likedSongs.reduce((count, track) => {
-    return matchingState.tracks.get(track.id)?.status === "matched" ? count + 1 : count;
+  // Count unmatched tracks
+  const unmatchedCount = Array.from(state.likedSongs).reduce((count, track) => {
+    return getTrackStatus(track.id) === "unmatched" ? count + 1 : count;
   }, 0);
 
   return (
-    <div className="space-y-4">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Liked Songs</h1>
-        <span className="text-sm text-gray-600 dark:text-gray-400">
-          {matchedCount} / {libraryState.likedSongs.length} matched
-        </span>
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-indigo-900 dark:text-indigo-50">Liked Songs</h1>
+        <p className="text-sm text-indigo-700 dark:text-indigo-300">
+          {state.likedSongs.size} tracks • {unmatchedCount} unmatched
+        </p>
       </div>
-      <TrackList
-        tracks={libraryState.likedSongs}
-        mode={mode === "select" ? "select" : "transfer"}
-        selection={selection.likedSongs}
-        onToggleTrack={toggleLikedSong}
-        isSelectionDisabled={isSelectionDisabled}
-      />
+
+      {/* Track List */}
+      <TrackList tracks={Array.from(state.likedSongs)} selection={new Set()} />
     </div>
   );
 };
