@@ -124,9 +124,9 @@ export function TransferButton() {
   return (
     <>
       <button
-        className={`fixed bottom-6 right-6 z-40 flex items-center gap-2 whitespace-nowrap rounded-full px-6 py-4 text-base font-medium shadow-lg transition-all duration-200 md:bottom-8 md:right-8 md:px-8 md:py-4 ${
+        className={`flex items-center gap-2 whitespace-nowrap rounded-full px-6 py-3 text-base font-medium transition-all duration-200 ${
           hasSelections
-            ? "transform cursor-pointer bg-gradient-to-r from-indigo-600 to-indigo-500 text-white hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-200/50 active:scale-[0.98] dark:hover:shadow-indigo-900/30"
+            ? "transform cursor-pointer bg-gradient-to-r from-indigo-600 to-indigo-500 text-white hover:scale-[1.02] hover:shadow-lg hover:shadow-indigo-200/50 active:scale-[0.98] dark:hover:shadow-indigo-900/30"
             : "cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
         }`}
         onClick={handleClick}

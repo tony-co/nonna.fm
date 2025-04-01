@@ -39,9 +39,7 @@ function YouTubeCallbackContent() {
 
         // Build redirect URL with service parameters
         const redirectUrl =
-          role === "target"
-            ? `/transfer?source=${sourceService}&target=youtube`
-            : `/source?source=youtube`;
+          role === "target" ? `/library/${sourceService}/youtube` : `/source?source=youtube`;
 
         console.log("Redirecting to:", redirectUrl);
         router.push(redirectUrl);

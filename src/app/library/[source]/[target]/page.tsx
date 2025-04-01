@@ -27,7 +27,7 @@ export default async function LibraryHomePage({ params }: LibraryHomePageProps) 
         />
       </svg>
       <p className="text-lg font-normal text-indigo-700 dark:text-indigo-400">
-        Select a playlist or album to view its tracks 2
+        Select a playlist or album to view its tracks
       </p>
       <p className="mt-2 text-sm text-indigo-600 dark:text-indigo-300/70">
         Choose from your {source} library on the left to transfer to {target}

@@ -67,6 +67,7 @@ export const LibrarySidebar: FC = () => {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handlePlaylistsToggle = () => {
     if (selectedPlaylistsCount === playlistsCount) {
       deselectAllPlaylists();
@@ -117,10 +118,10 @@ export const LibrarySidebar: FC = () => {
   };
 
   return (
-    <div className="sticky bottom-[20px] top-[20px] h-[calc(100vh-40px)] w-80 flex-shrink-0 overflow-y-auto">
-      <div className="flex flex-col space-y-4">
-        <div>
-          <h1 className="mb-1 text-xl font-bold text-zinc-800 dark:text-white">Library</h1>
+    <div className="h-full">
+      <div className="flex flex-col p-4">
+        <div className="mb-4 mt-2">
+          <h1 className="mb-1 text-xl font-bold text-zinc-800 dark:text-white">Your library</h1>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">Select items to transfer</p>
         </div>
 
@@ -196,22 +197,7 @@ export const LibrarySidebar: FC = () => {
 
         {/* Playlists Section */}
         <div>
-          <div className="mb-1 flex items-center gap-3 px-2 py-2">
-            <div onClick={e => e.stopPropagation()}>
-              <IndeterminateCheckbox
-                selectedCount={selectedPlaylistsCount}
-                totalCount={playlistsCount}
-                onChange={handlePlaylistsToggle}
-                className="flex-shrink-0"
-                label="All Playlists"
-              />
-            </div>
-            <div className="px-2">
-              <h2 className="mb-1 text-xl font-bold text-zinc-800 dark:text-white">Playlists</h2>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">All playlists</p>
-            </div>
-          </div>
-          <div className="space-y-1">
+          <div className="">
             {Array.from(state.playlists.values()).map(playlist => (
               <div
                 key={playlist.id}
