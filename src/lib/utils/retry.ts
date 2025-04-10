@@ -10,6 +10,8 @@ export interface RetryOptions {
   maxRetryDelay?: number;
   /** Factor to add jitter to delay (0-1) */
   jitterFactor?: number;
+  /** Additional status codes to retry (beyond the defaults) */
+  additionalRetryStatusCodes?: number[];
 }
 
 /**
@@ -20,6 +22,7 @@ const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
   initialRetryDelay: 1000, // 1 second
   maxRetryDelay: 64000, // 64 seconds
   jitterFactor: 0.1, // 10% jitter
+  additionalRetryStatusCodes: [],
 };
 
 /**
@@ -28,6 +31,15 @@ const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
 function addJitter(delay: number, factor: number): number {
   const jitter = delay * factor;
   return delay + (Math.random() * 2 - 1) * jitter;
+}
+
+/**
+ * Type definition for YouTube API error object
+ */
+interface YouTubeErrorObject {
+  domain: string;
+  reason: string;
+  message?: string;
 }
 
 /**
@@ -47,10 +59,26 @@ export async function retryWithExponentialBackoff<T>(
     initialRetryDelay = DEFAULT_RETRY_OPTIONS.initialRetryDelay,
     maxRetryDelay = DEFAULT_RETRY_OPTIONS.maxRetryDelay,
     jitterFactor = DEFAULT_RETRY_OPTIONS.jitterFactor,
+    additionalRetryStatusCodes = DEFAULT_RETRY_OPTIONS.additionalRetryStatusCodes,
   } = options;
 
   let attempt = 0;
   let delay = initialRetryDelay;
+
+  // Default status codes that should be retried (4xx/5xx excluding specific ones below)
+  const retryableStatusCodes = new Set([
+    408,
+    409,
+    425,
+    429,
+    500,
+    502,
+    503,
+    504,
+    ...additionalRetryStatusCodes,
+  ]);
+  // Status codes that should never be retried
+  const nonRetryableStatusCodes = new Set([401, 403, 404]);
 
   while (attempt < maxRetries) {
     try {
@@ -74,26 +102,84 @@ export async function retryWithExponentialBackoff<T>(
         }
       }
 
-      // For other errors that we don't want to retry, throw immediately
-      if (response.status === 401 || response.status === 403 || response.status === 404) {
+      // If it's a 409 (often used for YouTube's SERVICE_UNAVAILABLE), check error contents
+      if (response.status === 409) {
+        try {
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            // Clone the response to read it twice (once here, once for the content)
+            const clonedResponse = response.clone();
+            const errorData = await clonedResponse.json();
+
+            // Check if it's a YouTube SERVICE_UNAVAILABLE error
+            const isYouTubeServiceUnavailable = errorData?.error?.errors?.some(
+              (e: YouTubeErrorObject) => e.reason === "SERVICE_UNAVAILABLE"
+            );
+
+            if (isYouTubeServiceUnavailable) {
+              console.warn("YouTube SERVICE_UNAVAILABLE detected, retrying...");
+
+              // Log the retry attempt
+              console.warn(`API request failed (attempt ${attempt + 1}/${maxRetries}):`, {
+                status: response.status,
+                statusText: response.statusText,
+                reason: "SERVICE_UNAVAILABLE",
+                retryIn: delay,
+              });
+
+              // Wait before retrying
+              await new Promise(resolve => setTimeout(resolve, addJitter(delay, jitterFactor)));
+
+              // Exponential backoff for next attempt
+              delay = Math.min(delay * 2, maxRetryDelay);
+              attempt++;
+              continue;
+            }
+          }
+        } catch (e) {
+          // If we couldn't parse the error JSON, just continue with normal error handling
+          console.warn("Could not parse response JSON for 409 error:", e);
+        }
+      }
+
+      // For errors that we don't want to retry, throw immediately
+      if (nonRetryableStatusCodes.has(response.status)) {
         throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
       }
 
-      // Log the retry attempt
-      console.warn(`API request failed (attempt ${attempt + 1}/${maxRetries}):`, {
-        status: response.status,
-        statusText: response.statusText,
-        retryIn: delay,
-      });
+      // For errors with status codes that should be retried
+      if (retryableStatusCodes.has(response.status)) {
+        // Log the retry attempt
+        console.warn(`API request failed (attempt ${attempt + 1}/${maxRetries}):`, {
+          status: response.status,
+          statusText: response.statusText,
+          retryIn: delay,
+        });
 
-      // Wait before retrying
-      await new Promise(resolve => setTimeout(resolve, addJitter(delay, jitterFactor)));
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, addJitter(delay, jitterFactor)));
 
-      // Exponential backoff for next attempt
-      delay = Math.min(delay * 2, maxRetryDelay);
-      attempt++;
+        // Exponential backoff for next attempt
+        delay = Math.min(delay * 2, maxRetryDelay);
+        attempt++;
+        continue;
+      }
+
+      // For any other status code, throw an error
+      throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
     } catch (error) {
-      // If it's a network error or other exception, retry with backoff
+      // Check if this is an error we explicitly threw for non-retryable status codes
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const isNonRetryableStatusCode = Array.from(nonRetryableStatusCodes).some(code =>
+        errorMessage.includes(`Request failed with status ${code}`)
+      );
+
+      // Don't retry if it's a non-retryable status code
+      if (isNonRetryableStatusCode) {
+        throw error;
+      }
+
+      // If it's the last attempt, throw the error
       if (attempt === maxRetries - 1) {
         throw error;
       }

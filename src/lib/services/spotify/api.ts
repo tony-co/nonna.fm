@@ -66,18 +66,6 @@ async function performSearch(
   const matches = await Promise.all(matchPromises);
   matches.sort((a, b) => b.score - a.score);
 
-  // Log match details for debugging
-  console.log(
-    `[MATCHING] Results for "${track.name}" by ${track.artist}:`,
-    matches.slice(0, 3).map(match => ({
-      score: match.score,
-      details: match.details,
-      name: match.track.name,
-      artist: match.track.artists[0].name,
-      album: match.track.album.name,
-    }))
-  );
-
   // Return the ID if we have a good match (score >= minimum threshold)
   return matches[0].score >= DEFAULT_TRACK_CONFIG.thresholds.minimum ? matches[0].track.id : null;
 }
@@ -395,10 +383,6 @@ async function findBestMatch(track: ITrack, authData: AuthData): Promise<string 
     const searchQuery = encodeURIComponent(`${track.name} ${track.artist}`);
     let bestMatch = await performSearch(track, searchQuery, authData);
 
-    if (track.name.startsWith("DMX")) {
-      console.log(`[MATCHING] Best match: ${bestMatch}`);
-    }
-
     // If no good match found and track is from YouTube, retry with just the track name
     if (bestMatch === null && track.videoId) {
       console.log(
@@ -415,7 +399,10 @@ async function findBestMatch(track: ITrack, authData: AuthData): Promise<string 
   }
 }
 
-export async function search(tracks: Array<ITrack>, batchSize: number = 10): Promise<SearchResult> {
+export async function search(
+  tracks: Array<ITrack>,
+  onProgress: ((progress: number) => void) | undefined
+): Promise<SearchResult> {
   const authData = await getSpotifyAuthData("target");
   if (!authData) {
     return {
@@ -432,6 +419,9 @@ export async function search(tracks: Array<ITrack>, batchSize: number = 10): Pro
   const results: Array<ITrack> = [];
   let matched = 0;
   let unmatched = 0;
+  let processedCount = 0;
+
+  console.log("TCO - search - starting:", { trackCount: tracks.length });
 
   // Process tracks in batches
   await processInBatches(
@@ -439,6 +429,10 @@ export async function search(tracks: Array<ITrack>, batchSize: number = 10): Pro
       const trackResults = await Promise.all(
         batch.map(async track => {
           const targetId = await findBestMatch(track, authData);
+          processedCount++;
+          if (onProgress) {
+            onProgress(processedCount / tracks.length);
+          }
           return {
             ...track,
             targetId: targetId || undefined,
@@ -453,7 +447,8 @@ export async function search(tracks: Array<ITrack>, batchSize: number = 10): Pro
     },
     {
       items: tracks,
-      batchSize,
+      batchSize: 4,
+      delayBetweenBatches: 200,
       onBatchStart: (batchNumber, totalBatches) => {
         console.log(`Processing track search batch ${batchNumber}/${totalBatches}`);
       },
@@ -798,7 +793,10 @@ async function findBestAlbumMatch(album: IAlbum, authData: AuthData): Promise<st
   }
 }
 
-export async function searchAlbums(albums: Array<IAlbum>): Promise<SearchResult> {
+export async function searchAlbums(
+  albums: Array<IAlbum>,
+  onProgress: ((progress: number) => void) | undefined
+): Promise<SearchResult> {
   try {
     const authData = await getSpotifyAuthData("target");
     if (!authData) throw new Error("Not authenticated with Spotify");
@@ -806,6 +804,7 @@ export async function searchAlbums(albums: Array<IAlbum>): Promise<SearchResult>
     const results: Array<IAlbum> = [];
     let matched = 0;
     let unmatched = 0;
+    let processedCount = 0;
 
     // Process albums in batches
     await processInBatches(
@@ -813,6 +812,10 @@ export async function searchAlbums(albums: Array<IAlbum>): Promise<SearchResult>
         const albumResults = await Promise.all(
           batch.map(async album => {
             const spotifyId = await findBestAlbumMatch(album, authData);
+            processedCount++;
+            if (onProgress) {
+              onProgress(processedCount / albums.length);
+            }
             return {
               ...album,
               targetId: spotifyId || undefined,
@@ -827,7 +830,8 @@ export async function searchAlbums(albums: Array<IAlbum>): Promise<SearchResult>
       },
       {
         items: albums,
-        batchSize: 10,
+        batchSize: 4,
+        delayBetweenBatches: 200,
         onBatchStart: (batchNumber, totalBatches) => {
           console.log(`Processing album search batch ${batchNumber}/${totalBatches}`);
         },

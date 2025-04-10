@@ -31,7 +31,7 @@ export async function processInBatches<T, R>(
 ): Promise<BatchProcessorResult> {
   const {
     items,
-    batchSize,
+    batchSize = 5,
     delayBetweenBatches = 100,
     onBatchStart,
     onBatchComplete,
@@ -56,6 +56,15 @@ export async function processInBatches<T, R>(
     } catch (error) {
       failed += batch.length;
       onError?.(error as Error, batch);
+
+      // If error is AbortError, stop processing
+      if (
+        (error instanceof DOMException && error.name === "AbortError") ||
+        (error instanceof Error && error.message === "Aborted")
+      ) {
+        console.log("Batch processing aborted due to AbortError");
+        break;
+      }
     }
 
     // Add delay between batches if not the last batch

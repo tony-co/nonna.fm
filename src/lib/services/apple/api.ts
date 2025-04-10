@@ -2,6 +2,7 @@ import { SearchResult, TransferResult } from "@/types/services";
 import { getYouTubeAuthData } from "../youtube/auth";
 import { getAppleAuthData } from "./auth";
 import type { ITrack, ILibraryData, IAlbum, IPlaylist } from "@/types/library";
+import { processInBatches } from "@/lib/utils/batch-processor";
 import {
   calculateTrackMatchScore,
   calculateAlbumMatchScore,
@@ -10,6 +11,7 @@ import {
   type MatchScoreDetails,
   cleanSearchTerm,
 } from "@/lib/utils/matching";
+import { retryWithExponentialBackoff, type RetryOptions } from "@/lib/utils/retry";
 
 interface MusicKitInstance {
   authorize: () => Promise<string>;
@@ -75,14 +77,6 @@ declare global {
   }
 }
 
-interface Track {
-  id: string;
-  name: string;
-  artist: string;
-  album: string;
-  artwork?: string;
-}
-
 interface AppleMusicSong {
   id: string;
   attributes: {
@@ -137,43 +131,37 @@ interface AppleMusicSearchResponse {
   };
 }
 
-// Helper function to add delay between requests
-const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
-
-// Rate limiting configuration
-const API_CONFIG = {
-  baseDelay: 200, // Base delay between requests in ms
-  maxRetries: 3, // Maximum number of retries for rate-limited requests
-  backoffFactor: 2, // Exponential backoff multiplier
+// Define Apple-specific retry options
+const APPLE_RETRY_OPTIONS: RetryOptions = {
+  maxRetries: 5,
+  initialRetryDelay: 200, // Start with a bit faster retry than default
+  maxRetryDelay: 32000,
+  jitterFactor: 0.1,
 };
-
-interface ApiError extends Error {
-  status?: number;
-}
-
-// Wrapper for API calls with rate limiting and retries
-async function withRateLimit<T>(apiCall: () => Promise<T>, retryCount = 0): Promise<T> {
-  try {
-    // Add base delay before the request
-    await delay(API_CONFIG.baseDelay);
-    return await apiCall();
-  } catch (error) {
-    const apiError = error as ApiError;
-    if (apiError?.status === 429 && retryCount < API_CONFIG.maxRetries) {
-      // Calculate delay with exponential backoff
-      const backoffDelay = API_CONFIG.baseDelay * Math.pow(API_CONFIG.backoffFactor, retryCount);
-      console.log(
-        `Rate limited, retrying in ${backoffDelay}ms (attempt ${retryCount + 1}/${API_CONFIG.maxRetries})`
-      );
-      await delay(backoffDelay);
-      return withRateLimit(apiCall, retryCount + 1);
-    }
-    throw error;
-  }
-}
 
 export async function initializeAppleMusic(): Promise<MusicKitInstance> {
   try {
+    // Check if MusicKit is available
+    if (typeof window === "undefined" || !window.MusicKit) {
+      console.log("MusicKit not available yet, waiting for it to load...");
+      // Wait for MusicKit to be available (up to 10 attempts, with increasing delay)
+      let attempts = 0;
+      while (attempts < 10) {
+        await new Promise(resolve => setTimeout(resolve, 500 * (attempts + 1)));
+        if (window.MusicKit) {
+          console.log("MusicKit loaded after waiting");
+          break;
+        }
+        attempts++;
+        console.log(`Still waiting for MusicKit to load (attempt ${attempts + 1})`);
+      }
+
+      // If MusicKit is still not available after retries, throw an error
+      if (!window.MusicKit) {
+        throw new Error("MusicKit failed to load after multiple attempts");
+      }
+    }
+
     // Configure MusicKit
     await window.MusicKit.configure({
       developerToken: process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN || "",
@@ -207,7 +195,7 @@ export async function authorizeAppleMusic(): Promise<string> {
 }
 
 async function findBestMatch(
-  track: Track & { id: string },
+  track: ITrack & { id: string },
   music: MusicKitInstance
 ): Promise<{ songId: string | null; albumId: string | null }> {
   try {
@@ -219,34 +207,23 @@ async function findBestMatch(
     const searchArtist = isYouTubeSource ? track.artist : cleanSearchTerm(track.artist);
 
     const searchTerm = `${searchName} ${searchArtist}`;
-    if (isYouTubeSource) {
-      console.log(
-        `[MATCHING] Using pre-cleaned YouTube track: "${searchName}" by "${searchArtist}"`
-      );
-    } else {
-      console.log(
-        `[MATCHING] Searching with cleaned term: "${searchTerm}" (original: "${track.name} ${track.artist}")`
-      );
-    }
 
-    const result = await withRateLimit<AppleMusicSearchResponse>(async () => {
+    const result = await retryWithExponentialBackoff<AppleMusicSearchResponse>(async () => {
       const userToken = await music.authorize();
       const url = new URL("https://api.music.apple.com/v1/catalog/fr/search");
       url.searchParams.set("term", searchTerm);
       url.searchParams.set("types", "songs");
-      const response = await fetch(url.toString(), {
+      url.searchParams.set("limit", "3");
+      url.searchParams.set("fields[songs]", "name,artistName,albumName");
+      url.searchParams.set("include", "albums");
+
+      return fetch(url.toString(), {
         headers: {
           Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
           "Music-User-Token": userToken,
         },
       });
-
-      if (!response.ok) {
-        throw new Error(`Search failed: ${response.status} ${response.statusText}`);
-      }
-
-      return response.json();
-    });
+    }, APPLE_RETRY_OPTIONS);
 
     if (!result.results?.songs?.data?.length) {
       console.log(`[MATCHING] No results found for "${track.name}" by ${track.artist}`);
@@ -312,40 +289,55 @@ async function findBestMatch(
 
 export async function search(
   tracks: Array<ITrack & { targetId: string }>,
-  batchSize: number = 20
+  onProgress: ((progress: number) => void) | undefined
 ): Promise<SearchResult> {
   try {
     const music = await initializeAppleMusic();
     const results: Array<ITrack> = [];
     let matched = 0;
     let unmatched = 0;
+    let processedCount = 0;
 
-    // Process tracks in batches
-    for (let i = 0; i < tracks.length; i += batchSize) {
-      const batch = tracks.slice(i, i + batchSize);
-      console.log(
-        `Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(tracks.length / batchSize)}`
-      );
+    await processInBatches(
+      async batch => {
+        const trackResults = await Promise.all(
+          batch.map(async track => {
+            const { songId, albumId } = await findBestMatch(track, music);
+            processedCount++;
+            if (onProgress) {
+              onProgress(processedCount / tracks.length);
+            }
+            return {
+              ...track,
+              targetId: songId || undefined,
+              albumId: albumId || undefined,
+              status: songId ? ("matched" as const) : ("unmatched" as const),
+            };
+          })
+        );
 
-      const batchResults = await Promise.all(
-        batch.map(async track => {
-          const { songId, albumId } = await findBestMatch(track, music);
-          return {
-            ...track,
-            targetId: songId || undefined,
-            albumId: albumId || undefined,
-          };
-        })
-      );
-
-      results.push(...batchResults);
-      matched += batchResults.filter(r => r.targetId).length;
-      unmatched += batchResults.filter(r => !r.targetId).length;
-
-      if (i + batchSize < tracks.length) {
-        await delay(200); // Rate limiting
+        results.push(...trackResults);
+        matched += trackResults.filter(r => r.targetId).length;
+        unmatched += trackResults.filter(r => !r.targetId).length;
+      },
+      {
+        items: tracks,
+        batchSize: 10,
+        onBatchStart: (batchNumber, totalBatches) => {
+          console.log(`Processing track search batch ${batchNumber}/${totalBatches}`);
+        },
+        onError: (error, batch) => {
+          console.error("Error searching tracks batch:", {
+            error: error.message,
+            batchSize: batch.length,
+            tracks: batch.map(track => ({
+              name: track.name,
+              artist: track.artist,
+            })),
+          });
+        },
       }
-    }
+    );
 
     return {
       matched,
@@ -369,37 +361,26 @@ export async function createPlaylistWithTracks(
     const music = await initializeAppleMusic();
     const userToken = await music.authorize();
 
-    // Create the playlist with rate limiting
-    const createResponse = await withRateLimit(() =>
-      fetch("https://api.music.apple.com/v1/me/library/playlists", {
-        method: "POST",
-        headers: {
-          "Music-User-Token": userToken,
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          attributes: {
-            name,
-            description: description || `Imported on ${new Date().toLocaleDateString()}`,
+    // Create the playlist with retry
+    const playlistData = await retryWithExponentialBackoff<{ data: Array<{ id: string }> }>(
+      () =>
+        fetch("https://api.music.apple.com/v1/me/library/playlists", {
+          method: "POST",
+          headers: {
+            "Music-User-Token": userToken,
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
+            "Content-Type": "application/json",
           },
+          body: JSON.stringify({
+            attributes: {
+              name,
+              description: description || `Imported on ${new Date().toLocaleDateString()}`,
+            },
+          }),
         }),
-      })
+      APPLE_RETRY_OPTIONS
     );
 
-    if (!createResponse.ok) {
-      const errorText = await createResponse.text();
-      console.error("Failed to create playlist:", {
-        status: createResponse.status,
-        statusText: createResponse.statusText,
-        error: errorText,
-      });
-      throw new Error(
-        `Failed to create playlist: ${createResponse.status} ${createResponse.statusText}`
-      );
-    }
-
-    const playlistData = await createResponse.json();
     const playlistId = playlistData.data?.[0]?.id;
 
     if (!playlistId) {
@@ -424,38 +405,24 @@ export async function createPlaylistWithTracks(
     }
 
     // Add tracks to playlist
-    const addTracksResponse = await fetch(
-      `https://api.music.apple.com/v1/me/library/playlists/${playlistId}/tracks`,
-      {
-        method: "POST",
-        headers: {
-          "Music-User-Token": userToken,
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: tracksWithIds.map(track => ({
-            id: track.targetId,
-            type: "songs",
-          })),
+    await retryWithExponentialBackoff(
+      () =>
+        fetch(`https://api.music.apple.com/v1/me/library/playlists/${playlistId}/tracks`, {
+          method: "POST",
+          headers: {
+            "Music-User-Token": userToken,
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            data: tracksWithIds.map(track => ({
+              id: track.targetId,
+              type: "songs",
+            })),
+          }),
         }),
-      }
+      APPLE_RETRY_OPTIONS
     );
-
-    if (!addTracksResponse.ok) {
-      const errorText = await addTracksResponse.text();
-      console.error("Error adding tracks to playlist:", {
-        status: addTracksResponse.status,
-        statusText: addTracksResponse.statusText,
-        error: errorText,
-      });
-      return {
-        added: 0,
-        failed: tracksWithIds.length,
-        total: tracks.length,
-        playlistId,
-      };
-    }
 
     return {
       added: tracksWithIds.length,
@@ -491,38 +458,25 @@ export async function addTracksToLibrary(
       };
     }
 
-    // Add tracks to library with rate limiting
-    const response = await withRateLimit(() =>
-      fetch("https://api.music.apple.com/v1/me/library", {
-        method: "POST",
-        headers: {
-          "Music-User-Token": userToken,
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: tracksWithIds.map(track => ({
-            id: track.targetId,
-            type: "songs",
-          })),
+    // Add tracks to library with retry
+    await retryWithExponentialBackoff(
+      () =>
+        fetch("https://api.music.apple.com/v1/me/library", {
+          method: "POST",
+          headers: {
+            "Music-User-Token": userToken,
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            data: tracksWithIds.map(track => ({
+              id: track.targetId,
+              type: "songs",
+            })),
+          }),
         }),
-      })
+      APPLE_RETRY_OPTIONS
     );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Error adding tracks to library:", {
-        status: response.status,
-        statusText: response.statusText,
-        error: errorText,
-      });
-      return {
-        added: 0,
-        failed: tracksWithIds.length,
-        total: tracks.length,
-        playlistId: null,
-      };
-    }
 
     return {
       added: tracksWithIds.length,
@@ -557,34 +511,23 @@ export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferR
       .join(",");
     const url = `https://api.music.apple.com/v1/me/library?ids[albums]=${albumIds}`;
 
-    // Add albums to library
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Music-User-Token": userToken,
-        Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Error adding albums to library:", {
-        status: response.status,
-        statusText: response.statusText,
-        error: errorText,
-      });
-      return {
-        added: 0,
-        failed: albums.size,
-        total: albums.size,
-        playlistId: null,
-      };
-    }
+    // Add albums to library with retry
+    await retryWithExponentialBackoff(
+      () =>
+        fetch(url, {
+          method: "POST",
+          headers: {
+            "Music-User-Token": userToken,
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }),
+      APPLE_RETRY_OPTIONS
+    );
 
     return {
       added: albums.size,
-      failed: albums.size - albums.size,
+      failed: 0, // All were added if no error
       total: albums.size,
       playlistId: null,
     };
@@ -595,7 +538,7 @@ export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferR
 }
 
 async function findBestAlbumMatch(
-  album: { name: string; artist: string },
+  album: IAlbum,
   music: MusicKitInstance
 ): Promise<{ albumId: string | null }> {
   try {
@@ -605,24 +548,23 @@ async function findBestAlbumMatch(
       `[MATCHING] Searching with cleaned term: "${searchTerm}" (original: "${album.name} ${album.artist}")`
     );
 
-    const result = await withRateLimit(async () => {
+    const result = await retryWithExponentialBackoff<{
+      results?: { albums?: { data: AppleAlbum[] } };
+    }>(async () => {
       const userToken = await music.authorize();
       const url = new URL("https://api.music.apple.com/v1/catalog/fr/search");
       url.searchParams.set("term", searchTerm);
       url.searchParams.set("types", "albums");
-      const response = await fetch(url.toString(), {
+      url.searchParams.set("limit", "3");
+      url.searchParams.set("fields[albums]", "name,artistName");
+
+      return fetch(url.toString(), {
         headers: {
           Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
           "Music-User-Token": userToken,
         },
       });
-
-      if (!response.ok) {
-        throw new Error(`Search failed: ${response.status} ${response.statusText}`);
-      }
-
-      return response.json();
-    });
+    }, APPLE_RETRY_OPTIONS);
 
     // Process initial search results
     if (!result.results?.albums?.data?.length) {
@@ -634,12 +576,7 @@ async function findBestAlbumMatch(
       .map((appleAlbum: AppleAlbum) => ({
         album: appleAlbum,
         ...calculateAlbumMatchScore(
-          {
-            name: album.name,
-            artist: album.artist,
-            id: "", // Required by IAlbum but not used in matching
-            artwork: undefined,
-          },
+          album,
           {
             name: appleAlbum.attributes.name,
             artist: appleAlbum.attributes.artistName,
@@ -651,7 +588,7 @@ async function findBestAlbumMatch(
 
     // Log match details
     console.log(
-      `[MATCHING] Results for album "${album.name}" by ${album.artist}":`,
+      `[MATCHING] Results for album "${album.name}" by ${album.artist}:`,
       matches
         .slice(0, 3)
         .map((match: { score: number; details: MatchScoreDetails; album: AppleAlbum }) => ({
@@ -674,34 +611,62 @@ async function findBestAlbumMatch(
   }
 }
 
-export async function searchAlbums(albums: Array<IAlbum>): Promise<SearchResult> {
+export async function searchAlbums(
+  albums: Array<IAlbum>,
+  onProgress: ((progress: number) => void) | undefined
+): Promise<SearchResult> {
   try {
     const music = await initializeAppleMusic();
     const results: Array<IAlbum> = [];
     let matched = 0;
     let unmatched = 0;
+    let processedCount = 0;
 
-    // Process albums
-    const batchResults = await Promise.all(
-      albums.map(async album => {
-        const { albumId } = await findBestAlbumMatch(album, music);
-        return {
-          ...album, // Preserve all existing album properties
-          targetId: albumId || undefined, // Convert null to undefined
-          status: albumId ? ("matched" as const) : ("unmatched" as const),
-        };
-      })
+    await processInBatches(
+      async batch => {
+        const albumResults = await Promise.all(
+          batch.map(async album => {
+            const { albumId } = await findBestAlbumMatch(album, music);
+            processedCount++;
+            if (onProgress) {
+              onProgress(processedCount / albums.length);
+            }
+            return {
+              ...album,
+              targetId: albumId || undefined,
+              status: albumId ? ("matched" as const) : ("unmatched" as const),
+            };
+          })
+        );
+
+        results.push(...albumResults);
+        matched += albumResults.filter(r => r.targetId).length;
+        unmatched += albumResults.filter(r => !r.targetId).length;
+      },
+      {
+        items: albums,
+        batchSize: 10,
+        onBatchStart: (batchNumber, totalBatches) => {
+          console.log(`Processing album search batch ${batchNumber}/${totalBatches}`);
+        },
+        onError: (error, batch) => {
+          console.error("Error searching albums batch:", {
+            error: error.message,
+            batchSize: batch.length,
+            albums: batch.map(album => ({
+              name: album.name,
+              artist: album.artist,
+            })),
+          });
+        },
+      }
     );
-
-    results.push(...batchResults);
-    matched += batchResults.filter(r => r.targetId).length;
-    unmatched += batchResults.filter(r => !r.targetId).length;
 
     return {
       matched,
       unmatched,
       total: albums.length,
-      albums: batchResults,
+      albums: results,
     };
   } catch (error) {
     console.error("Error in searchAlbums:", error);
@@ -753,27 +718,20 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
 
   // Fetch playlists
   const playlists: IPlaylist[] = [];
-  let nextUrl: string | undefined = `${baseUrl}/playlists?limit=25`;
+  let nextUrl = `${baseUrl}/playlists?limit=50`;
 
   do {
-    if (!nextUrl) break;
-    const response: Response = await fetch(nextUrl, {
-      headers: {
-        Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-        "Music-User-Token": authData.accessToken,
-      },
-    });
+    const data = await retryWithExponentialBackoff<AppleResponse<ApplePlaylist>>(
+      () =>
+        fetch(nextUrl, {
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
+            "Music-User-Token": authData.accessToken,
+          },
+        }),
+      APPLE_RETRY_OPTIONS
+    );
 
-    if (!response.ok) {
-      console.error("Failed to fetch playlists:", {
-        status: response.status,
-        statusText: response.statusText,
-        url: nextUrl,
-      });
-      throw new Error("Failed to fetch playlists");
-    }
-
-    const data: AppleResponse<ApplePlaylist> = await response.json();
     const playlistItems = data.data.map(playlist => ({
       id: playlist.id,
       name: playlist.attributes.name,
@@ -789,35 +747,29 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
     nextUrl = data.next
       ? data.next.startsWith("http")
         ? data.next
-        : `https://api.music.apple.com${data.next}`
-      : undefined;
+        : `https://api.music.apple.com${data.next}&limit=50`
+      : "";
+
+    if (!nextUrl) break;
   } while (nextUrl);
 
   // Fetch songs from library
   const songs = [];
-  nextUrl = `${baseUrl}/songs?limit=25`;
+  nextUrl = `${baseUrl}/songs?limit=50`;
 
   do {
-    if (!nextUrl) break;
-    console.log("Fetching songs from:", nextUrl); // Add logging to debug URL
-    const response: Response = await fetch(nextUrl, {
-      headers: {
-        Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-        "Music-User-Token": authData.accessToken,
-      },
-    });
+    console.log("Fetching songs from:", nextUrl);
+    const data = await retryWithExponentialBackoff<AppleResponse<AppleSong>>(
+      () =>
+        fetch(nextUrl, {
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
+            "Music-User-Token": authData.accessToken,
+          },
+        }),
+      APPLE_RETRY_OPTIONS
+    );
 
-    if (!response.ok) {
-      console.error("Failed to fetch songs:", {
-        status: response.status,
-        statusText: response.statusText,
-        url: nextUrl,
-        headers: Object.fromEntries(response.headers.entries()),
-      });
-      throw new Error("Failed to fetch songs");
-    }
-
-    const data: AppleResponse<AppleSong> = await response.json();
     const songItems = data.data.map(song => ({
       id: song.id,
       name: song.attributes.name,
@@ -831,33 +783,28 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
     nextUrl = data.next
       ? data.next.startsWith("http")
         ? data.next
-        : `https://api.music.apple.com${data.next}`
-      : undefined;
+        : `https://api.music.apple.com${data.next}&limit=50`
+      : "";
+
+    if (!nextUrl) break;
   } while (nextUrl);
 
   // Fetch albums
-  const albums = [];
-  nextUrl = `${baseUrl}/albums?limit=25`;
+  const albums: IAlbum[] = [];
+  nextUrl = `${baseUrl}/albums?limit=50`;
 
   do {
-    if (!nextUrl) break;
-    const response: Response = await fetch(nextUrl, {
-      headers: {
-        Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-        "Music-User-Token": authData.accessToken,
-      },
-    });
+    const data = await retryWithExponentialBackoff<AppleResponse<AppleAlbum>>(
+      () =>
+        fetch(nextUrl, {
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
+            "Music-User-Token": authData.accessToken,
+          },
+        }),
+      APPLE_RETRY_OPTIONS
+    );
 
-    if (!response.ok) {
-      console.error("Failed to fetch albums:", {
-        status: response.status,
-        statusText: response.statusText,
-        url: nextUrl,
-      });
-      throw new Error("Failed to fetch albums");
-    }
-
-    const data: AppleResponse<AppleAlbum> = await response.json();
     const albumItems = data.data.map(album => ({
       id: album.id,
       name: album.attributes.name,
@@ -870,8 +817,10 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
     nextUrl = data.next
       ? data.next.startsWith("http")
         ? data.next
-        : `https://api.music.apple.com${data.next}`
-      : undefined;
+        : `https://api.music.apple.com${data.next}&limit=50`
+      : "";
+
+    if (!nextUrl) break;
   } while (nextUrl);
 
   return {
@@ -886,21 +835,21 @@ export async function fetchPlaylistCurator(playlistId: string): Promise<CuratorR
   if (!authData) throw new Error("Not authenticated with Apple Music");
 
   try {
-    const curatorResponse = await fetch(
-      `https://api.music.apple.com/v1/me/library/playlists/${playlistId}/catalog?include=curator`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-          "Music-User-Token": authData.accessToken,
-        },
-      }
+    const curatorData = await retryWithExponentialBackoff<CuratorResponse>(
+      () =>
+        fetch(
+          `https://api.music.apple.com/v1/me/library/playlists/${playlistId}/catalog?include=curator`,
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
+              "Music-User-Token": authData.accessToken,
+            },
+          }
+        ),
+      APPLE_RETRY_OPTIONS
     );
 
-    if (curatorResponse.ok) {
-      const curatorData = await curatorResponse.json();
-      return curatorData;
-    }
-    return null;
+    return curatorData;
   } catch (error) {
     console.warn("Failed to fetch curator information:", error);
     return null;
@@ -919,22 +868,20 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
   if (!authData) throw new Error("Not authenticated with Apple Music");
 
   const tracks = [];
-  let nextUrl: string | undefined =
-    `https://api.music.apple.com/v1/me/library/playlists/${playlistId}/tracks`;
+  let nextUrl = `https://api.music.apple.com/v1/me/library/playlists/${playlistId}/tracks`;
 
   do {
-    const response: Response = await fetch(nextUrl, {
-      headers: {
-        Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-        "Music-User-Token": authData.accessToken,
-      },
-    });
+    const data = await retryWithExponentialBackoff<AppleResponse<AppleSong>>(
+      () =>
+        fetch(nextUrl, {
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
+            "Music-User-Token": authData.accessToken,
+          },
+        }),
+      APPLE_RETRY_OPTIONS
+    );
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch playlist tracks");
-    }
-
-    const data: AppleResponse<AppleSong> = await response.json();
     const trackItems = data.data.map(item => ({
       id: item.id,
       name: item.attributes.name,
@@ -944,7 +891,9 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
     }));
 
     tracks.push(...trackItems);
-    nextUrl = data.next;
+    nextUrl = data.next || "";
+
+    if (!nextUrl) break;
   } while (nextUrl);
 
   return tracks;

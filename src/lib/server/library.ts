@@ -19,14 +19,6 @@ export async function fetchInitialLibraryData(
       };
     }
 
-    // Skip Apple Music on server side since it requires client-side authentication
-    if (sourceService === "apple") {
-      return {
-        initialData: null,
-        error: null,
-      };
-    }
-
     const initialData = await fetchUserLibrary(sourceService);
     return { initialData, error: null };
   } catch (error) {

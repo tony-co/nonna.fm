@@ -70,11 +70,6 @@ export function normalizeString(str: string): string {
     .replace(/\s+/g, " ") // Normalize spaces
     .trim();
 
-  // if contains '.' or '-'
-  if (str.includes(".") || str.includes(",") || str.includes("-") || str.includes("DMX")) {
-    console.log(`[DEBUG] normalizeString('${str}') -> '${result}'`);
-  }
-
   return result;
 }
 
@@ -126,24 +121,11 @@ export async function calculateTrackMatchScore(
     totalScore += albumScore * weights.album;
   }
 
-  console.log(
-    `[MATCHING] Comparing ${sourceTrack.name} by ${sourceTrack.artist} with ${targetTrack.name} by ${targetTrack.artist}: ${totalScore}`
-  );
-
   // If we have a YouTube video ID and the score is low, try additional matching strategies
   if (!!sourceTrack.videoId && totalScore < 0.5) {
-    console.log(
-      `[MATCHING] Low score for ${sourceTrack.name} by ${sourceTrack.artist} with target ${targetTrack.name} by ${targetTrack.artist}: ${totalScore}`
-    );
-    console.log(`[MATCHING] Video ID: ${sourceTrack.videoId}`);
-
     // First try: Compare source name against combined target name + artist
     const combinedTargetTitle = `${targetTrack.name} ${targetTrack.artist}`;
     const combinedNameScore = calculateStringSimilarity(sourceTrack.name, combinedTargetTitle);
-
-    console.log(
-      `[MATCHING] Combined name source: ${sourceTrack.name} target: ${combinedTargetTitle} score: ${combinedNameScore}`
-    );
 
     // If the combined score is significantly better, use it
     if (combinedNameScore > totalScore + 0.2) {
