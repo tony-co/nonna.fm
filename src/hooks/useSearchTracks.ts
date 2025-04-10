@@ -15,45 +15,35 @@ interface UseSearchTracksReturn {
 export const useSearchTracks = (): UseSearchTracksReturn => {
   const [isLoading] = useState(false);
   const [error] = useState<string | null>(null);
-  const { startMatching, cancelMatching } = useMatching();
+  const {
+    matchLikedSongs: matchLikedSongsCtx,
+    matchAlbums: matchAlbumsCtx,
+    matchPlaylistTracks: matchPlaylistTracksCtx,
+    cancelMatching,
+  } = useMatching();
 
   const matchLikedSongs = useCallback(
     async (tracks: ITrack[], targetService: MusicService) => {
       if (!tracks.length) return;
-      startMatching(
-        "likedSongs",
-        undefined,
-        { likedSongs: tracks, albums: null, playlist: null },
-        targetService
-      );
+      matchLikedSongsCtx(tracks, targetService);
     },
-    [startMatching]
+    [matchLikedSongsCtx]
   );
 
   const matchAlbums = useCallback(
     async (albums: IAlbum[], targetService: MusicService) => {
       if (!albums.length) return;
-      startMatching(
-        "albums",
-        undefined,
-        { likedSongs: null, albums, playlist: null },
-        targetService
-      );
+      matchAlbumsCtx(albums, targetService);
     },
-    [startMatching]
+    [matchAlbumsCtx]
   );
 
   const matchPlaylistTracks = useCallback(
     async (playlist: IPlaylist, targetService: MusicService) => {
       if (!playlist.tracks.length) return;
-      startMatching(
-        "playlist",
-        playlist.id,
-        { likedSongs: null, albums: null, playlist },
-        targetService
-      );
+      matchPlaylistTracksCtx(playlist, targetService);
     },
-    [startMatching]
+    [matchPlaylistTracksCtx]
   );
 
   return {

@@ -475,7 +475,7 @@ export async function search(
 
 export async function createPlaylistWithTracks(
   name: string,
-  tracks: Array<ITrack & { targetId: string }>,
+  tracks: Array<ITrack>,
   description?: string
 ): Promise<TransferResult> {
   try {
@@ -576,9 +576,7 @@ export async function createPlaylistWithTracks(
   }
 }
 
-export async function addTracksToLibrary(
-  tracks: Array<ITrack & { targetId: string }>
-): Promise<TransferResult> {
+export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<TransferResult> {
   try {
     console.log("addTracksToLibrary - starting:", { trackCount: tracks.length });
     const authData = await getSpotifyAuthData("target");

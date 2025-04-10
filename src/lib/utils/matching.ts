@@ -112,7 +112,7 @@ export async function calculateTrackMatchScore(
   const nameScore = calculateStringSimilarity(sourceTrack.name, targetTrack.name);
   const artistScore = calculateStringSimilarity(sourceTrack.artist, targetTrack.artist);
   const albumScore = targetTrack.album
-    ? calculateStringSimilarity(sourceTrack.album, targetTrack.album)
+    ? calculateStringSimilarity(sourceTrack.album ?? "", targetTrack.album)
     : undefined;
 
   // Calculate total score

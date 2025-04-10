@@ -22,3 +22,6 @@ class MusicServiceFactory implements IServiceFactory {
 }
 
 export const musicServiceFactory = new MusicServiceFactory();
+
+// Keep track of playlists currently being fetched
+export const fetchingPlaylists = new Set<string>();

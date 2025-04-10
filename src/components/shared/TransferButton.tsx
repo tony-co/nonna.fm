@@ -103,19 +103,21 @@ export function TransferButton() {
 
   // Prepare selected data for the success modal
   const getSelectedData = () => {
-    const selectedLikedSongs = Array.from(state.likedSongs).filter(track =>
-      state.selectedItems.tracks.has(track.id)
-    );
+    const selectedLikedSongs = state.likedSongs
+      ? Array.from(state.likedSongs).filter(track => state.selectedItems.tracks.has(track.id))
+      : [];
 
-    const selectedAlbums = Array.from(state.albums).filter(album =>
-      state.selectedItems.albums.has(album.id)
-    );
+    const selectedAlbums = state.albums
+      ? Array.from(state.albums).filter(album => state.selectedItems.albums.has(album.id))
+      : [];
 
     const selectedPlaylists = new Map();
-    for (const playlistId of state.selectedItems.playlists) {
-      const playlist = state.playlists.get(playlistId);
-      if (playlist) {
-        selectedPlaylists.set(playlistId, playlist);
+    if (state.playlists) {
+      for (const playlistId of state.selectedItems.playlists) {
+        const playlist = state.playlists.get(playlistId);
+        if (playlist) {
+          selectedPlaylists.set(playlistId, playlist);
+        }
       }
     }
 
@@ -135,19 +137,25 @@ export function TransferButton() {
       // Create selection state from the selected items
       const selection = {
         likedSongs: new Set(
-          Array.from(state.likedSongs).filter(track => state.selectedItems.tracks.has(track.id))
+          state.likedSongs
+            ? Array.from(state.likedSongs).filter(track => state.selectedItems.tracks.has(track.id))
+            : []
         ),
         albums: new Set(
-          Array.from(state.albums).filter(album => state.selectedItems.albums.has(album.id))
+          state.albums
+            ? Array.from(state.albums).filter(album => state.selectedItems.albums.has(album.id))
+            : []
         ),
         playlists: new Map(),
       };
 
       // Add selected playlists to the selection
-      for (const playlistId of state.selectedItems.playlists) {
-        const playlist = state.playlists.get(playlistId);
-        if (playlist) {
-          selection.playlists.set(playlistId, new Set(playlist.tracks));
+      if (state.playlists) {
+        for (const playlistId of state.selectedItems.playlists) {
+          const playlist = state.playlists.get(playlistId);
+          if (playlist) {
+            selection.playlists.set(playlistId, new Set(playlist.tracks));
+          }
         }
       }
 

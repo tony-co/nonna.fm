@@ -192,7 +192,10 @@ describe("Spotify API", () => {
       },
     ];
 
-    const searchResult = await search(testTracks, 1); // 1 track per batch for testing
+    const searchResult = await search(testTracks, progress => {
+      // Optional: Log progress if needed
+      console.log(`Search progress: ${Math.round(progress * 100)}%`);
+    }); // Pass a progress callback function
 
     // Verify search results
     expect(searchResult).toBeDefined();

@@ -251,10 +251,15 @@ export async function fetchDeezerAlbums(): Promise<IAlbum[]> {
 
 /**
  * Empty implementation for search - Deezer API not supported
- * @param tracks - Tracks to search for
- * @param _batchSize - Not used in Deezer implementation as API is not supported
  */
-export async function search(tracks: ITrack[], _batchSize?: number): Promise<SearchResult> {
+export async function search(
+  tracks: ITrack[],
+  onProgress?: (progress: number) => void
+): Promise<SearchResult> {
+  // Call onProgress with 100% since we're not doing any actual work
+  if (onProgress) {
+    onProgress(1);
+  }
   return {
     matched: 0,
     unmatched: tracks.length,
@@ -266,7 +271,14 @@ export async function search(tracks: ITrack[], _batchSize?: number): Promise<Sea
 /**
  * Empty implementation for searchAlbums - Deezer API not supported
  */
-export async function searchAlbums(albums: Array<IAlbum>): Promise<SearchResult> {
+export async function searchAlbums(
+  albums: Array<IAlbum>,
+  onProgress?: (progress: number) => void
+): Promise<SearchResult> {
+  // Call onProgress with 100% since we're not doing any actual work
+  if (onProgress) {
+    onProgress(1);
+  }
   return {
     matched: 0,
     unmatched: albums.length,

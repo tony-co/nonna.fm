@@ -64,7 +64,7 @@ function libraryReducer(state: LibraryState, action: LibraryAction): LibraryStat
         ...state,
         selectedItems: {
           ...state.selectedItems,
-          tracks: new Set([...state.likedSongs].map(track => track.id)),
+          tracks: new Set([...(state.likedSongs ?? [])].map(track => track.id)),
         },
       };
     case "DESELECT_ALL_TRACKS":
@@ -109,7 +109,7 @@ function libraryReducer(state: LibraryState, action: LibraryAction): LibraryStat
         ...state,
         selectedItems: {
           ...state.selectedItems,
-          albums: new Set([...state.albums].map(album => album.id)),
+          albums: new Set([...(state.albums ?? [])].map(album => album.id)),
         },
       };
     case "DESELECT_ALL_ALBUMS":
@@ -122,7 +122,7 @@ function libraryReducer(state: LibraryState, action: LibraryAction): LibraryStat
         ...state,
         selectedItems: {
           ...state.selectedItems,
-          playlists: new Set([...state.playlists.keys()]),
+          playlists: new Set([...(state.playlists?.keys() ?? [])]),
         },
       };
     case "DESELECT_ALL_PLAYLISTS":

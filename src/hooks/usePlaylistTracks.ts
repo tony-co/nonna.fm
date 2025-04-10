@@ -20,7 +20,7 @@ export const usePlaylistTracks = (playlistId: string): UsePlaylistTracksReturn =
     let isMounted = true;
 
     const fetchTracks = async (): Promise<void> => {
-      if (!state) return;
+      if (!state || !state.playlists) return;
 
       // Get the existing playlist
       const existingPlaylist = state.playlists.get(playlistId);
@@ -80,7 +80,7 @@ export const usePlaylistTracks = (playlistId: string): UsePlaylistTracksReturn =
   }, [playlistId, state, actions]);
 
   return {
-    playlist: state?.playlists.get(playlistId),
+    playlist: state?.playlists?.get(playlistId),
     isLoading,
     error,
   };

@@ -115,6 +115,8 @@ export const AlbumList: FC = () => {
 
   // Handle select all toggle
   const handleSelectAll = () => {
+    if (!state.albums) return;
+
     if (allAlbumsSelected) {
       Array.from(state.albums).forEach(album => {
         if (selectedItems.albums.has(album.id)) {

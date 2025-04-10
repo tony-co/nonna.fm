@@ -77,6 +77,9 @@ export function useTransfer(): UseTransferReturn {
 
       // Transfer playlists
       for (const [playlistId, selectedTracks] of Array.from(selection.playlists.entries())) {
+        if (!state.playlists) {
+          throw new Error("Playlists not initialized");
+        }
         const playlist = state.playlists.get(playlistId);
         if (!playlist) {
           throw new Error(`Playlist not found: ${playlistId}`);

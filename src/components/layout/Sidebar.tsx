@@ -28,8 +28,6 @@ export const LibrarySidebar: FC = () => {
     deselectAllTracks,
     selectAllAlbums,
     deselectAllAlbums,
-    selectAllPlaylists,
-    deselectAllPlaylists,
     selectPlaylist,
     deselectPlaylist,
   } = useLibrarySelection();
@@ -47,11 +45,6 @@ export const LibrarySidebar: FC = () => {
   const albumsCount = state.albums.size;
   const selectedAlbumsCount = Array.from(state.albums).filter(album =>
     selectedItems.albums.has(album.id)
-  ).length;
-
-  const playlistsCount = state.playlists.size;
-  const selectedPlaylistsCount = Array.from(state.playlists.values()).filter(playlist =>
-    selectedItems.playlists.has(playlist.id)
   ).length;
 
   // Handle selection toggles with matching
@@ -72,23 +65,6 @@ export const LibrarySidebar: FC = () => {
     } else {
       selectAllAlbums();
       matchAlbums(Array.from(state.albums ?? []), target);
-    }
-  };
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handlePlaylistsToggle = () => {
-    if (selectedPlaylistsCount === playlistsCount) {
-      deselectAllPlaylists();
-      // Cancel all playlists that are currently matching
-      Array.from(state.playlists?.values() ?? []).forEach(playlist => {
-        cancelMatching("playlist", playlist.id);
-      });
-    } else {
-      selectAllPlaylists();
-      // Match all playlists when selected
-      Array.from(state.playlists?.values() ?? []).forEach(playlist => {
-        matchPlaylistTracks(playlist, target);
-      });
     }
   };
 
