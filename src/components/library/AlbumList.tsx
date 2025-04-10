@@ -1,97 +1,194 @@
+"use client";
 import { FC, useRef } from "react";
-import { IAlbum } from "@/types/library";
-import { useSelection } from "@/contexts/SelectionContext";
 import { useMatching } from "@/contexts/MatchingContext";
-import { useLibrary } from "@/contexts/LibraryContext";
-import { useIsVisible } from "@/hooks/useIsVisible";
+import { useLibrary, useLibrarySelection } from "@/contexts/LibraryContext";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
+import { useIsVisible } from "@/hooks/useIsVisible";
+import { StatusIcon } from "@/components/shared/StatusIcon";
+import type { IAlbum } from "@/types/library";
 
-const StatusIcon: FC<{ status: string | undefined }> = ({ status }) => {
-  switch (status) {
-    case "matched":
-      return (
-        <div className="flex justify-end" title="Matched">
-          <div className="h-2.5 w-2.5 rounded-full bg-indigo-500 dark:bg-indigo-400" />
-        </div>
-      );
-    case "unmatched":
-      return (
-        <div className="flex justify-end" title="Not Found">
-          <div className="h-2.5 w-2.5 rounded-full bg-red-500 dark:bg-red-400" />
-        </div>
-      );
-    case "pending":
-      return (
-        <div className="flex justify-end" title="Searching...">
-          <div className="h-2.5 w-2.5 animate-pulse rounded-full bg-indigo-300 dark:bg-indigo-200" />
-        </div>
-      );
-    default:
-      return null;
-  }
-};
+interface AlbumItemProps {
+  album: IAlbum;
+  selected: boolean;
+  onToggle: () => void;
+}
 
-const AlbumItem: FC<{ album: IAlbum }> = ({ album }) => {
-  const { selection, isSelectionDisabled, toggleAlbum } = useSelection();
-  const { getAlbumStatus } = useMatching();
-  const status = getAlbumStatus(album.id);
+const AlbumItem: FC<AlbumItemProps> = ({ album, selected, onToggle }) => {
   const ref = useRef<HTMLDivElement>(null);
   const isVisible = useIsVisible(ref);
+  const { getAlbumStatus } = useMatching();
+  const status = getAlbumStatus(album.id);
 
   return (
     <div
       ref={ref}
-      className="flex items-center gap-4 rounded-lg bg-indigo-50 p-4 transition-colors duration-200 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/30"
+      className={`group grid grid-cols-[32px_1fr_32px] items-center gap-2 rounded-md p-1.5 transition-colors duration-200 md:grid-cols-[32px_32px_1fr_231px_32px] md:gap-4 md:p-2 ${
+        selected
+          ? "bg-indigo-50 dark:bg-indigo-950/30"
+          : "bg-transparent hover:bg-indigo-50/70 dark:bg-transparent dark:hover:bg-indigo-950/20"
+      }`}
+      role="album"
     >
-      <input
-        type="checkbox"
-        className="h-4 w-4 cursor-pointer rounded accent-indigo-600 transition-colors duration-200 dark:accent-indigo-500"
-        checked={selection.albums.has(album)}
-        onChange={() => toggleAlbum(album)}
-        disabled={isSelectionDisabled}
-      />
-      <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded">
-        {isVisible ? (
-          <ArtworkImage src={album.artwork} alt={`${album.name} artwork`} size={48} type="album" />
-        ) : (
-          <div className="h-full w-full bg-indigo-200 dark:bg-indigo-800" />
-        )}
+      <div>
+        <input
+          type="checkbox"
+          className="h-3.5 w-3.5 cursor-pointer rounded-sm transition-colors duration-200 md:h-4 md:w-4"
+          style={{ accentColor: "#6366f1" }}
+          checked={selected}
+          onChange={onToggle}
+          aria-label={`Select ${album.name} by ${album.artist}`}
+        />
       </div>
-      <div className="flex-grow">
-        <p className="font-normal text-indigo-900 dark:text-indigo-50">{album.name}</p>
-        <p className="text-sm text-indigo-700 dark:text-indigo-300">{album.artist}</p>
+
+      <div className="hidden text-sm font-normal text-slate-500 md:block dark:text-slate-400">
+        {/* Album number would go here if needed */}
       </div>
-      <StatusIcon status={status} />
+
+      <div className="flex min-w-0 items-center gap-4">
+        {/* Artwork with intersection observer */}
+        <div className="h-10 w-10 flex-shrink-0 rounded">
+          {isVisible ? (
+            <ArtworkImage
+              src={album.artwork}
+              alt={`${album.name} artwork`}
+              size={40}
+              type="album"
+            />
+          ) : (
+            <div className="h-full w-full rounded bg-slate-100 dark:bg-slate-800" />
+          )}
+        </div>
+
+        {/* Album info */}
+        <div className="min-w-0 flex-1">
+          <div
+            className={`truncate font-medium ${
+              status === "unmatched"
+                ? "text-red-500 dark:text-red-400"
+                : status === "matched"
+                  ? "text-gray-800 dark:text-indigo-50"
+                  : "text-slate-900 dark:text-slate-100"
+            }`}
+          >
+            {album.name}
+          </div>
+          <div className="truncate text-sm text-slate-500 dark:text-slate-400">{album.artist}</div>
+        </div>
+      </div>
+
+      <div>
+        <StatusIcon status={status} />
+      </div>
     </div>
   );
 };
 
 export const AlbumList: FC = () => {
-  const { libraryState } = useLibrary();
+  const { state } = useLibrary();
+  const { selectedItems, selectAlbum, deselectAlbum } = useLibrarySelection();
   const { getAlbumStatus } = useMatching();
 
-  if (!libraryState) return null;
+  if (!state.albums) return null;
 
-  const { albums } = libraryState;
-  const unmatchedCount = albums.filter(album => getAlbumStatus(album.id) === "unmatched").length;
+  // Convert selected album IDs to album objects
+  const selectedAlbums = new Set(
+    Array.from(state.albums).filter(album => selectedItems.albums.has(album.id))
+  );
+
+  // Count unmatched albums
+  const unmatchedCount = Array.from(state.albums).reduce((count, album) => {
+    return getAlbumStatus(album.id) === "unmatched" ? count + 1 : count;
+  }, 0);
+
+  // Handle album toggle
+  const handleToggleAlbum = (album: IAlbum) => {
+    if (selectedItems.albums.has(album.id)) {
+      deselectAlbum(album.id);
+    } else {
+      selectAlbum(album.id);
+    }
+  };
+
+  // Calculate if all albums are selected
+  const allAlbumsSelected = state.albums.size > 0 && selectedAlbums.size === state.albums.size;
+  const someAlbumsSelected = selectedAlbums.size > 0 && selectedAlbums.size < state.albums.size;
+
+  // Handle select all toggle
+  const handleSelectAll = () => {
+    if (!state.albums) return;
+
+    if (allAlbumsSelected) {
+      Array.from(state.albums).forEach(album => {
+        if (selectedItems.albums.has(album.id)) {
+          deselectAlbum(album.id);
+        }
+      });
+    } else {
+      Array.from(state.albums).forEach(album => {
+        if (!selectedItems.albums.has(album.id)) {
+          selectAlbum(album.id);
+        }
+      });
+    }
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold text-indigo-900 dark:text-indigo-50">Albums</h1>
-          {unmatchedCount > 0 && (
-            <span className="rounded bg-red-100 px-2 py-1 text-sm font-medium text-red-800 dark:bg-red-900/30 dark:text-red-400">
-              {unmatchedCount} unmatched
-            </span>
-          )}
-        </div>
-        <span className="text-sm text-indigo-800 dark:text-indigo-300">{albums.length} albums</span>
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-indigo-900 dark:text-indigo-50">Albums</h1>
+        <p className="text-sm text-indigo-700 dark:text-indigo-300">
+          {state.albums.size} albums • {unmatchedCount} unmatched
+        </p>
       </div>
-      <div className="space-y-2">
-        {albums.map(album => (
-          <AlbumItem key={album.id} album={album} />
-        ))}
+
+      {/* Album List */}
+      <div className="relative bg-transparent dark:bg-transparent" role="albumlist">
+        {/* List Header */}
+        <div
+          className="sticky top-0 mb-4 grid grid-cols-[32px_1fr_32px] gap-2 border-b border-slate-200 bg-white/80 p-1.5 py-2 text-xs font-normal text-slate-500 backdrop-blur-sm md:grid-cols-[32px_32px_1fr_231px_32px] md:gap-4 md:p-2 md:text-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400"
+          role="row"
+        >
+          <div className="flex items-center" role="columnheader">
+            <input
+              type="checkbox"
+              className="h-3.5 w-3.5 cursor-pointer rounded-sm transition-colors duration-200 md:h-4 md:w-4"
+              style={{ accentColor: "#6366f1" }}
+              checked={allAlbumsSelected}
+              ref={checkbox => {
+                if (checkbox) {
+                  checkbox.indeterminate = someAlbumsSelected && !allAlbumsSelected;
+                }
+              }}
+              onChange={handleSelectAll}
+              aria-label="Select all albums"
+            />
+          </div>
+          <div className="hidden items-center md:flex" role="columnheader">
+            #
+          </div>
+          <div className="flex items-center" role="columnheader">
+            Title
+          </div>
+          <div className="hidden items-center md:flex" role="columnheader">
+            Artist
+          </div>
+          <div className="flex items-center justify-end" role="columnheader">
+            Status
+          </div>
+        </div>
+
+        {/* Albums */}
+        <div className="space-y-2">
+          {Array.from(state.albums).map(album => (
+            <AlbumItem
+              key={album.id}
+              album={album}
+              selected={selectedAlbums.has(album)}
+              onToggle={() => handleToggleAlbum(album)}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -23,19 +23,19 @@ function SourcePageContent() {
 
     try {
       const source = searchParams.get("source");
-      const transferParams = new URLSearchParams();
-      if (source) transferParams.set("source", source);
-      transferParams.set("target", serviceId);
+      if (!source) {
+        throw new Error("No source service selected");
+      }
 
       if (serviceId === "apple") {
         await authorizeAppleMusic();
-        router.push(`/transfer?${transferParams.toString()}`);
+        router.push(`/library/${source}/${serviceId}`);
       } else if (serviceId === "spotify") {
         await initiateSpotifyAuth("target");
-        router.push(`/transfer?${transferParams.toString()}`);
+        router.push(`/library/${source}/${serviceId}`);
       } else if (serviceId === "youtube") {
         await initiateYouTubeAuth("target");
-        router.push(`/transfer?${transferParams.toString()}`);
+        router.push(`/library/${source}/${serviceId}`);
       }
     } catch (err) {
       console.error("Authorization error:", err);

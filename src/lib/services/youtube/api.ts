@@ -2,6 +2,8 @@ import { getYouTubeAuthData } from "./auth";
 import { YTMusicAdapter } from "./ytmusic-adapter";
 import type { ITrack, ILibraryData, IAlbum } from "@/types/library";
 import type { SearchResult, TransferResult } from "@/types/services";
+import { retryWithExponentialBackoff } from "@/lib/utils/retry";
+import { processInBatches } from "@/lib/utils/batch-processor";
 
 interface YouTubePlaylistItem {
   id?: string;
@@ -56,11 +58,6 @@ interface YouTubePlaylistCreateResponse {
 
 interface YouTubePlaylistItemInsertResponse {
   id: string;
-  snippet: {
-    resourceId: {
-      videoId: string;
-    };
-  };
 }
 
 interface YouTubePlaylistItemsResponse {
@@ -95,16 +92,18 @@ async function findBestAlbumMatch(album: Pick<ITrack, "name" | "artist">): Promi
       return null;
     }
 
-    const response = await fetch("/api/youtube/search", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query: `${album.name} ${album.artist}`,
-        token: authData.accessToken,
-      }),
-    });
+    const response = await retryWithExponentialBackoff<Response>(() =>
+      fetch("/api/youtube/search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: `${album.name} ${album.artist}`,
+          token: authData.accessToken,
+        }),
+      })
+    );
 
     if (!response.ok) {
       throw new Error("Search request failed");
@@ -149,22 +148,16 @@ export async function findMatchingAlbums(
   albums: IAlbum[]
 ): Promise<Array<IAlbum & { targetId?: string }>> {
   try {
-    const authData = await getYouTubeAuthData("target");
-    if (!authData) {
-      throw new Error("Not authenticated with YouTube");
-    }
-
-    const batchResults = await Promise.all(
+    const results = await Promise.all(
       albums.map(async album => {
-        const youtubeId = await findBestAlbumMatch(album);
+        const targetId = await findBestAlbumMatch(album);
         return {
           ...album,
-          targetId: youtubeId || undefined,
+          targetId: targetId || undefined,
         };
       })
     );
-
-    return batchResults;
+    return results;
   } catch (error) {
     console.error("[MATCHING] Error finding matching albums:", error);
     return albums.map(album => ({ ...album }));
@@ -174,19 +167,57 @@ export async function findMatchingAlbums(
 /**
  * Search for tracks in YouTube Music
  */
-export async function search(tracks: ITrack[]): Promise<SearchResult> {
+export async function search(
+  tracks: ITrack[],
+  onProgress: ((progress: number) => void) | undefined
+): Promise<SearchResult> {
   try {
     const ytAdapter = new YTMusicAdapter();
     await ytAdapter.initialize("target");
 
-    const matchedTracks = await ytAdapter.findMatchingTracks(tracks);
-    const validTracks = matchedTracks.filter(track => track.targetId);
+    const results: ITrack[] = [];
+    let matched = 0;
+    let unmatched = 0;
+
+    await processInBatches(
+      async batch => {
+        const batchResults = await Promise.all(
+          batch.map(async track => {
+            const result = await ytAdapter.findMatchingTracks([track]);
+            return result[0];
+          })
+        );
+
+        results.push(...batchResults);
+
+        const validTracks = batchResults.filter(track => track.targetId);
+        matched += validTracks.length;
+        unmatched += batch.length - validTracks.length;
+
+        if (onProgress) {
+          onProgress(results.length / tracks.length);
+        }
+      },
+      {
+        items: tracks,
+        batchSize: 5,
+        delayBetweenBatches: 200,
+        onBatchStart: (batchNumber, totalBatches) => {
+          console.log(`[YOUTUBE] Processing search batch ${batchNumber}/${totalBatches}`);
+        },
+        onError: (error, batch) => {
+          console.error("[YOUTUBE] Error searching tracks batch:", error);
+          unmatched += batch.length;
+          results.push(...batch.map(track => ({ ...track })));
+        },
+      }
+    );
 
     return {
-      matched: validTracks.length,
-      unmatched: tracks.length - validTracks.length,
+      matched,
+      unmatched,
       total: tracks.length,
-      tracks: matchedTracks,
+      tracks: results,
     };
   } catch (error) {
     console.error("[SEARCH] Error searching tracks:", error);
@@ -220,8 +251,10 @@ export async function createPlaylistWithTracks(
         playlistId: null,
       };
     }
+    console.log("Creating playlist with tracks:", validTracks);
 
-    // Create the playlist
+    // Create the playlist - using a different implementation for this specific case
+    // since it needs to return a string, not a Response
     const createPlaylist = async (): Promise<string> => {
       const response = await fetch("https://www.googleapis.com/youtube/v3/playlists?part=snippet", {
         method: "POST",
@@ -246,63 +279,79 @@ export async function createPlaylistWithTracks(
       return data.id;
     };
 
-    // Create playlist with retry
-    const playlistId = await retryWithExponentialBackoff(createPlaylist);
+    // Using a different approach for retry with this function since it returns a string
+    let retries = 0;
+    const maxRetries = 3;
+    let playlistId: string;
 
-    // Add tracks to the playlist
-    const addTrackToPlaylist = async (track: ITrack & { targetId?: string }): Promise<void> => {
-      if (!track.targetId) return;
-
-      const response = await fetch(
-        "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${authData.accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            snippet: {
-              playlistId,
-              resourceId: {
-                kind: "youtube#video",
-                videoId: track.targetId,
-              },
-            },
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to add track to playlist: ${response.status} ${response.statusText}`
-        );
-      }
-
-      const data = (await response.json()) as YouTubePlaylistItemInsertResponse;
-      if (!data.id) {
-        throw new Error("Failed to add track to playlist: No item ID returned");
-      }
-    };
-
-    // Add tracks with retry
-    let added = 0;
-    let failed = 0;
-
-    for (const track of validTracks) {
+    while (true) {
       try {
-        await retryWithExponentialBackoff(() => addTrackToPlaylist(track));
-        added++;
+        playlistId = await createPlaylist();
+        break;
       } catch (error) {
-        console.error(`Failed to add track ${track.name}:`, error);
-        failed++;
+        retries++;
+        if (retries >= maxRetries) {
+          throw error;
+        }
+        const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
 
+    // Add tracks to the playlist
+    const result = await processInBatches(
+      async batch => {
+        await Promise.all(
+          batch
+            .filter(track => track.targetId)
+            .map(async track => {
+              const response = await retryWithExponentialBackoff<Response>(() =>
+                fetch("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet", {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${authData.accessToken}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    snippet: {
+                      playlistId,
+                      resourceId: {
+                        kind: "youtube#video",
+                        videoId: track.targetId,
+                      },
+                    },
+                  }),
+                })
+              );
+
+              if (!response.ok) {
+                throw new Error(
+                  `Failed to add track to playlist: ${response.status} ${response.statusText}`
+                );
+              }
+
+              const data = (await response.json()) as YouTubePlaylistItemInsertResponse;
+              if (!data.id) {
+                throw new Error("Failed to add track to playlist: No item ID returned");
+              }
+            })
+        );
+      },
+      {
+        items: validTracks,
+        batchSize: 3,
+        delayBetweenBatches: 200,
+        onBatchStart: (batchNumber, totalBatches) => {
+          console.log(`[YOUTUBE] Processing playlist tracks batch ${batchNumber}/${totalBatches}`);
+        },
+        onError: error => {
+          console.error("[YOUTUBE] Error adding tracks to playlist:", error);
+        },
+      }
+    );
+
     return {
-      added,
-      failed,
-      total: tracks.length,
+      ...result,
       playlistId,
     };
   } catch (error) {
@@ -336,17 +385,15 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
         url.searchParams.append("pageToken", nextPageToken);
       }
 
-      const response = await fetch(url.toString(), {
-        headers: {
-          Authorization: `Bearer ${authData.accessToken}`,
-        },
-      });
+      const response = await retryWithExponentialBackoff<YouTubePlaylistItemsResponse>(() =>
+        fetch(url.toString(), {
+          headers: {
+            Authorization: `Bearer ${authData.accessToken}`,
+          },
+        })
+      );
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch playlist items");
-      }
-
-      const data = (await response.json()) as YouTubePlaylistItemsResponse;
+      const data = response;
 
       tracks.push(
         ...(data.items || [])
@@ -403,17 +450,15 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
       url.searchParams.append("pageToken", nextPageToken);
     }
 
-    const response = await fetch(url.toString(), {
-      headers: {
-        Authorization: `Bearer ${authData.accessToken}`,
-      },
-    });
+    const response = await retryWithExponentialBackoff<YouTubePlaylistResponse>(() =>
+      fetch(url.toString(), {
+        headers: {
+          Authorization: `Bearer ${authData.accessToken}`,
+        },
+      })
+    );
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch playlists");
-    }
-
-    const data: YouTubePlaylistResponse = await response.json();
+    const data: YouTubePlaylistResponse = response;
 
     playlists.push(
       ...data.items.map(playlist => ({
@@ -438,7 +483,13 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
 
   // For now, return empty albums array as YouTube Music's album structure
   // is different and will need special handling
-  const albums: Array<{ id: string; name: string; artist: string; artwork?: string }> = [];
+  const albums: Array<{
+    id: string;
+    name: string;
+    artist: string;
+    artwork?: string;
+    tracks: ITrack[];
+  }> = [];
 
   return {
     playlists,
@@ -684,43 +735,56 @@ function extractTrackMetadata(item: YouTubePlaylistItem): TrackMetadata {
 }
 
 /**
- * Retry a function with exponential backoff
- */
-async function retryWithExponentialBackoff<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 3
-): Promise<T> {
-  let retries = 0;
-  while (true) {
-    try {
-      return await fn();
-    } catch (error) {
-      retries++;
-      if (retries >= maxRetries) {
-        throw error;
-      }
-      const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000;
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-}
-
-/**
  * Search for albums in YouTube Music
  */
-export async function searchAlbums(albums: IAlbum[]): Promise<SearchResult> {
+export async function searchAlbums(
+  albums: IAlbum[],
+  onProgress: ((progress: number) => void) | undefined
+): Promise<SearchResult> {
   try {
-    const ytAdapter = new YTMusicAdapter();
-    await ytAdapter.initialize("target");
+    const results: IAlbum[] = [];
+    let matched = 0;
+    let unmatched = 0;
 
-    const matchedAlbums = await findMatchingAlbums(albums);
-    const validAlbums = matchedAlbums.filter(album => album.targetId);
+    await processInBatches(
+      async batch => {
+        const batchResults = await Promise.all(
+          batch.map(async album => {
+            const result = await findMatchingAlbums([album]);
+            return result[0] || { ...album, tracks: [], targetId: undefined };
+          })
+        );
+
+        results.push(...batchResults);
+
+        const validAlbums = batchResults.filter(album => album.targetId);
+        matched += validAlbums.length;
+        unmatched += batch.length - validAlbums.length;
+
+        if (onProgress) {
+          onProgress(results.length / albums.length);
+        }
+      },
+      {
+        items: albums,
+        batchSize: 3,
+        delayBetweenBatches: 300,
+        onBatchStart: (batchNumber, totalBatches) => {
+          console.log(`[YOUTUBE] Processing album search batch ${batchNumber}/${totalBatches}`);
+        },
+        onError: (error, batch) => {
+          console.error("[YOUTUBE] Error searching albums batch:", error);
+          unmatched += batch.length;
+          results.push(...batch.map(album => ({ ...album, tracks: [], targetId: undefined })));
+        },
+      }
+    );
 
     return {
-      matched: validAlbums.length,
-      unmatched: albums.length - validAlbums.length,
+      matched,
+      unmatched,
       total: albums.length,
-      tracks: [], // YouTube doesn't return tracks in album search
+      albums: results,
     };
   } catch (error) {
     console.error("[SEARCH] Error searching albums:", error);
@@ -728,7 +792,7 @@ export async function searchAlbums(albums: IAlbum[]): Promise<SearchResult> {
       matched: 0,
       unmatched: albums.length,
       total: albums.length,
-      tracks: [],
+      albums: albums.map(album => ({ ...album, tracks: [], targetId: undefined })),
     };
   }
 }

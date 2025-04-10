@@ -39,9 +39,7 @@ function SpotifyCallbackContent() {
 
         // Build redirect URL with service parameters
         const redirectUrl =
-          role === "target"
-            ? `/transfer?source=${sourceService}&target=spotify`
-            : `/source?source=spotify`;
+          role === "target" ? `/library/${sourceService}/spotify` : `/source?source=spotify`;
 
         console.log("Redirecting to:", redirectUrl);
         router.push(redirectUrl);

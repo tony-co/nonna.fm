@@ -8,6 +8,7 @@ interface ArtworkImageProps {
   size: number;
   type?: ArtworkType;
   className?: string;
+  objectFit?: "cover" | "contain";
 }
 
 const FALLBACK_CONFIGS = {
@@ -50,6 +51,7 @@ export const ArtworkImage: React.FC<ArtworkImageProps> = ({
   size,
   type = "playlist",
   className = "",
+  objectFit = "cover",
 }) => {
   const baseClassName =
     "relative overflow-hidden rounded-md shadow-sm transition-transform duration-200 group-hover:scale-105";
@@ -69,7 +71,7 @@ export const ArtworkImage: React.FC<ArtworkImageProps> = ({
 
   return (
     <div style={{ width: size, height: size }} className={finalClassName}>
-      <Image src={src} alt={alt} fill className="object-cover" sizes={`${size}px`} />
+      <Image src={src} alt={alt} fill className={`object-${objectFit}`} sizes={`${size}px`} />
     </div>
   );
 };

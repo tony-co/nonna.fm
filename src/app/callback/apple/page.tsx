@@ -39,9 +39,7 @@ function AppleCallbackContent() {
 
         // Build redirect URL with service parameters
         const redirectUrl =
-          role === "target"
-            ? `/transfer?source=${sourceService}&target=apple`
-            : `/source?source=apple`;
+          role === "target" ? `/library/${sourceService}/apple` : `/source?source=apple`;
 
         console.log("Redirecting to:", redirectUrl);
         router.push(redirectUrl);

@@ -39,9 +39,7 @@ function DeezerCallbackContent() {
 
         // Build redirect URL with service parameters
         const redirectUrl =
-          role === "target"
-            ? `/transfer?source=${sourceService}&target=deezer`
-            : `/source?source=deezer`;
+          role === "target" ? `/library/${sourceService}/deezer` : `/source?source=deezer`;
 
         console.log("Redirecting to:", redirectUrl);
         router.push(redirectUrl);

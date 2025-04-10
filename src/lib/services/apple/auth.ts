@@ -69,6 +69,27 @@ export async function initiateAppleAuth(role: "source" | "target"): Promise<bool
     // Clear any existing auth data for this role
     clearAuthData(role);
 
+    // Check if MusicKit is available
+    if (typeof window === "undefined" || !window.MusicKit) {
+      console.log("MusicKit not available yet, waiting for it to load...");
+      // Wait for MusicKit to be available (up to 10 attempts, with increasing delay)
+      let attempts = 0;
+      while (attempts < 10) {
+        await new Promise(resolve => setTimeout(resolve, 500 * (attempts + 1)));
+        if (window.MusicKit) {
+          console.log("MusicKit loaded after waiting");
+          break;
+        }
+        attempts++;
+        console.log(`Still waiting for MusicKit to load (attempt ${attempts + 1})`);
+      }
+
+      // If MusicKit is still not available after retries, throw an error
+      if (!window.MusicKit) {
+        throw new Error("MusicKit failed to load after multiple attempts");
+      }
+    }
+
     // Initialize MusicKit
     await window.MusicKit.configure({
       developerToken: process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN || "",

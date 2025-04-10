@@ -255,8 +255,6 @@ export async function getYouTubeAuthData(role: "source" | "target"): Promise<Aut
   const expirationThreshold = 5 * 60 * 1000; // 5 minutes in milliseconds
   const isExpired = now >= expirationTime - expirationThreshold;
 
-  console.log("Checking auth token status");
-
   // If token is expired and we have a refresh token, try to refresh
   if (isExpired && authData.refreshToken) {
     console.log("Starting token refresh...");

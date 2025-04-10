@@ -1,19 +1,15 @@
 import { useState } from "react";
 import { ISelectionState, IAlbum, IPlaylist } from "@/types/library";
 import { MusicService, TransferResult } from "@/types/services";
-import { useMatching } from "@/contexts/MatchingContext";
+import { useMatching, MATCHING_STATUS } from "@/contexts/MatchingContext";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { addTracksToLibrary, addAlbumsToLibrary, createPlaylistWithTracks } from "@/lib/musicApi";
-import { useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 
 interface TransferResults {
   likedSongs?: TransferResult;
   albums?: TransferResult;
   playlists: Map<string, TransferResult>;
-}
-
-interface UseTransferProps {
-  onSearchTracks: () => Promise<void>;
 }
 
 interface UseTransferReturn {
@@ -25,51 +21,37 @@ interface UseTransferReturn {
   error: string | null;
 }
 
-export function useTransfer({ onSearchTracks }: UseTransferProps): UseTransferReturn {
-  const { libraryState } = useLibrary();
-  const { matchingState } = useMatching();
-  const searchParams = useSearchParams();
+export function useTransfer(): UseTransferReturn {
+  const { state } = useLibrary();
+  const { getTrackStatus, getTrackTargetId, getAlbumTargetId } = useMatching();
   const [transferResults, setTransferResults] = useState<TransferResults | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Get source and target services from URL parameters
-  const sourceService = searchParams.get("source") as MusicService;
-  const targetService = searchParams.get("target") as MusicService;
+  const params = useParams();
+  const sourceService = params.source as MusicService;
+  const targetService = params.target as MusicService;
 
   const handleStartTransfer = async (selection: ISelectionState): Promise<void> => {
-    if (!libraryState || !targetService) {
-      console.error("handleStartTransfer - missing required data", { libraryState, targetService });
+    if (!state || !targetService) {
+      console.error("handleStartTransfer - missing required data", { state, targetService });
       setError("Target service not specified");
       return;
     }
 
     try {
-      // First, ensure all selected items are matched
-      const selectedAlbums = Array.from(selection.albums);
-      const unmatched = selectedAlbums.filter(
-        album => !matchingState.albums.get(album.id)?.targetId
-      );
-
-      if (unmatched.length > 0) {
-        console.log(
-          "Found unmatched albums, initiating matching process:",
-          unmatched.map(a => a.name)
-        );
-        await onSearchTracks();
-        return;
-      }
-
       const results: TransferResults = {
         playlists: new Map<string, TransferResult>(),
       };
 
+      console.log("Starting transfer with selection:", selection);
+
       // Transfer liked songs
       const matchedLikedSongs = Array.from(selection.likedSongs)
-        .filter(track => matchingState.tracks.get(track.id)?.status === "matched")
+        .filter(track => getTrackStatus(track.id) === MATCHING_STATUS.MATCHED)
         .map(track => ({
           ...track,
-          targetId: matchingState.tracks.get(track.id)?.targetId,
+          targetId: getTrackTargetId(track.id),
         }));
 
       if (matchedLikedSongs.length > 0) {
@@ -77,10 +59,10 @@ export function useTransfer({ onSearchTracks }: UseTransferProps): UseTransferRe
       }
 
       // Transfer matched albums
-      const albumsWithIds = selectedAlbums
+      const albumsWithIds = Array.from(selection.albums)
         .map(album => ({
           ...album,
-          targetId: matchingState.albums.get(album.id)?.targetId,
+          targetId: getAlbumTargetId(album.id),
         }))
         .filter((album): album is IAlbum & { targetId: string } => !!album.targetId);
 
@@ -95,14 +77,21 @@ export function useTransfer({ onSearchTracks }: UseTransferProps): UseTransferRe
 
       // Transfer playlists
       for (const [playlistId, selectedTracks] of Array.from(selection.playlists.entries())) {
-        const playlist = libraryState.playlists.find(p => p.id === playlistId);
-        if (!playlist) continue;
+        if (!state.playlists) {
+          throw new Error("Playlists not initialized");
+        }
+        const playlist = state.playlists.get(playlistId);
+        if (!playlist) {
+          throw new Error(`Playlist not found: ${playlistId}`);
+        }
+
+        console.log("Transferring playlist:", playlist);
 
         const matchedTracks = Array.from(selectedTracks)
-          .filter(track => matchingState.tracks.get(track.id)?.status === "matched")
+          .filter(track => getTrackStatus(track.id) === MATCHING_STATUS.MATCHED)
           .map(track => ({
             ...track,
-            targetId: matchingState.tracks.get(track.id)?.targetId,
+            targetId: getTrackTargetId(track.id),
           }));
 
         if (matchedTracks.length > 0) {
@@ -116,8 +105,10 @@ export function useTransfer({ onSearchTracks }: UseTransferProps): UseTransferRe
         }
       }
 
+      console.log("Transfer completed successfully:", results);
       setTransferResults(results);
       setShowSuccessModal(true);
+      console.log("Success modal should show now:", { showModal: true });
     } catch (err) {
       console.error("handleStartTransfer - error:", err);
       setError("Failed to transfer tracks. Please try again.");
@@ -128,9 +119,9 @@ export function useTransfer({ onSearchTracks }: UseTransferProps): UseTransferRe
     playlist: IPlaylist,
     selection: ISelectionState
   ): Promise<void> => {
-    if (!libraryState || !targetService) {
+    if (!state || !targetService) {
       console.error("handleTransferPlaylist - missing required data", {
-        libraryState,
+        state,
         targetService,
       });
       setError("Target service not specified");
@@ -145,10 +136,10 @@ export function useTransfer({ onSearchTracks }: UseTransferProps): UseTransferRe
       }
 
       const matchedTracks = Array.from(selectedTracks)
-        .filter(track => matchingState.tracks.get(track.id)?.status === "matched")
+        .filter(track => getTrackStatus(track.id) === MATCHING_STATUS.MATCHED)
         .map(track => ({
           ...track,
-          targetId: matchingState.tracks.get(track.id)?.targetId,
+          targetId: getTrackTargetId(track.id),
         }));
 
       if (matchedTracks.length === 0) {
@@ -163,10 +154,14 @@ export function useTransfer({ onSearchTracks }: UseTransferProps): UseTransferRe
         targetService
       );
 
-      setTransferResults({
+      const results: TransferResults = {
         playlists: new Map([[playlist.id, result]]),
-      });
+      };
+
+      console.log("Playlist transfer completed successfully:", results);
+      setTransferResults(results);
       setShowSuccessModal(true);
+      console.log("Success modal should show now:", { showModal: true });
     } catch (err) {
       console.error("handleTransferPlaylist - error:", err);
       setError("Failed to transfer playlist. Please try again.");

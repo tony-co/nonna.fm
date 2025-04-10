@@ -19,29 +19,32 @@ export interface TransferResult {
 
 export interface IMusicServiceProvider {
   // Search for tracks and albums - not all services might support batch requests
-  search(tracks: ITrack[], batchSize?: number): Promise<SearchResult>;
+  search: (tracks: Array<ITrack>, onProgress?: (progress: number) => void) => Promise<SearchResult>;
 
   // Search for albums
-  searchAlbums(albums: Array<IAlbum>): Promise<SearchResult>;
+  searchAlbums: (
+    albums: Array<IAlbum>,
+    onProgress?: (progress: number) => void
+  ) => Promise<SearchResult>;
 
   // Transfer liked songs
-  addTracksToLibrary(tracks: ITrack[]): Promise<TransferResult>;
+  addTracksToLibrary: (tracks: Array<ITrack>) => Promise<TransferResult>;
 
   // Transfer albums
-  addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferResult>;
+  addAlbumsToLibrary: (albums: Set<IAlbum>) => Promise<TransferResult>;
 
   // Transfer playlists
-  createPlaylistWithTracks(
+  createPlaylistWithTracks: (
     name: string,
-    tracks: ITrack[],
+    tracks: Array<ITrack>,
     description?: string
-  ): Promise<TransferResult>;
+  ) => Promise<TransferResult>;
 
   // Fetch methods
-  fetchUserLibrary(): Promise<ILibraryData>;
+  fetchUserLibrary: () => Promise<ILibraryData>;
 
   // Fetch playlist tracks
-  fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>;
+  fetchPlaylistTracks: (playlistId: string) => Promise<ITrack[]>;
 }
 
 export interface IServiceFactory {
