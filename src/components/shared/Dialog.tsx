@@ -75,13 +75,13 @@ export default function Dialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-md dark:bg-black/60"
+      className="fixed inset-0 isolate z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-md dark:bg-black/60"
       aria-modal="true"
       role="dialog"
     >
       <div
         ref={dialogRef}
-        className="dark:bg-[var(--color-indigo-990)]/80 animate-in fade-in mx-4 mt-[10vh] flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl duration-200 dark:border-indigo-950"
+        className="dark:bg-[var(--color-indigo-990)]/80 animate-in fade-in mx-4 flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl duration-200 dark:border-indigo-950"
       >
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-gray-800">
           <h2 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">

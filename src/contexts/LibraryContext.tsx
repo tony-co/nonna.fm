@@ -53,7 +53,7 @@ interface LibraryContextType {
 }
 
 // Create context
-const LibraryContext = createContext<LibraryContextType | null>(null);
+export const LibraryContext = createContext<LibraryContextType | null>(null);
 
 // Reducer function
 function libraryReducer(state: LibraryState, action: LibraryAction): LibraryState {

@@ -19,10 +19,13 @@ export interface TransferResult {
 
 export interface IMusicServiceProvider {
   // Search for tracks and albums - not all services might support batch requests
-  search(tracks: ITrack[], batchSize?: number): Promise<SearchResult>;
+  search: (tracks: ITrack[], onProgress?: (progress: number) => void) => Promise<SearchResult>;
 
   // Search for albums
-  searchAlbums(albums: Array<IAlbum>): Promise<SearchResult>;
+  searchAlbums: (
+    albums: IAlbum[],
+    onProgress?: (progress: number) => void
+  ) => Promise<SearchResult>;
 
   // Transfer liked songs
   addTracksToLibrary(tracks: ITrack[]): Promise<TransferResult>;

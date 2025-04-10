@@ -54,7 +54,7 @@ const TrackRow: FC<{
           ? "bg-indigo-50 dark:bg-indigo-950/30"
           : "bg-transparent hover:bg-indigo-50/70 dark:bg-transparent dark:hover:bg-indigo-950/20"
       }`}
-      role="row"
+      role="track"
     >
       {/* Index number */}
       <div className="hidden text-sm font-normal text-slate-500 md:block dark:text-slate-400">

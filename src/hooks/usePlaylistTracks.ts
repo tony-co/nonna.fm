@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { IPlaylist } from "@/types/library";
 import { fetchPlaylistCurator } from "@/lib/services/apple/api";
-import { fetchPlaylistTracks as fetchPlaylistTracksApi, getSourceService } from "@/lib/musicApi";
+import { fetchPlaylistTracks, getSourceService } from "@/lib/musicApi";
 import { useLibrary } from "@/contexts/LibraryContext";
 
 interface UsePlaylistTracksReturn {
@@ -47,7 +47,7 @@ export const usePlaylistTracks = (playlistId: string): UsePlaylistTracksReturn =
           curatorName = curator?.data?.[0]?.attributes?.curatorName || "";
         }
 
-        const tracks = await fetchPlaylistTracksApi(playlistId, sourceService);
+        const tracks = await fetchPlaylistTracks(playlistId, sourceService);
 
         if (!isMounted) return;
 

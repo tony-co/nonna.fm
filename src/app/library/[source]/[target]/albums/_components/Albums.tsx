@@ -2,14 +2,14 @@
 
 import { FC, useEffect, useRef } from "react";
 import { useLibrary } from "@/contexts/LibraryContext";
-import { useSearchTracks } from "@/hooks/useSearchTracks";
+import { useMatching } from "@/contexts/MatchingContext";
 import { useParams } from "next/navigation";
 import { AlbumList } from "@/components/library/AlbumList";
 import type { MusicService } from "@/types/services";
 
 export const Albums: FC = () => {
   const { state } = useLibrary();
-  const { matchAlbums } = useSearchTracks();
+  const { matchAlbums } = useMatching();
   const params = useParams();
   const target = params.target as MusicService;
   const hasStartedMatching = useRef(false);

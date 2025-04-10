@@ -11,7 +11,7 @@ export default async function LibraryHomePage({ params }: LibraryHomePageProps) 
   const { source, target } = await params;
 
   return (
-    <div className="p-8 text-center" role="status" aria-label="Empty State">
+    <div className="p-8 text-center" role="guide" aria-label="Empty State">
       <svg
         className="mx-auto mb-4 h-16 w-16 text-indigo-500 dark:text-indigo-500"
         fill="none"

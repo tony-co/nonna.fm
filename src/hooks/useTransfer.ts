@@ -1,19 +1,15 @@
 import { useState } from "react";
 import { ISelectionState, IAlbum, IPlaylist } from "@/types/library";
 import { MusicService, TransferResult } from "@/types/services";
-import { useMatching } from "@/contexts/MatchingContext";
+import { useMatching, MATCHING_STATUS } from "@/contexts/MatchingContext";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { addTracksToLibrary, addAlbumsToLibrary, createPlaylistWithTracks } from "@/lib/musicApi";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 
 interface TransferResults {
   likedSongs?: TransferResult;
   albums?: TransferResult;
   playlists: Map<string, TransferResult>;
-}
-
-interface UseTransferProps {
-  onSearchTracks: () => Promise<void>;
 }
 
 interface UseTransferReturn {
@@ -25,19 +21,15 @@ interface UseTransferReturn {
   error: string | null;
 }
 
-export function useTransfer({ onSearchTracks }: UseTransferProps): UseTransferReturn {
+export function useTransfer(): UseTransferReturn {
   const { state } = useLibrary();
-  const { matchingState } = useMatching();
-  const searchParams = useSearchParams();
+  const { getTrackStatus, getTrackTargetId, getAlbumTargetId } = useMatching();
   const [transferResults, setTransferResults] = useState<TransferResults | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Get source and target services from URL parameters
-  const sourceService = searchParams.get("source") as MusicService;
-  //const targetService = searchParams.get("target") as MusicService;
-
   const params = useParams();
+  const sourceService = params.source as MusicService;
   const targetService = params.target as MusicService;
 
   const handleStartTransfer = async (selection: ISelectionState): Promise<void> => {
@@ -48,31 +40,18 @@ export function useTransfer({ onSearchTracks }: UseTransferProps): UseTransferRe
     }
 
     try {
-      // First, ensure all selected items are matched
-      const selectedAlbums = Array.from(selection.albums);
-      const unmatched = selectedAlbums.filter(
-        album => !matchingState.albums.get(album.id)?.targetId
-      );
-
-      if (unmatched.length > 0) {
-        console.log(
-          "Found unmatched albums, initiating matching process:",
-          unmatched.map(a => a.name)
-        );
-        await onSearchTracks();
-        return;
-      }
-
       const results: TransferResults = {
         playlists: new Map<string, TransferResult>(),
       };
 
+      console.log("Starting transfer with selection:", selection);
+
       // Transfer liked songs
       const matchedLikedSongs = Array.from(selection.likedSongs)
-        .filter(track => matchingState.tracks.get(track.id)?.status === "matched")
+        .filter(track => getTrackStatus(track.id) === MATCHING_STATUS.MATCHED)
         .map(track => ({
           ...track,
-          targetId: matchingState.tracks.get(track.id)?.targetId,
+          targetId: getTrackTargetId(track.id),
         }));
 
       if (matchedLikedSongs.length > 0) {
@@ -80,10 +59,10 @@ export function useTransfer({ onSearchTracks }: UseTransferProps): UseTransferRe
       }
 
       // Transfer matched albums
-      const albumsWithIds = selectedAlbums
+      const albumsWithIds = Array.from(selection.albums)
         .map(album => ({
           ...album,
-          targetId: matchingState.albums.get(album.id)?.targetId,
+          targetId: getAlbumTargetId(album.id),
         }))
         .filter((album): album is IAlbum & { targetId: string } => !!album.targetId);
 
@@ -99,13 +78,17 @@ export function useTransfer({ onSearchTracks }: UseTransferProps): UseTransferRe
       // Transfer playlists
       for (const [playlistId, selectedTracks] of Array.from(selection.playlists.entries())) {
         const playlist = state.playlists.get(playlistId);
-        if (!playlist) continue;
+        if (!playlist) {
+          throw new Error(`Playlist not found: ${playlistId}`);
+        }
+
+        console.log("Transferring playlist:", playlist);
 
         const matchedTracks = Array.from(selectedTracks)
-          .filter(track => matchingState.tracks.get(track.id)?.status === "matched")
+          .filter(track => getTrackStatus(track.id) === MATCHING_STATUS.MATCHED)
           .map(track => ({
             ...track,
-            targetId: matchingState.tracks.get(track.id)?.targetId,
+            targetId: getTrackTargetId(track.id),
           }));
 
         if (matchedTracks.length > 0) {
@@ -150,10 +133,10 @@ export function useTransfer({ onSearchTracks }: UseTransferProps): UseTransferRe
       }
 
       const matchedTracks = Array.from(selectedTracks)
-        .filter(track => matchingState.tracks.get(track.id)?.status === "matched")
+        .filter(track => getTrackStatus(track.id) === MATCHING_STATUS.MATCHED)
         .map(track => ({
           ...track,
-          targetId: matchingState.tracks.get(track.id)?.targetId,
+          targetId: getTrackTargetId(track.id),
         }));
 
       if (matchedTracks.length === 0) {

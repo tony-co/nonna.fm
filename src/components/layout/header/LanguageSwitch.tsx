@@ -40,6 +40,7 @@ export const LanguageSwitch = () => {
     <div className="relative" ref={dropdownRef} style={{ zIndex: 100 }}>
       <button
         onClick={() => setIsOpen(!isOpen)}
+        data-testid="language-switch"
         className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-gray-800 transition-colors hover:text-gray-950 dark:text-indigo-300 dark:hover:text-indigo-200"
       >
         <svg
@@ -64,7 +65,10 @@ export const LanguageSwitch = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-40 rounded-xl border border-gray-100 bg-white py-2 shadow-lg backdrop-blur-lg dark:border-gray-800/50 dark:bg-gray-900/95">
+        <div
+          data-testid="language-dropdown"
+          className="absolute right-0 top-full mt-2 w-40 rounded-xl border border-gray-100 bg-white py-2 shadow-lg backdrop-blur-lg dark:border-gray-800/50 dark:bg-gray-900/95"
+        >
           {languages.map(lang => (
             <button
               key={lang.code}

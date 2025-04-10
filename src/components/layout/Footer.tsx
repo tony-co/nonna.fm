@@ -6,7 +6,7 @@ const GITHUB_REPO = "https://github.com/tony-co/nonna.fm";
 export function Footer({ children }: { children?: React.ReactNode }): React.ReactElement {
   return (
     <footer className="border-t border-indigo-200/20 bg-white/80 px-4 py-4 backdrop-blur-sm dark:border-indigo-800/20 dark:bg-[#0A0A1B]/80">
-      <div className="mx-auto flex max-w-7xl items-center justify-between">
+      <div className="container mx-auto flex items-center justify-between">
         {/* Links on the left */}
         <div className="hidden items-center gap-4 pl-8 md:flex">
           <a

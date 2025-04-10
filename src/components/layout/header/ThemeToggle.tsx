@@ -20,6 +20,7 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
+      data-testid="theme-toggle"
       className={`
         relative inline-flex h-[30px] w-[60px] items-center justify-between rounded-full p-0.5
         ${

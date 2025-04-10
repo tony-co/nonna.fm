@@ -2,8 +2,7 @@
 
 import { useEffect, useState, TouchEvent } from "react";
 import { LibrarySidebar } from "@/components/layout/Sidebar";
-import { MatchingProvider } from "@/contexts/MatchingContext";
-import { LibraryProvider, useLibrary } from "@/contexts/LibraryContext";
+import { useLibrary } from "@/contexts/LibraryContext";
 import type { IPlaylist } from "@/types/library";
 import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
 import { MusicService } from "@/types/services";
@@ -137,7 +136,7 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
         <aside
           role="sidebar"
           aria-label="Library Selection"
-          className={`h-full w-full overflow-y-auto border-r border-indigo-100/10 transition-transform duration-300 md:relative md:w-[38rem] md:translate-x-0 dark:bg-[#0A0A1B] md:dark:bg-transparent ${
+          className={`h-full w-full overflow-y-auto transition-transform duration-300 md:relative md:w-[38rem] md:translate-x-0 md:border-r md:border-indigo-100/10 md:dark:bg-transparent ${
             isContentVisible ? "fixed -translate-x-full md:static md:translate-x-0" : ""
           }`}
         >
@@ -160,6 +159,7 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
           {/* Back Link - Mobile Only */}
           <button
             type="button"
+            data-testid="back-to-library"
             onClick={() => {
               setIsContentVisible(false);
               router.push(`/library/${source}/${_target}`);
@@ -196,11 +196,5 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
 }
 
 export function LibraryClientContent(props: LibraryClientContentProps) {
-  return (
-    <LibraryProvider>
-      <MatchingProvider>
-        <LibraryContent {...props} />
-      </MatchingProvider>
-    </LibraryProvider>
-  );
+  return <LibraryContent {...props} />;
 }

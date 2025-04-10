@@ -19,7 +19,6 @@ export interface IAlbum {
   status?: "pending" | "matched" | "unmatched";
   selected?: boolean;
   artwork?: string; // URL to album artwork
-  tracks: ITrack[];
 }
 
 export interface IPlaylist {
@@ -49,9 +48,9 @@ export interface ITrack {
 
 export interface LibraryState {
   // Library Data
-  likedSongs: Set<ITrack>;
-  albums: Set<IAlbum>;
-  playlists: Map<string, IPlaylist>;
+  likedSongs: Set<ITrack> | undefined;
+  albums: Set<IAlbum> | undefined;
+  playlists: Map<string, IPlaylist> | undefined;
 
   // Selection State
   selectedItems: {

@@ -3,15 +3,13 @@
 import { FC, useEffect, useRef } from "react";
 import { useMatching } from "@/contexts/MatchingContext";
 import { useLibrary } from "@/contexts/LibraryContext";
-import { useSearchTracks } from "@/hooks/useSearchTracks";
 import { useParams } from "next/navigation";
 import { TrackList } from "@/components/library/TrackList";
 import type { MusicService } from "@/types/services";
 
 export const LikedSongs: FC = () => {
   const { state } = useLibrary();
-  const { getTrackStatus } = useMatching();
-  const { matchLikedSongs } = useSearchTracks();
+  const { getTrackStatus, matchLikedSongs } = useMatching();
   const params = useParams();
   const target = params.target as MusicService;
   const hasStartedMatching = useRef(false);

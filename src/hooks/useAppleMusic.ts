@@ -17,18 +17,52 @@ export function useAppleMusic(): UseAppleMusicReturn {
 
   // Initialize MusicKit when the component mounts
   useEffect(() => {
+    let isMounted = true;
+    let retryTimeout: NodeJS.Timeout | null = null;
+
     async function init(): Promise<void> {
       try {
         await initializeAppleMusic();
-        setIsInitialized(true);
+        if (isMounted) {
+          setIsInitialized(true);
+        }
       } catch (err) {
-        setError(err instanceof Error ? err : new Error("Failed to initialize Apple Music"));
+        if (isMounted) {
+          setError(err instanceof Error ? err : new Error("Failed to initialize Apple Music"));
+        }
       }
     }
 
-    if (typeof window !== "undefined" && window.MusicKit) {
-      init();
+    async function waitForMusicKit(attempts = 0): Promise<void> {
+      if (!isMounted) return;
+
+      if (window.MusicKit) {
+        init();
+      } else if (attempts < 10) {
+        console.log(`Waiting for MusicKit to be available (attempt ${attempts + 1})`);
+        retryTimeout = setTimeout(
+          () => {
+            waitForMusicKit(attempts + 1);
+          },
+          500 * (attempts + 1)
+        );
+      } else {
+        if (isMounted) {
+          setError(new Error("MusicKit failed to load after multiple attempts"));
+        }
+      }
     }
+
+    if (typeof window !== "undefined") {
+      waitForMusicKit();
+    }
+
+    return () => {
+      isMounted = false;
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+      }
+    };
   }, []);
 
   const authorize = useCallback(async () => {

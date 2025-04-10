@@ -7,7 +7,6 @@ import { usePlaylistTracks } from "@/hooks/usePlaylistTracks";
 import { PlayOnButton } from "@/components/shared/PlayOnButton";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { useSearchTracks } from "@/hooks/useSearchTracks";
 import { useParams } from "next/navigation";
 import { MusicService } from "@/types/services";
 
@@ -17,9 +16,8 @@ interface PlaylistProps {
 
 export const Playlist: FC<PlaylistProps> = ({ playlistId }) => {
   const { selectedItems } = useLibrarySelection();
-  const { getTrackStatus } = useMatching();
+  const { getTrackStatus, matchPlaylistTracks } = useMatching();
   const { playlist, isLoading, error } = usePlaylistTracks(playlistId);
-  const { matchPlaylistTracks } = useSearchTracks();
   const params = useParams();
   const targetService = params.target as MusicService;
   const hasStartedMatching = useRef(false);

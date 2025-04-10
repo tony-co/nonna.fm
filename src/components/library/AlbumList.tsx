@@ -27,7 +27,7 @@ const AlbumItem: FC<AlbumItemProps> = ({ album, selected, onToggle }) => {
           ? "bg-indigo-50 dark:bg-indigo-950/30"
           : "bg-transparent hover:bg-indigo-50/70 dark:bg-transparent dark:hover:bg-indigo-950/20"
       }`}
-      role="row"
+      role="album"
     >
       <div>
         <input
@@ -74,11 +74,6 @@ const AlbumItem: FC<AlbumItemProps> = ({ album, selected, onToggle }) => {
           </div>
           <div className="truncate text-sm text-slate-500 dark:text-slate-400">{album.artist}</div>
         </div>
-      </div>
-
-      {/* Artist */}
-      <div className="hidden truncate text-sm text-slate-500 md:flex md:text-slate-400">
-        {album.artist}
       </div>
 
       <div>

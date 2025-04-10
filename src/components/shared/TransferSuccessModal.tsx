@@ -1,4 +1,5 @@
 import { FC, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Dialog from "./Dialog";
 import { getServiceById } from "@/config/services";
 import { TransferResult } from "@/types/services";
@@ -67,7 +68,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
     (results.albums?.added || 0) +
     Array.from(results.playlists.values()).reduce((sum, result) => sum + result.added, 0);
 
-  return (
+  return createPortal(
     <Dialog
       isOpen={isOpen}
       onClose={onClose}
@@ -211,9 +212,9 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
                       <div className="font-medium text-gray-900 dark:text-white">
                         {playlist.name || "Playlist"}
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {/* <div className="text-sm text-gray-500 dark:text-gray-400">
                         {result.added} songs transferred
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                   <svg
@@ -244,6 +245,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
           </button>
         </div>
       </div>
-    </Dialog>
+    </Dialog>,
+    document.body
   );
 };
