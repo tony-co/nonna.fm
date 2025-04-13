@@ -84,25 +84,17 @@ export async function retryWithExponentialBackoff<T>(
     try {
       const response = await fetchFn();
 
-      // Helper function to safely parse response
-      const parseResponse = async (res: Response): Promise<T> => {
-        const contentType = res.headers.get("content-type");
-        try {
-          if (contentType && contentType.includes("application/json")) {
-            const text = await res.text();
-            // Only try to parse as JSON if we have content
-            return text ? JSON.parse(text) : null;
-          }
-          return (await res.text()) as T;
-        } catch (e) {
-          console.warn("Failed to parse response:", e);
-          return null as T;
-        }
-      };
-
       // If the response is ok, parse and return the data
       if (response.ok) {
-        return await parseResponse(response);
+        if (response.status === 204) {
+          return {} as T;
+        }
+        // Handle both JSON and text responses
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          return await response.json();
+        }
+        return (await response.text()) as T;
       }
 
       // If we get a 429, use the Retry-After header if available
@@ -118,9 +110,9 @@ export async function retryWithExponentialBackoff<T>(
         try {
           const contentType = response.headers.get("content-type");
           if (contentType && contentType.includes("application/json")) {
-            // Parse error response separately from main response
-            const text = await response.clone().text();
-            const errorData = text ? JSON.parse(text) : null;
+            // Clone the response to read it twice (once here, once for the content)
+            const clonedResponse = response.clone();
+            const errorData = await clonedResponse.json();
 
             // Check if it's a YouTube SERVICE_UNAVAILABLE error
             const isYouTubeServiceUnavailable = errorData?.error?.errors?.some(
@@ -157,9 +149,6 @@ export async function retryWithExponentialBackoff<T>(
       if (nonRetryableStatusCodes.has(response.status)) {
         throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
       }
-
-      console.log("retryableStatusCodes", retryableStatusCodes);
-      console.log("response.status", response.status);
 
       // For errors with status codes that should be retried
       if (retryableStatusCodes.has(response.status)) {
