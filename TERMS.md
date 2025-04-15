@@ -38,7 +38,7 @@ By using Youtube features, you agree to:
 
 You can revoke nonna.fm's access to your YouTube data at: https://security.google.com/settings/security/permissions
 
-## Spotify Integration
+### Spotify Integration
 
 By using Spotify features, you agree to:
 
