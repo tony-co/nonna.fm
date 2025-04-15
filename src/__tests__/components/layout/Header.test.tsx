@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Header } from "@/components/layout/Header";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { TransferProvider } from "@/contexts/TransferContext";
 
 // Mock next/font/google
 vi.mock("next/font/google", () => ({
@@ -10,6 +11,26 @@ vi.mock("next/font/google", () => ({
     style: {
       fontFamily: "Inter",
     },
+  }),
+}));
+
+// Mock useTransferLimits hook
+vi.mock("@/hooks/useTransferLimits", () => ({
+  useTransferLimits: () => ({
+    status: {
+      isPremium: false,
+      dailyLimit: 10,
+      currentUsage: 0,
+      availableToday: 10,
+    },
+    loading: false,
+    error: null,
+    updateUsage: vi.fn(),
+    checkLimit: vi.fn(),
+    refreshStatus: vi.fn(),
+    isLimitExceededModalOpen: false,
+    setIsLimitExceededModalOpen: vi.fn(),
+    selectedCountForModal: 0,
   }),
 }));
 
@@ -39,7 +60,9 @@ describe("Header", () => {
   it("renders the header with logo and navigation", () => {
     render(
       <ThemeProvider>
-        <Header />
+        <TransferProvider>
+          <Header />
+        </TransferProvider>
       </ThemeProvider>
     );
 
@@ -64,7 +87,9 @@ describe("Header", () => {
   it("starts with light theme by default", () => {
     render(
       <ThemeProvider>
-        <Header />
+        <TransferProvider>
+          <Header />
+        </TransferProvider>
       </ThemeProvider>
     );
 
@@ -75,7 +100,9 @@ describe("Header", () => {
   it("toggles between light and dark themes when clicking the theme button", () => {
     render(
       <ThemeProvider>
-        <Header />
+        <TransferProvider>
+          <Header />
+        </TransferProvider>
       </ThemeProvider>
     );
 
@@ -110,7 +137,9 @@ describe("Header", () => {
 
     render(
       <ThemeProvider>
-        <Header />
+        <TransferProvider>
+          <Header />
+        </TransferProvider>
       </ThemeProvider>
     );
 

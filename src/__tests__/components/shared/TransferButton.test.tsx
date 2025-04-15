@@ -52,7 +52,7 @@ describe("TransferButton", () => {
     expect(transferButton).toBeDisabled();
   });
 
-  it("shows enabled state and correct summary text when tracks and playlists are matched", () => {
+  it("shows enabled state and correct usage text when tracks and playlists are matched", () => {
     // Mock a selection of tracks and playlists
     const libraryState = {
       selectedItems: {
@@ -80,8 +80,8 @@ describe("TransferButton", () => {
     const transferButton = screen.getByRole("transfer-button");
     expect(transferButton).not.toBeDisabled();
 
-    // Check the summary text shows correct counts
-    const summaryText = screen.getByText("2 liked tracks, 1 playlists");
-    expect(summaryText).toBeInTheDocument();
+    // Check the usage text shows correct counts
+    const usageText = screen.getByText("10 transfers available");
+    expect(usageText).toBeInTheDocument();
   });
 });

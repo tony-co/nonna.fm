@@ -37,6 +37,28 @@ interface SpotifyTokenResponse {
   scope: string;
 }
 
+async function fetchSpotifyUserProfile(accessToken: string): Promise<{ id: string }> {
+  try {
+    const response = await fetch("https://api.spotify.com/v1/me", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch user profile");
+    }
+
+    const data = await response.json();
+    return {
+      id: data.id,
+    };
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    throw error;
+  }
+}
+
 export async function initiateSpotifyAuth(role: "source" | "target"): Promise<void> {
   initializeEncryption();
 
@@ -250,13 +272,15 @@ export async function handleSpotifyCallback(
 
   // Store auth data
   try {
+    // Fetch user profile
+    const userProfile = await fetchSpotifyUserProfile(tokenData.access_token);
+
     const authData: AuthData = {
       accessToken: tokenData.access_token,
       refreshToken: tokenData.refresh_token,
       expiresIn: tokenData.expires_in,
       timestamp: Date.now(),
-      userId: "",
-      displayName: "",
+      userId: userProfile.id,
       tokenType: tokenData.token_type,
       role: storedState.role,
       serviceId: "spotify",
@@ -305,6 +329,8 @@ export async function refreshSpotifyToken(
     console.log("Attempting to refresh token with refresh token length:", refreshToken?.length);
 
     let responseData;
+    // Get existing auth data to preserve user info
+    const existingAuthData = getAuthData(role);
 
     // For test environments, allow direct requests to Spotify API
     if (directRequest) {
@@ -374,8 +400,7 @@ export async function refreshSpotifyToken(
       refreshToken: responseData.refresh_token || refreshToken, // Use old refresh token if new one is not provided
       expiresIn: responseData.expires_in,
       timestamp: Date.now(),
-      userId: "",
-      displayName: "",
+      userId: existingAuthData?.userId || "",
       tokenType: responseData.token_type || "Bearer",
       role: role,
       serviceId: "spotify",

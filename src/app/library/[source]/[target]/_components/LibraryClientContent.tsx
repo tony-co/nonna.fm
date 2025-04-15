@@ -6,7 +6,7 @@ import { useLibrary } from "@/contexts/LibraryContext";
 import type { IPlaylist } from "@/types/library";
 import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
 import { MusicService } from "@/types/services";
-import { initiateAppleAuth } from "@/lib/services/apple/auth";
+import { authorizeAppleMusic } from "@/lib/services/apple/api";
 import { fetchInitialLibraryData } from "@/lib/server/library";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -63,7 +63,7 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
 
         // Apple Musickit requires browser-side initialization
         if (source === "apple") {
-          await initiateAppleAuth("source");
+          await authorizeAppleMusic("source");
         }
 
         const { initialData, error } = await fetchInitialLibraryData(source);

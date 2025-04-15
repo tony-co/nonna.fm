@@ -10,7 +10,7 @@ import { initializeEncryption } from "@/lib/auth/crypto";
 import { clearAllServiceData } from "@/lib/auth/utils";
 import { initiateSpotifyAuth } from "@/lib/services/spotify/auth";
 import { initiateYouTubeAuth } from "@/lib/services/youtube/auth";
-import { initiateAppleAuth } from "@/lib/services/apple/auth";
+import { authorizeAppleMusic } from "@/lib/services/apple/api";
 import { SERVICES, getAvailableServices } from "@/config/services";
 import { createPortal } from "react-dom";
 import { DeezerConnectModal } from "@/components/modals/DeezerConnectModal";
@@ -43,10 +43,8 @@ function HomePageContent() {
   const handleAppleLogin = async (): Promise<void> => {
     try {
       clearAllServiceData();
-      const success = await initiateAppleAuth("source");
-      if (success) {
-        router.push("/source?source=apple");
-      }
+      await authorizeAppleMusic("source");
+      router.push("/source?source=apple");
     } catch (error) {
       console.error("Error initiating Apple Music auth:", error);
     }
@@ -179,11 +177,11 @@ function HomePageContent() {
                   </span>
                 </div>
                 <h3 className="mb-4 text-2xl font-semibold text-zinc-800 dark:text-stone-200">
-                  Free Forever
+                  Generous Free Plan
                 </h3>
                 <p className="text-lg text-zinc-600 dark:text-stone-400">
-                  Transfer all your playlists, liked songs and albums between any music streaming
-                  service with up to 5000 tracks completely free.
+                  300 transfers for free <strong>everyday</strong> or upgrade to premium for 10x
+                  more.
                 </p>
               </div>
               <div className="rounded-3xl border border-indigo-200/50 bg-indigo-100 p-10 shadow-lg transition-all duration-200 hover:shadow-xl dark:border-indigo-800/30 dark:bg-indigo-950/70">

@@ -3,7 +3,8 @@
 import { useParams, useSearchParams } from "next/navigation";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { useMatching } from "@/contexts/MatchingContext";
-import { useTransfer } from "@/hooks/useTransfer";
+import { useTransfer as useTransferHook } from "@/hooks/useTransfer";
+import { useTransfer } from "@/contexts/TransferContext";
 import { useState, useEffect, useMemo } from "react";
 import { TransferSuccessModal } from "./TransferSuccessModal";
 import { MusicService } from "@/types/services";
@@ -15,6 +16,14 @@ export function TransferButton() {
   const searchParams = useSearchParams();
   const { state } = useLibrary();
   const { isMatchingInProgress } = useMatching();
+  const { userStatus: status } = useTransfer();
+  const {
+    handleStartTransfer,
+    transferResults,
+    showSuccessModal,
+    setShowSuccessModal,
+    error: transferError,
+  } = useTransferHook();
   const [isTransferring, setIsTransferring] = useState(false);
 
   // Initial check for fetching playlists to prevent flickering
@@ -32,9 +41,6 @@ export function TransferButton() {
   // Get target service from URL parameters
   const params = useParams();
   const targetServiceId = params.target as MusicService;
-
-  const { handleStartTransfer, transferResults, showSuccessModal, setShowSuccessModal, error } =
-    useTransfer();
 
   // Check if any items are selected
   const hasSelections =
@@ -168,8 +174,10 @@ export function TransferButton() {
   return (
     <>
       <div className="flex items-center gap-4">
-        {hasSelections && !isCompleted && (
-          <span className="text-sm text-gray-600 dark:text-gray-400">{getSummaryText()}</span>
+        {!isCompleted && status && (
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            {status.availableToday} transfers available
+          </span>
         )}
         <button
           className={`relative flex w-[240px] items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-full px-6 py-3 text-base font-medium transition-all duration-200 ${
@@ -219,9 +227,9 @@ export function TransferButton() {
         />
       )}
 
-      {error && (
+      {transferError && (
         <div className="fixed bottom-24 left-0 right-0 mx-auto w-full max-w-md rounded-lg bg-red-50 p-4 text-red-800 shadow-lg dark:bg-red-900/30 dark:text-red-200">
-          <p>{error}</p>
+          <p>{transferError}</p>
         </div>
       )}
     </>
