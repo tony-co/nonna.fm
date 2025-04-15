@@ -14,12 +14,14 @@ import { authorizeAppleMusic } from "@/lib/services/apple/api";
 import { SERVICES, getAvailableServices } from "@/config/services";
 import { createPortal } from "react-dom";
 import { DeezerConnectModal } from "@/components/modals/DeezerConnectModal";
+import { SpotifyConsentModal } from "@/components/modals/SpotifyConsentModal";
 
 function HomePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const [isDeezerModalOpen, setIsDeezerModalOpen] = useState(false);
+  const [isSpotifyConsentModalOpen, setIsSpotifyConsentModalOpen] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
@@ -32,8 +34,13 @@ function HomePageContent() {
   }, [error]);
 
   const handleSpotifyLogin = async (): Promise<void> => {
+    setIsSpotifyConsentModalOpen(true);
+  };
+
+  const handleSpotifyConsent = async (): Promise<void> => {
     try {
       clearAllServiceData();
+      setIsSpotifyConsentModalOpen(false);
       await initiateSpotifyAuth("source");
     } catch (error) {
       console.error("Error initiating Spotify auth:", error);
@@ -285,6 +292,13 @@ function HomePageContent() {
           <DeezerConnectModal
             isOpen={isDeezerModalOpen}
             onClose={() => setIsDeezerModalOpen(false)}
+          />
+
+          {/* Spotify Consent Modal */}
+          <SpotifyConsentModal
+            isOpen={isSpotifyConsentModalOpen}
+            onClose={() => setIsSpotifyConsentModalOpen(false)}
+            onAgree={handleSpotifyConsent}
           />
         </main>
       </div>

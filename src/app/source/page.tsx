@@ -9,6 +9,7 @@ import { initiateSpotifyAuth } from "@/lib/services/spotify/auth";
 import { useState, Suspense } from "react";
 import { MusicService } from "@/types/services";
 import { initiateYouTubeAuth } from "@/lib/services/youtube/auth";
+import { SpotifyConsentModal } from "@/components/modals/SpotifyConsentModal";
 
 function SourcePageContent() {
   const router = useRouter();
@@ -16,6 +17,8 @@ function SourcePageContent() {
   const { authorize: authorizeAppleMusic } = useAppleMusic();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSpotifyConsentModalOpen, setIsSpotifyConsentModalOpen] = useState(false);
+  const [pendingTargetAction, setPendingTargetAction] = useState<string | null>(null);
 
   const handleTargetSelect = async (serviceId: string): Promise<void> => {
     setIsProcessing(true);
@@ -31,8 +34,9 @@ function SourcePageContent() {
         await authorizeAppleMusic("target");
         router.push(`/library/${source}/${serviceId}`);
       } else if (serviceId === "spotify") {
-        await initiateSpotifyAuth("target");
-        router.push(`/library/${source}/${serviceId}`);
+        setPendingTargetAction(serviceId);
+        setIsSpotifyConsentModalOpen(true);
+        setIsProcessing(false);
       } else if (serviceId === "youtube") {
         await initiateYouTubeAuth("target");
         router.push(`/library/${source}/${serviceId}`);
@@ -42,7 +46,27 @@ function SourcePageContent() {
       setError(
         `Failed to connect to ${serviceId === "apple" ? "Apple Music" : "Spotify"}. Please try again.`
       );
-    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleSpotifyConsent = async (): Promise<void> => {
+    if (!pendingTargetAction) return;
+
+    setIsProcessing(true);
+    setIsSpotifyConsentModalOpen(false);
+
+    try {
+      const source = searchParams.get("source");
+      if (!source) {
+        throw new Error("No source service selected");
+      }
+
+      await initiateSpotifyAuth("target");
+      router.push(`/library/${source}/spotify`);
+    } catch (err) {
+      console.error("Authorization error:", err);
+      setError("Failed to connect to Spotify. Please try again.");
       setIsProcessing(false);
     }
   };
@@ -74,6 +98,16 @@ function SourcePageContent() {
           </div>
         </main>
         <Footer />
+
+        <SpotifyConsentModal
+          isOpen={isSpotifyConsentModalOpen}
+          onClose={() => {
+            setIsSpotifyConsentModalOpen(false);
+            setPendingTargetAction(null);
+            setIsProcessing(false);
+          }}
+          onAgree={handleSpotifyConsent}
+        />
       </div>
     </>
   );
