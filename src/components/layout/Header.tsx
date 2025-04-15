@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { TransferUsageDisplay } from "../shared/TransferUsageDisplay";
 import { ThemeToggle } from "./header/ThemeToggle";
 import { LanguageSwitch } from "./header/LanguageSwitch";
 import { MobileMenu } from "./header/MobileMenu";
 import { NonnaLogo } from "../icons/NonnaLogo";
 import { Inter } from "next/font/google";
-import { TransferUsageDisplay } from "../shared/TransferUsageDisplay";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -15,6 +16,8 @@ const inter = Inter({
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const isLibraryPage = pathname?.startsWith("/library");
 
   return (
     <>
@@ -45,7 +48,7 @@ export const Header = () => {
 
             {/* Desktop Navigation */}
             <div className="hidden items-center gap-8 sm:flex">
-              <TransferUsageDisplay />
+              {isLibraryPage && <TransferUsageDisplay />}
               <LanguageSwitch />
               <ThemeToggle />
             </div>
