@@ -62,69 +62,6 @@ export function clearAppleMusicAuth(role?: "source" | "target"): void {
   }
 }
 
-export async function initiateAppleAuth(role: "source" | "target"): Promise<boolean> {
-  try {
-    console.log("initiateAppleAuth - starting for role:", role);
-
-    // Clear any existing auth data for this role
-    clearAuthData(role);
-
-    // Check if MusicKit is available
-    if (typeof window === "undefined" || !window.MusicKit) {
-      console.log("MusicKit not available yet, waiting for it to load...");
-      // Wait for MusicKit to be available (up to 10 attempts, with increasing delay)
-      let attempts = 0;
-      while (attempts < 10) {
-        await new Promise(resolve => setTimeout(resolve, 500 * (attempts + 1)));
-        if (window.MusicKit) {
-          console.log("MusicKit loaded after waiting");
-          break;
-        }
-        attempts++;
-        console.log(`Still waiting for MusicKit to load (attempt ${attempts + 1})`);
-      }
-
-      // If MusicKit is still not available after retries, throw an error
-      if (!window.MusicKit) {
-        throw new Error("MusicKit failed to load after multiple attempts");
-      }
-    }
-
-    // Initialize MusicKit
-    await window.MusicKit.configure({
-      developerToken: process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN || "",
-      app: {
-        name: "Nonna.fm",
-        build: "1.0.0",
-      },
-    });
-
-    // Get MusicKit instance
-    const music = window.MusicKit.getInstance();
-
-    // Authorize with MusicKit
-    const musicUserToken = await music.authorize();
-    console.log("MusicKit authorization successful");
-
-    // Store the auth data
-    setAppleMusicAuthData(role, {
-      accessToken: musicUserToken,
-      refreshToken: "", // MusicKit handles token refresh internally
-      expiresIn: 3600, // 1 hour default, MusicKit will handle actual expiration
-      timestamp: Date.now(),
-      userId: "", // Will be populated later if needed
-      displayName: "", // Will be populated later if needed
-      tokenType: "Bearer", // MusicKit uses Bearer tokens
-    });
-
-    console.log("Apple Music authorization completed");
-    return true;
-  } catch (error) {
-    console.error("initiateAppleAuth - error:", error);
-    throw error;
-  }
-}
-
 export async function handleAppleCallback(
   searchParams: string
 ): Promise<{ success: boolean; role?: "source" | "target" }> {
@@ -142,12 +79,6 @@ export async function handleAppleCallback(
   const code = params.get("code");
   const receivedState = params.get("state");
   const error = params.get("error");
-
-  console.log("Received params:", {
-    hasCode: !!code,
-    hasState: !!receivedState,
-    error: error || "none",
-  });
 
   if (error) {
     console.error("Apple auth error occurred");
@@ -206,10 +137,7 @@ export async function handleAppleCallback(
     return { success: false };
   }
 
-  console.log("State validation successful");
-
   // Exchange code for token with retry logic
-  console.log("Starting token exchange...");
   let tokenResponse: Response | undefined;
   let retryCount = 0;
   const maxRetries = 3;
@@ -272,7 +200,6 @@ export async function handleAppleCallback(
     return { success: false };
   }
 
-  console.log("Token exchange successful");
   let tokenData: AppleTokenResponse;
   try {
     tokenData = await tokenResponse.json();
@@ -286,13 +213,15 @@ export async function handleAppleCallback(
 
   // Store auth data
   try {
+    // Fetch user profile
+    const userProfile = await fetchAppleMusicUserProfile();
+
     const authData: AuthData = {
       accessToken: tokenData.access_token,
       refreshToken: tokenData.refresh_token,
       expiresIn: tokenData.expires_in,
       timestamp: Date.now(),
-      userId: "",
-      displayName: "",
+      userId: userProfile.id,
       tokenType: tokenData.token_type,
       role: storedState.role,
       serviceId: "apple",
@@ -358,7 +287,6 @@ export async function refreshAppleToken(
       expiresIn: tokenData.expires_in,
       timestamp: Date.now(),
       userId: "",
-      displayName: "",
       tokenType: tokenData.token_type,
       role: role,
       serviceId: "apple",
@@ -378,5 +306,20 @@ export function clearAppleAuth(role?: "source" | "target"): void {
   } else {
     clearAuthData("source");
     clearAuthData("target");
+  }
+}
+
+async function fetchAppleMusicUserProfile(): Promise<{ id: string }> {
+  try {
+    const music = window.MusicKit.getInstance();
+    // Get the current user's info which includes their unique identifier
+    const userInfo = await music.authorize();
+
+    return {
+      id: userInfo, // MusicKit.authorize() returns the user token which serves as a unique identifier
+    };
+  } catch (error) {
+    console.error("Error fetching Apple Music user profile:", error);
+    throw error;
   }
 }

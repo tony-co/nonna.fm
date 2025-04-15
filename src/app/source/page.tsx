@@ -28,7 +28,7 @@ function SourcePageContent() {
       }
 
       if (serviceId === "apple") {
-        await authorizeAppleMusic();
+        await authorizeAppleMusic("target");
         router.push(`/library/${source}/${serviceId}`);
       } else if (serviceId === "spotify") {
         await initiateSpotifyAuth("target");

@@ -5,6 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { TransferButton } from "@/components/shared/TransferButton";
 import { LibraryProvider } from "@/contexts/LibraryContext";
 import { MatchingProvider } from "@/contexts/MatchingContext";
+import { TransferProvider } from "@/contexts/TransferContext";
 
 interface LibraryLayoutProps {
   children: React.ReactNode;
@@ -21,28 +22,32 @@ export default async function LibraryLayout({ children, params }: LibraryLayoutP
   return (
     <LibraryProvider>
       <MatchingProvider>
-        <div className="flex h-screen flex-col">
-          {/* Fixed Header */}
-          <div className="fixed left-0 right-0 top-0 z-50">
-            <Header />
-          </div>
+        <TransferProvider>
+          <div className="flex h-screen flex-col">
+            {/* Fixed Header */}
+            <div className="fixed left-0 right-0 top-0 z-50">
+              <Header />
+            </div>
 
-          {/* Main Content Area */}
-          <div className="flex-1 pt-14 sm:pt-16">
-            <main className="container mx-auto h-[calc(100vh-8rem)]">
-              <LibraryClientContent source={source} _target={target}>
-                {children}
-              </LibraryClientContent>
-            </main>
-          </div>
+            {/* Main Content Area */}
+            <div className="flex-1 pt-14 sm:pt-16">
+              <main className="container mx-auto h-[calc(100vh-8rem)]">
+                <LibraryClientContent source={source} _target={target}>
+                  {children}
+                </LibraryClientContent>
+              </main>
+            </div>
 
-          {/* Fixed Footer */}
-          <div className="fixed bottom-0 left-0 right-0 z-40">
-            <Footer>
-              <TransferButton />
-            </Footer>
+            {/* Fixed Footer */}
+            <div className="fixed bottom-0 left-0 right-0 z-40">
+              <Footer>
+                <div className="flex w-full items-center justify-between">
+                  <TransferButton />
+                </div>
+              </Footer>
+            </div>
           </div>
-        </div>
+        </TransferProvider>
       </MatchingProvider>
     </LibraryProvider>
   );

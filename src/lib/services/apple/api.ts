@@ -12,6 +12,7 @@ import {
   cleanSearchTerm,
 } from "@/lib/utils/matching";
 import { retryWithExponentialBackoff, type RetryOptions } from "@/lib/utils/retry";
+import { AUTH_STORAGE_KEYS, type AuthData, setServiceType } from "@/lib/auth/constants";
 
 interface MusicKitInstance {
   authorize: () => Promise<string>;
@@ -143,17 +144,17 @@ export async function initializeAppleMusic(): Promise<MusicKitInstance> {
   try {
     // Check if MusicKit is available
     if (typeof window === "undefined" || !window.MusicKit) {
-      console.log("MusicKit not available yet, waiting for it to load...");
+      console.error("MusicKit not available yet, waiting for it to load...");
       // Wait for MusicKit to be available (up to 10 attempts, with increasing delay)
       let attempts = 0;
       while (attempts < 10) {
         await new Promise(resolve => setTimeout(resolve, 500 * (attempts + 1)));
         if (window.MusicKit) {
-          console.log("MusicKit loaded after waiting");
+          console.info("MusicKit loaded after waiting");
           break;
         }
         attempts++;
-        console.log(`Still waiting for MusicKit to load (attempt ${attempts + 1})`);
+        console.error(`Still waiting for MusicKit to load (attempt ${attempts + 1})`);
       }
 
       // If MusicKit is still not available after retries, throw an error
@@ -180,13 +181,30 @@ export async function initializeAppleMusic(): Promise<MusicKitInstance> {
   }
 }
 
-export async function authorizeAppleMusic(): Promise<string> {
+export async function authorizeAppleMusic(role: "source" | "target"): Promise<string> {
   try {
-    console.log("authorizeAppleMusic - starting");
     const music = await initializeAppleMusic();
-    console.log("authorizeAppleMusic - initialized");
     const musicUserToken = await music.authorize();
-    console.log("authorizeAppleMusic - success");
+
+    // Store auth data in localStorage
+    const authData: AuthData = {
+      accessToken: musicUserToken,
+      refreshToken: "", // MusicKit handles token refresh internally
+      expiresIn: 3600, // 1 hour default
+      timestamp: Date.now(),
+      userId: musicUserToken, // Use the user token as ID since it's unique per user
+      tokenType: "Bearer",
+      role,
+      serviceId: "apple",
+    };
+
+    // Store in localStorage
+    localStorage.setItem(
+      role === "source" ? AUTH_STORAGE_KEYS.SOURCE.TOKEN : AUTH_STORAGE_KEYS.TARGET.TOKEN,
+      JSON.stringify(authData)
+    );
+    setServiceType(role, "apple");
+
     return musicUserToken;
   } catch (error) {
     console.error("authorizeAppleMusic - error:", error);
@@ -735,7 +753,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
       name: playlist.attributes.name,
       trackCount: playlist.attributes.trackCount,
       ownerId: authData.userId,
-      ownerName: authData.displayName,
+      ownerName: "", // TODO: get owner name
       artwork: formatArtworkUrl(playlist.attributes.artwork?.url),
       tracks: [], // We'll fetch tracks when needed
     }));
@@ -756,7 +774,6 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
   nextUrl = `${baseUrl}/songs?limit=50`;
 
   do {
-    console.log("Fetching songs from:", nextUrl);
     const data = await retryWithExponentialBackoff<AppleResponse<AppleSong>>(
       () =>
         fetch(nextUrl, {

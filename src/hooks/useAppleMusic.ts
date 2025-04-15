@@ -6,7 +6,7 @@ interface UseAppleMusicReturn {
   isAuthorized: boolean;
   musicUserToken: string | null;
   error: Error | null;
-  authorize: () => Promise<void>;
+  authorize: (role: "source" | "target") => Promise<void>;
 }
 
 export function useAppleMusic(): UseAppleMusicReturn {
@@ -65,9 +65,9 @@ export function useAppleMusic(): UseAppleMusicReturn {
     };
   }, []);
 
-  const authorize = useCallback(async () => {
+  const authorize = useCallback(async (role: "source" | "target") => {
     try {
-      const token = await authorizeAppleMusic();
+      const token = await authorizeAppleMusic(role);
       setMusicUserToken(token);
       setIsAuthorized(true);
       setError(null);

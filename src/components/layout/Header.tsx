@@ -6,6 +6,7 @@ import { LanguageSwitch } from "./header/LanguageSwitch";
 import { MobileMenu } from "./header/MobileMenu";
 import { NonnaLogo } from "../icons/NonnaLogo";
 import { Inter } from "next/font/google";
+import { TransferUsageDisplay } from "../shared/TransferUsageDisplay";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -44,6 +45,7 @@ export const Header = () => {
 
             {/* Desktop Navigation */}
             <div className="hidden items-center gap-8 sm:flex">
+              <TransferUsageDisplay />
               <LanguageSwitch />
               <ThemeToggle />
             </div>

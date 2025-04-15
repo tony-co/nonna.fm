@@ -5,6 +5,7 @@ import { useMatching, MATCHING_STATUS } from "@/contexts/MatchingContext";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { addTracksToLibrary, addAlbumsToLibrary, createPlaylistWithTracks } from "@/lib/musicApi";
 import { useParams } from "next/navigation";
+import { useTransfer as useTransferContext } from "@/contexts/TransferContext";
 
 interface TransferResults {
   likedSongs?: TransferResult;
@@ -12,7 +13,7 @@ interface TransferResults {
   playlists: Map<string, TransferResult>;
 }
 
-interface UseTransferReturn {
+interface UseTransferHookReturn {
   handleStartTransfer: (selection: ISelectionState) => Promise<void>;
   handleTransferPlaylist: (playlist: IPlaylist, selection: ISelectionState) => Promise<void>;
   transferResults: TransferResults | null;
@@ -21,16 +22,40 @@ interface UseTransferReturn {
   error: string | null;
 }
 
-export function useTransfer(): UseTransferReturn {
+export function useTransfer(): UseTransferHookReturn {
   const { state } = useLibrary();
   const { getTrackStatus, getTrackTargetId, getAlbumTargetId } = useMatching();
   const [transferResults, setTransferResults] = useState<TransferResults | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { updateUsage, checkLimit } = useTransferContext();
 
   const params = useParams();
   const sourceService = params.source as MusicService;
   const targetService = params.target as MusicService;
+
+  // Helper to count total tracks in a selection
+  const countSelectedTracks = (selection: ISelectionState): number => {
+    let count = 0;
+
+    // Count liked songs
+    count += Array.from(selection.likedSongs).filter(
+      track => getTrackStatus(track.id) === MATCHING_STATUS.MATCHED
+    ).length;
+
+    // Count tracks in playlists
+    for (const [, selectedTracks] of Array.from(selection.playlists.entries())) {
+      count += Array.from(selectedTracks).filter(
+        track => getTrackStatus(track.id) === MATCHING_STATUS.MATCHED
+      ).length;
+    }
+
+    // Count albums as tracks (this is a simplification)
+    // In a full implementation, we would count the actual tracks in each album
+    count += selection.albums.size;
+
+    return count;
+  };
 
   const handleStartTransfer = async (selection: ISelectionState): Promise<void> => {
     if (!state || !targetService) {
@@ -40,11 +65,20 @@ export function useTransfer(): UseTransferReturn {
     }
 
     try {
+      // Count total tracks that will be transferred
+      const totalTracksToTransfer = countSelectedTracks(selection);
+
+      // Check against daily limit without updating usage
+      const canProceed = await checkLimit(totalTracksToTransfer);
+      if (!canProceed) {
+        return;
+      }
+
+      console.log("Starting transfer with selection:", selection);
+
       const results: TransferResults = {
         playlists: new Map<string, TransferResult>(),
       };
-
-      console.log("Starting transfer with selection:", selection);
 
       // Transfer liked songs
       const matchedLikedSongs = Array.from(selection.likedSongs)
@@ -105,6 +139,9 @@ export function useTransfer(): UseTransferReturn {
         }
       }
 
+      // Update usage count in Redis after successful transfer
+      await updateUsage(totalTracksToTransfer);
+
       console.log("Transfer completed successfully:", results);
       setTransferResults(results);
       setShowSuccessModal(true);
@@ -147,6 +184,12 @@ export function useTransfer(): UseTransferReturn {
         return;
       }
 
+      // Check against daily limit without updating usage
+      const canProceed = await checkLimit(matchedTracks.length);
+      if (!canProceed) {
+        return;
+      }
+
       const result = await createPlaylistWithTracks(
         playlist.name,
         matchedTracks,
@@ -154,14 +197,15 @@ export function useTransfer(): UseTransferReturn {
         targetService
       );
 
+      // Update usage count in Redis after successful transfer
+      await updateUsage(matchedTracks.length);
+
       const results: TransferResults = {
         playlists: new Map([[playlist.id, result]]),
       };
 
-      console.log("Playlist transfer completed successfully:", results);
       setTransferResults(results);
       setShowSuccessModal(true);
-      console.log("Success modal should show now:", { showModal: true });
     } catch (err) {
       console.error("handleTransferPlaylist - error:", err);
       setError("Failed to transfer playlist. Please try again.");

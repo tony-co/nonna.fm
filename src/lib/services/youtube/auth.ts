@@ -197,13 +197,15 @@ export async function handleYouTubeCallback(
 
   // Store auth data
   try {
+    // Fetch user profile
+    const userProfile = await fetchYouTubeUserProfile(tokenData.access_token);
+
     const authData: AuthData = {
       accessToken: tokenData.access_token,
       refreshToken: tokenData.refresh_token,
       expiresIn: tokenData.expires_in,
       timestamp: Date.now(),
-      userId: "",
-      displayName: "",
+      userId: userProfile.id,
       tokenType: tokenData.token_type,
       role: storedState.role,
       serviceId: "youtube",
@@ -296,5 +298,34 @@ export function clearYouTubeAuth(role?: "source" | "target"): void {
   } else {
     clearAuthData("source");
     clearAuthData("target");
+  }
+}
+
+async function fetchYouTubeUserProfile(accessToken: string): Promise<{ id: string }> {
+  try {
+    const response = await fetch(
+      "https://www.googleapis.com/youtube/v3/channels?part=id&mine=true",
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch user profile");
+    }
+
+    const data = await response.json();
+    if (!data.items || data.items.length === 0) {
+      throw new Error("No channel found for user");
+    }
+
+    return {
+      id: data.items[0].id,
+    };
+  } catch (error) {
+    console.error("Error fetching YouTube user profile:", error);
+    throw error;
   }
 }

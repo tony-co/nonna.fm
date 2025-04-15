@@ -8,7 +8,6 @@ interface ServiceTokenCache {
   refreshToken: string | null;
   expiresAt: number | null; // timestamp when token expires
   userId?: string | null;
-  displayName?: string | null;
   tokenType?: string | null;
   serviceId?: string | null;
 }
@@ -97,7 +96,6 @@ export async function getCachedSpotifyAccessToken(
       expiresIn: Math.floor((cache.expiresAt - now) / 1000),
       timestamp: now,
       userId: cache.userId || "unknown",
-      displayName: cache.displayName || "Unknown User",
       tokenType: cache.tokenType || "Bearer",
       role: "target",
       serviceId: cache.serviceId || service,
@@ -125,7 +123,6 @@ export async function getCachedSpotifyAccessToken(
       refreshToken: authData.refreshToken || cache.refreshToken,
       expiresAt: authData.timestamp + authData.expiresIn * 1000,
       userId: authData.userId,
-      displayName: authData.displayName,
       tokenType: authData.tokenType,
       serviceId: authData.serviceId,
     };
@@ -146,7 +143,6 @@ export async function getCachedSpotifyAccessToken(
           refreshToken: refreshedAuth.refreshToken || refreshToken,
           expiresAt: Date.now() + refreshedAuth.expiresIn * 1000,
           userId: refreshedAuth.userId,
-          displayName: refreshedAuth.displayName,
           tokenType: refreshedAuth.tokenType,
           serviceId: refreshedAuth.serviceId,
         };

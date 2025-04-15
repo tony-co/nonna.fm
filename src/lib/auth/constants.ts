@@ -19,7 +19,6 @@ export interface AuthData {
   expiresIn: number;
   timestamp: number;
   userId: string;
-  displayName: string;
   tokenType: string;
   role: "source" | "target";
   serviceId: string;
