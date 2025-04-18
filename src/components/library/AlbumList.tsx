@@ -77,7 +77,7 @@ const AlbumItem: FC<AlbumItemProps> = ({ album, selected, onToggle }) => {
       </div>
 
       <div>
-        <StatusIcon status={status} />
+        <StatusIcon album={album} />
       </div>
     </div>
   );

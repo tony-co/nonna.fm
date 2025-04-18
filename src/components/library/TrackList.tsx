@@ -2,49 +2,27 @@
 
 import { FC, useRef } from "react";
 import { useMatching } from "@/contexts/MatchingContext";
-import type { ITrack } from "@/types/library";
+import type { ITrack, IPlaylist } from "@/types/library";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import { useIsVisible } from "@/hooks/useIsVisible";
-
-// Status icons component for better organization
-const StatusIcon: FC<{ status: string | undefined }> = ({ status }) => {
-  switch (status) {
-    case "matched":
-      return (
-        <div className="flex justify-end" title="Matched">
-          <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-        </div>
-      );
-    case "unmatched":
-      return (
-        <div className="flex justify-end" title="Not Found">
-          <div className="h-2.5 w-2.5 rounded-full bg-red-500 dark:bg-red-400" />
-        </div>
-      );
-    case "pending":
-      return (
-        <div className="flex justify-end" title="Searching...">
-          <div className="h-2.5 w-2.5 animate-pulse rounded-full bg-indigo-500 dark:bg-indigo-400" />
-        </div>
-      );
-    default:
-      return null;
-  }
-};
+import { StatusIcon } from "@/components/shared/StatusIcon";
 
 interface TrackListProps {
   tracks: Array<ITrack>;
   selection?: Set<ITrack>;
+  playlist?: IPlaylist;
 }
 
 const TrackRow: FC<{
   track: ITrack;
   index: number;
   isSelected: boolean;
-  status?: string;
-}> = ({ track, index, isSelected, status }) => {
+  playlist?: IPlaylist;
+}> = ({ track, index, isSelected, playlist }) => {
   const ref = useRef<HTMLDivElement>(null);
   const isVisible = useIsVisible(ref as React.RefObject<HTMLElement>);
+  const { getTrackStatus } = useMatching();
+  const status = getTrackStatus(track.id);
 
   return (
     <div
@@ -95,15 +73,13 @@ const TrackRow: FC<{
 
       {/* Status */}
       <div>
-        <StatusIcon status={status} />
+        <StatusIcon track={track} playlist={playlist} />
       </div>
     </div>
   );
 };
 
-export const TrackList: FC<TrackListProps> = ({ tracks, selection = new Set() }) => {
-  const { getTrackStatus } = useMatching();
-
+export const TrackList: FC<TrackListProps> = ({ tracks, selection = new Set(), playlist }) => {
   return (
     <div className="relative bg-transparent dark:bg-transparent" role="tracklist">
       {/* Header */}
@@ -129,7 +105,6 @@ export const TrackList: FC<TrackListProps> = ({ tracks, selection = new Set() })
       {/* Tracks */}
       <div className="space-y-2">
         {tracks.map((track, index) => {
-          const status = getTrackStatus(track.id);
           const isSelected = Array.from(selection).some(
             selectedTrack => selectedTrack.id === track.id
           );
@@ -140,7 +115,7 @@ export const TrackList: FC<TrackListProps> = ({ tracks, selection = new Set() })
               track={track}
               index={index}
               isSelected={isSelected}
-              status={status}
+              playlist={playlist}
             />
           );
         })}

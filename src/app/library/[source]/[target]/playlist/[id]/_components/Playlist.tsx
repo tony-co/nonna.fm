@@ -75,7 +75,7 @@ export const Playlist: FC<PlaylistProps> = ({ playlistId }) => {
       </div>
 
       {/* Track List */}
-      <TrackList tracks={playlist.tracks} selection={selectedTracks} />
+      <TrackList tracks={playlist.tracks} selection={selectedTracks} playlist={playlist} />
     </div>
   );
 };
