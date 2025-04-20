@@ -6,9 +6,9 @@ import { mockNextNavigation, mockReactSuspense } from "@/__tests__/testUtils";
 mockNextNavigation();
 mockReactSuspense();
 
-// Mock MatchingContext
-import * as MatchingContextMock from "@/__mocks__/contexts/MatchingContext";
-vi.mock("@/contexts/MatchingContext", () => MatchingContextMock);
+// Mock useMatching hook
+import { useMatching, resetMocks as resetMatchingMocks } from "@/__mocks__/hooks/useMatching";
+vi.mock("@/hooks/useMatching", () => ({ useMatching }));
 
 // Regular imports
 import React from "react";
@@ -21,6 +21,7 @@ import { mockAlbums } from "@/__mocks__/data/libraryData";
 describe("AlbumsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetMatchingMocks(); // Reset useMatching mock state and spies
   });
 
   it("renders loading spinner while loading", () => {

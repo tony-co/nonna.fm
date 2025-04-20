@@ -17,6 +17,12 @@ const initialMockState: LibraryState = {
     isLoading: false,
     error: null,
   },
+  matching: {
+    isLoading: false,
+    error: null,
+    progress: {},
+    currentTask: null,
+  },
 };
 
 // Export for backward compatibility with existing tests

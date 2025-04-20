@@ -1,32 +1,17 @@
 "use client";
 
-import { FC, useEffect, useRef } from "react";
-import { useMatching } from "@/contexts/MatchingContext";
+import { FC } from "react";
 import { useLibrary } from "@/contexts/LibraryContext";
-import { useParams } from "next/navigation";
 import { TrackList } from "@/components/library/TrackList";
-import type { MusicService } from "@/types/services";
 
 export const LikedSongs: FC = () => {
   const { state } = useLibrary();
-  const { getTrackStatus, matchLikedSongs } = useMatching();
-  const params = useParams();
-  const target = params.target as MusicService;
-  const hasStartedMatching = useRef(false);
-
-  // Trigger matching for all liked songs when component mounts
-  useEffect(() => {
-    if (state.likedSongs && !hasStartedMatching.current) {
-      hasStartedMatching.current = true;
-      matchLikedSongs(Array.from(state.likedSongs), target);
-    }
-  }, [state.likedSongs, matchLikedSongs, target]);
 
   if (!state.likedSongs) return null;
 
-  // Count unmatched tracks
+  // Count unmatched tracks by reading status directly from track object
   const unmatchedCount = Array.from(state.likedSongs).reduce((count, track) => {
-    return getTrackStatus(track.id) === "unmatched" ? count + 1 : count;
+    return track.status === "unmatched" ? count + 1 : count;
   }, 0);
 
   return (

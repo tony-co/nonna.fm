@@ -2,10 +2,10 @@
 
 import { useParams, useSearchParams } from "next/navigation";
 import { useLibrary } from "@/contexts/LibraryContext";
-import { useMatching } from "@/contexts/MatchingContext";
+import { useMatching } from "@/hooks/useMatching";
 import { useTransfer as useTransferHook } from "@/hooks/useTransfer";
 import { useTransfer } from "@/contexts/TransferContext";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { TransferSuccessModal } from "./TransferSuccessModal";
 import { MusicService } from "@/types/services";
 
@@ -15,7 +15,7 @@ export const fetchingPlaylists = new Set<string>();
 export function TransferButton() {
   const searchParams = useSearchParams();
   const { state } = useLibrary();
-  const { isMatchingInProgress } = useMatching();
+  const { isLoading: isMatching } = useMatching();
   const { userStatus: status } = useTransfer();
   const {
     handleStartTransfer,
@@ -36,7 +36,7 @@ export function TransferButton() {
     return false;
   }, [state.selectedItems.playlists]);
 
-  const [isFetchingPlaylists, setIsFetchingPlaylists] = useState(initialFetchingStatus);
+  const [isFetchingPlaylists] = useState(initialFetchingStatus);
 
   // Get target service from URL parameters
   const params = useParams();
@@ -47,30 +47,6 @@ export function TransferButton() {
     state.selectedItems.tracks.size > 0 ||
     state.selectedItems.albums.size > 0 ||
     state.selectedItems.playlists.size > 0;
-
-  // Check if any matching is in progress
-  const isMatching = isMatchingInProgress();
-
-  // Effect to check if any selected playlists are being fetched
-  useEffect(() => {
-    // Check if any of the selected playlists are being fetched
-    const checkFetchingStatus = () => {
-      for (const playlistId of state.selectedItems.playlists) {
-        if (fetchingPlaylists.has(playlistId)) {
-          setIsFetchingPlaylists(true);
-          return;
-        }
-      }
-      setIsFetchingPlaylists(false);
-    };
-
-    checkFetchingStatus();
-
-    // Setup interval to check regularly
-    const intervalId = setInterval(checkFetchingStatus, 200);
-
-    return () => clearInterval(intervalId);
-  }, [state.selectedItems.playlists]);
 
   // Get current mode from URL
   const mode = searchParams.get("step") || "select";

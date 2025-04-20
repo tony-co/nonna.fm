@@ -1,11 +1,7 @@
 import { vi } from "vitest";
 import React from "react";
 import { mockLibraryState, LibraryProvider, useLibrary } from "@/__mocks__/contexts/LibraryContext";
-import * as MatchingContextMock from "@/__mocks__/contexts/MatchingContext";
 import { TransferProvider } from "@/contexts/TransferContext";
-
-// Mock the MatchingContext module to use our mock implementation
-vi.mock("@/contexts/MatchingContext", () => MatchingContextMock);
 
 // Mock useTransferLimits hook
 vi.mock("@/hooks/useTransferLimits", () => ({
@@ -103,10 +99,8 @@ export const TestWrapper = ({
   };
 
   return (
-    <MatchingContextMock.MatchingProvider>
-      <LibraryProvider initialState={state}>
-        <TransferProvider>{children}</TransferProvider>
-      </LibraryProvider>
-    </MatchingContextMock.MatchingProvider>
+    <LibraryProvider initialState={state}>
+      <TransferProvider>{children}</TransferProvider>
+    </LibraryProvider>
   );
 };

@@ -2,31 +2,30 @@
 const nextConfig = {
   images: {
     domains: [
-      "cdn-images.dzcdn.net",
-      "static.thenounproject.com",
-      "i.scdn.co",
-      "mosaic.scdn.co",
-      "api.music.apple.com",
-      "is1-ssl.mzstatic.com",
-      "is2-ssl.mzstatic.com",
-      "is3-ssl.mzstatic.com",
-      "is4-ssl.mzstatic.com",
-      "is5-ssl.mzstatic.com",
+      "cdn-images.dzcdn.net", // Deezer images
+      "i.scdn.co", // Spotify images
+      "mosaic.scdn.co", // Spotify images
+      "api.music.apple.com", // Apple Music images
     ],
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "is*.mzstatic.com",
+        hostname: "is*.mzstatic.com", // Apple Music images
         pathname: "/image/**",
       },
       {
         protocol: "https",
-        hostname: "*.spotifycdn.com",
+        hostname: "*.blobstore.apple.com", // Apple Music images (user uploaded)
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.spotifycdn.com", // Spotify images
         pathname: "/image/**",
       },
       {
         protocol: "https",
-        hostname: "*.ytimg.com",
+        hostname: "*.ytimg.com", // YouTube images
         pathname: "/**",
       },
     ],
