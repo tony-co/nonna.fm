@@ -1,10 +1,9 @@
 "use client";
 
 import { FC, useRef } from "react";
-import { useMatching } from "@/contexts/MatchingContext";
+import { useIsVisible } from "@/hooks/useIsVisible";
 import type { ITrack, IPlaylist } from "@/types/library";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
-import { useIsVisible } from "@/hooks/useIsVisible";
 import { StatusIcon } from "@/components/shared/StatusIcon";
 
 interface TrackListProps {
@@ -21,8 +20,8 @@ const TrackRow: FC<{
 }> = ({ track, index, isSelected, playlist }) => {
   const ref = useRef<HTMLDivElement>(null);
   const isVisible = useIsVisible(ref as React.RefObject<HTMLElement>);
-  const { getTrackStatus } = useMatching();
-  const status = getTrackStatus(track.id);
+  // Status is now read directly from the track object (single source of truth)
+  const status = track.status;
 
   return (
     <div
@@ -111,7 +110,7 @@ export const TrackList: FC<TrackListProps> = ({ tracks, selection = new Set(), p
 
           return (
             <TrackRow
-              key={track.id + index}
+              key={track.id}
               track={track}
               index={index}
               isSelected={isSelected}

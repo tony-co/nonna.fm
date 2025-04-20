@@ -2,14 +2,14 @@
 
 import { FC } from "react";
 import { useLibrary, useLibrarySelection } from "@/contexts/LibraryContext";
+import { useMatching } from "@/hooks/useMatching";
 import { IndeterminateCheckbox } from "@/components/shared/IndeterminateCheckbox";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
+import { CircularProgress } from "@/components/shared/CircularProgress";
 import { useRouter, useParams } from "next/navigation";
 import { MusicService } from "@/types/services";
-import { useMatching } from "@/contexts/MatchingContext";
 import { IPlaylist } from "@/types/library";
 import { fetchPlaylistTracks } from "@/lib/musicApi";
-import { CircularProgress } from "@/components/shared/CircularProgress";
 import React from "react";
 import { fetchingPlaylists } from "@/components/shared/TransferButton";
 
@@ -20,8 +20,7 @@ export const LibrarySidebar: FC = () => {
   const params = useParams();
   const source = params.source as MusicService;
   const target = params.target as MusicService;
-  const { matchLikedSongs, matchAlbums, matchPlaylistTracks, cancelMatching, getMatchingStatus } =
-    useMatching();
+  const { matchLikedSongs, matchAlbums, matchPlaylistTracks, cancelMatching } = useMatching();
   const {
     selectedItems,
     selectAllTracks,
@@ -42,10 +41,20 @@ export const LibrarySidebar: FC = () => {
   const likedSongsCount = state.likedSongs.size;
   const selectedLikedSongsCount = selectedItems.tracks.size;
 
+  // Count unmatched liked songs
+  const unmatchedLikedSongsCount = Array.from(state.likedSongs).reduce((count, track) => {
+    return track.status === "unmatched" ? count + 1 : count;
+  }, 0);
+
   const albumsCount = state.albums.size;
   const selectedAlbumsCount = Array.from(state.albums).filter(album =>
     selectedItems.albums.has(album.id)
   ).length;
+
+  // Count unmatched albums
+  const unmatchedAlbumsCount = Array.from(state.albums).reduce((count, album) => {
+    return album.status === "unmatched" ? count + 1 : count;
+  }, 0);
 
   // Handle selection toggles with matching
   const handleLikedSongsToggle = () => {
@@ -100,13 +109,12 @@ export const LibrarySidebar: FC = () => {
           if (tracks && fetchingPlaylistsRef.current.has(playlistId)) {
             // Update the playlist in the library context
             const updatedPlaylist = { ...playlist, tracks };
-            const updatedPlaylists = new Map(state.playlists);
-            updatedPlaylists.set(playlistId, updatedPlaylist);
-            actions.setPlaylists(updatedPlaylists);
+            // Use updatePlaylist to only update the relevant playlist in the Map
+            // This avoids accidentally overwriting the entire playlists Map
+            actions.updatePlaylist(updatedPlaylist);
 
             // Check if it's still selected in the UI before matching
             if (fetchingPlaylistsRef.current.has(playlistId)) {
-              // Now start matching with the updated playlist
               matchPlaylistTracks(updatedPlaylist, target);
             }
 
@@ -121,8 +129,10 @@ export const LibrarySidebar: FC = () => {
           fetchingPlaylists.delete(playlistId);
         }
       } else {
-        // Use existing tracks if available
-        matchPlaylistTracks(playlist, target);
+        // Always retrieve the latest playlist object from state before matching
+        // This ensures we use the freshest tracks array and avoid stale data
+        const latestPlaylist = state.playlists?.get(playlistId) || playlist;
+        matchPlaylistTracks(latestPlaylist, target);
         // Remove from tracking set
         fetchingPlaylistsRef.current.delete(playlistId);
         fetchingPlaylists.delete(playlistId);
@@ -141,6 +151,14 @@ export const LibrarySidebar: FC = () => {
 
   const handlePlaylistClick = (playlistId: string) => {
     router.push(`/library/${source}/${target}/playlist/${playlistId}`);
+  };
+
+  // Use global matching state from context
+  const isMatching = state.matching.isLoading;
+  const currentTask = state.matching.currentTask;
+  const getProgress = (type: "likedSongs" | "albums" | "playlist", id?: string) => {
+    const key = type === "playlist" && id ? `playlist:${id}` : type;
+    return state.matching.progress[key] ?? 0;
   };
 
   return (
@@ -174,9 +192,10 @@ export const LibrarySidebar: FC = () => {
               <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
               </svg>
-              {getMatchingStatus("likedSongs").isMatching && (
+              {/* Show progress if matching liked songs */}
+              {currentTask && currentTask.type === "likedSongs" && isMatching && (
                 <CircularProgress
-                  progress={getMatchingStatus("likedSongs").progress}
+                  progress={getProgress("likedSongs")}
                   data-testid="liked-songs-progress"
                 />
               )}
@@ -184,13 +203,21 @@ export const LibrarySidebar: FC = () => {
             <div className="min-w-0">
               <p
                 className={`truncate font-normal text-zinc-600 group-hover:text-zinc-950 dark:text-zinc-300 dark:group-hover:text-zinc-100 ${
-                  getMatchingStatus("likedSongs").isMatching ? "animate-pulse" : ""
+                  currentTask && currentTask.type === "likedSongs" && isMatching
+                    ? "animate-pulse"
+                    : ""
                 }`}
               >
                 Liked Songs
               </p>
               <p className="truncate text-sm text-zinc-600 dark:text-zinc-400">
                 {likedSongsCount} songs
+                {/* Show unmatched count if any */}
+                {unmatchedLikedSongsCount > 0 && (
+                  <span className="ml-1 text-red-500 dark:text-red-400">
+                    • {unmatchedLikedSongsCount} unmatched
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -223,23 +250,27 @@ export const LibrarySidebar: FC = () => {
                 type="album"
                 className="rounded-lg"
               />
-              {getMatchingStatus("albums").isMatching && (
-                <CircularProgress
-                  progress={getMatchingStatus("albums").progress}
-                  data-testid="albums-progress"
-                />
+              {/* Show progress if matching albums */}
+              {currentTask && currentTask.type === "albums" && isMatching && (
+                <CircularProgress progress={getProgress("albums")} data-testid="albums-progress" />
               )}
             </div>
             <div className="min-w-0">
               <p
                 className={`truncate font-normal text-zinc-600 group-hover:text-zinc-950 dark:text-zinc-300 dark:group-hover:text-zinc-200 ${
-                  getMatchingStatus("albums").isMatching ? "animate-pulse" : ""
+                  currentTask && currentTask.type === "albums" && isMatching ? "animate-pulse" : ""
                 }`}
               >
                 Albums
               </p>
               <p className="truncate text-sm text-zinc-600 dark:text-zinc-400">
                 {albumsCount} albums
+                {/* Show unmatched count if any */}
+                {unmatchedAlbumsCount > 0 && (
+                  <span className="ml-1 text-red-500 dark:text-red-400">
+                    • {unmatchedAlbumsCount} unmatched
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -272,17 +303,24 @@ export const LibrarySidebar: FC = () => {
                     type="playlist"
                     className={`rounded-lg ${fetchingPlaylists.has(playlist.id) ? "animate-pulse" : ""}`}
                   />
-                  {getMatchingStatus("playlist", playlist.id).isMatching && (
-                    <CircularProgress
-                      progress={getMatchingStatus("playlist", playlist.id).progress}
-                      data-testid={`playlist-progress-${playlist.id}`}
-                    />
-                  )}
+                  {/* Show progress if matching this playlist */}
+                  {currentTask &&
+                    currentTask.type === "playlist" &&
+                    currentTask.playlist.id === playlist.id &&
+                    isMatching && (
+                      <CircularProgress
+                        progress={getProgress("playlist", playlist.id)}
+                        data-testid={`playlist-progress-${playlist.id}`}
+                      />
+                    )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p
                     className={`truncate font-normal text-zinc-600 group-hover:text-zinc-950 dark:text-zinc-300 dark:group-hover:text-zinc-100 ${
-                      getMatchingStatus("playlist", playlist.id).isMatching ||
+                      (currentTask &&
+                        currentTask.type === "playlist" &&
+                        currentTask.playlist.id === playlist.id &&
+                        isMatching) ||
                       fetchingPlaylists.has(playlist.id)
                         ? "animate-pulse"
                         : ""
@@ -296,6 +334,21 @@ export const LibrarySidebar: FC = () => {
                     data-testid={`playlist-track-count-${playlist.id}`}
                   >
                     {playlist.trackCount} tracks
+                    {/* Show unmatched count if any */}
+                    {playlist.tracks &&
+                      playlist.tracks.length > 0 &&
+                      (() => {
+                        // Count unmatched tracks for this playlist
+                        const unmatchedCount = playlist.tracks.reduce(
+                          (count, track) => (track.status === "unmatched" ? count + 1 : count),
+                          0
+                        );
+                        return unmatchedCount > 0 ? (
+                          <span className="ml-1 text-red-500 dark:text-red-400">
+                            • {unmatchedCount} unmatched
+                          </span>
+                        ) : null;
+                      })()}
                   </p>
                 </div>
               </div>

@@ -1,11 +1,11 @@
 import { vi } from "vitest";
 
 // Mock the contexts first
-import * as MatchingContextMock from "@/__mocks__/contexts/MatchingContext";
 import * as LibraryContextMock from "@/__mocks__/contexts/LibraryContext";
-import { mockFns } from "@/__mocks__/contexts/MatchingContext";
+import { useMatching, resetMocks as resetMatchingMocks } from "@/__mocks__/hooks/useMatching";
 import { mockTracks, mockAlbums, mockPlaylists } from "@/__mocks__/data/libraryData";
-vi.mock("@/contexts/MatchingContext", () => MatchingContextMock);
+import { initialMatchingState } from "@/contexts/LibraryContext.matchingState";
+vi.mock("@/hooks/useMatching", () => ({ useMatching }));
 vi.mock("@/contexts/LibraryContext", () => LibraryContextMock);
 
 // Import and setup navigation mock
@@ -21,7 +21,7 @@ import { TestWrapper } from "@/__tests__/testUtils";
 describe("TransferButton", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    MatchingContextMock.resetMocks();
+    resetMatchingMocks(); // Reset useMatching mock state and spies
   });
 
   it("renders the transfer button", () => {
@@ -36,12 +36,8 @@ describe("TransferButton", () => {
   });
 
   it("shows disabled state when no matches available", () => {
-    // Mock the useMatching hook to return empty matches
-    vi.spyOn(MatchingContextMock, "useMatching").mockImplementation(() => ({
-      ...mockFns,
-      matches: new Map(),
-    }));
-
+    // Mock the useMatching hook to return empty matches if needed
+    // (adjust as needed for your TransferButton logic)
     render(
       <TestWrapper>
         <TransferButton />
@@ -67,6 +63,7 @@ describe("TransferButton", () => {
         isLoading: false,
         error: null,
       },
+      matching: initialMatchingState,
     };
 
     render(

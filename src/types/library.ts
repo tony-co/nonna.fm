@@ -1,3 +1,5 @@
+import { MusicService } from "@/types/services";
+
 export interface ILibraryData {
   likedSongs: Array<ITrack>;
   albums: Array<IAlbum>;
@@ -16,7 +18,7 @@ export interface IAlbum {
   name: string;
   artist: string;
   targetId?: string;
-  status?: "pending" | "matched" | "unmatched";
+  status?: MatchingStatus;
   selected?: boolean;
   artwork?: string; // URL to album artwork
 }
@@ -42,9 +44,21 @@ export interface ITrack {
   artwork?: string; // URL to track artwork
   targetId?: string;
   videoId?: string;
-  status?: "pending" | "matched" | "unmatched";
+  status?: MatchingStatus;
   selected?: boolean;
 }
+
+export interface MatchingState {
+  isLoading: boolean;
+  error: string | null;
+  progress: Record<string, number>;
+  currentTask: QueueTask | null;
+}
+
+export type QueueTask =
+  | { type: "likedSongs"; tracks: ITrack[]; targetService: string }
+  | { type: "albums"; albums: IAlbum[]; targetService: string }
+  | { type: "playlist"; playlist: IPlaylist; targetService: string };
 
 export interface LibraryState {
   // Library Data
@@ -64,14 +78,14 @@ export interface LibraryState {
     isLoading: boolean;
     error: string | null;
   };
+
+  matching: MatchingState;
 }
 
 export type LibraryAction =
   // Selection Actions
   | { type: "SELECT_ALL_TRACKS" }
   | { type: "DESELECT_ALL_TRACKS" }
-  | { type: "SELECT_ALBUM"; payload: string }
-  | { type: "DESELECT_ALBUM"; payload: string }
   | { type: "SELECT_PLAYLIST"; payload: string }
   | { type: "DESELECT_PLAYLIST"; payload: string }
   | { type: "SELECT_ALL_ALBUMS" }
@@ -92,4 +106,43 @@ export type LibraryAction =
 
   // Status Actions
   | { type: "SET_LOADING"; payload: boolean }
-  | { type: "SET_ERROR"; payload: string | null };
+  | { type: "SET_ERROR"; payload: string | null }
+
+  // Matching Actions
+  | { type: "MATCHING_START"; payload: QueueTask }
+  | { type: "MATCHING_PROGRESS"; payload: { key: string; value: number } }
+  | { type: "MATCHING_ERROR"; payload: string }
+  | { type: "MATCHING_COMPLETE"; payload: string }
+  | { type: "MATCHING_CANCEL"; payload: { type: string; id?: string } };
+
+// --- Matching status constants ---
+/**
+ * Status values for track/album/playlist matching operations.
+ * Used to indicate whether an item is pending, matched, or unmatched.
+ */
+export const MATCHING_STATUS = {
+  PENDING: "pending",
+  MATCHED: "matched",
+  UNMATCHED: "unmatched",
+} as const;
+
+/**
+ * Type for status fields that use MATCHING_STATUS values.
+ * Ensures all status fields are consistent and type-safe.
+ */
+export type MatchingStatus = (typeof MATCHING_STATUS)[keyof typeof MATCHING_STATUS];
+
+// --- useMatching hook return type ---
+/**
+ * Return type for the useMatching hook, describing the API for matching operations.
+ */
+export interface UseMatchingReturn {
+  isLoading: boolean;
+  error: string | null;
+  matchLikedSongs: (tracks: ITrack[], targetService: MusicService) => Promise<void>;
+  matchAlbums: (albums: IAlbum[], targetService: MusicService) => Promise<void>;
+  matchPlaylistTracks: (playlist: IPlaylist, targetService: MusicService) => Promise<void>;
+  cancelMatching: (type: "likedSongs" | "albums" | "playlist", id?: string) => void;
+  getProgress: (type: "likedSongs" | "albums" | "playlist", id?: string) => number;
+  currentTask: QueueTask | null;
+}

@@ -1,7 +1,6 @@
 import { FC } from "react";
-import { useMatching } from "@/contexts/MatchingContext";
 import type { IAlbum, ITrack, IPlaylist } from "@/types/library";
-
+import { MatchingStatus } from "@/types/library";
 interface StatusIconProps {
   album?: IAlbum;
   track?: ITrack;
@@ -9,14 +8,12 @@ interface StatusIconProps {
 }
 
 export const StatusIcon: FC<StatusIconProps> = ({ album, track, playlist: _playlist }) => {
-  const { getTrackStatus, getAlbumStatus } = useMatching();
-
-  let status: "pending" | "matched" | "unmatched" | undefined;
-
+  // Status is now read directly from the album or track object
+  let status: MatchingStatus | undefined;
   if (album) {
-    status = getAlbumStatus(album.id);
+    status = album.status;
   } else if (track) {
-    status = getTrackStatus(track.id);
+    status = track.status;
     // Note: playlist parameter is provided but currently not used.
     // It will be used in the future to differentiate between liked tracks and playlist tracks
   }

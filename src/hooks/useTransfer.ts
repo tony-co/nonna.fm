@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ISelectionState, IAlbum, IPlaylist } from "@/types/library";
 import { MusicService, TransferResult } from "@/types/services";
-import { useMatching, MATCHING_STATUS } from "@/contexts/MatchingContext";
+import { useMatching } from "@/hooks/useMatching";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { addTracksToLibrary, addAlbumsToLibrary, createPlaylistWithTracks } from "@/lib/musicApi";
 import { useParams } from "next/navigation";
@@ -24,7 +24,7 @@ interface UseTransferHookReturn {
 
 export function useTransfer(): UseTransferHookReturn {
   const { state } = useLibrary();
-  const { getTrackStatus, getTrackTargetId, getAlbumTargetId } = useMatching();
+  useMatching();
   const [transferResults, setTransferResults] = useState<TransferResults | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,15 +39,11 @@ export function useTransfer(): UseTransferHookReturn {
     let count = 0;
 
     // Count liked songs
-    count += Array.from(selection.likedSongs).filter(
-      track => getTrackStatus(track.id) === MATCHING_STATUS.MATCHED
-    ).length;
+    count += Array.from(selection.likedSongs).filter(track => track.status === "matched").length;
 
     // Count tracks in playlists
     for (const [, selectedTracks] of Array.from(selection.playlists.entries())) {
-      count += Array.from(selectedTracks).filter(
-        track => getTrackStatus(track.id) === MATCHING_STATUS.MATCHED
-      ).length;
+      count += Array.from(selectedTracks).filter(track => track.status === "matched").length;
     }
 
     // Count albums as tracks (this is a simplification)
@@ -82,10 +78,10 @@ export function useTransfer(): UseTransferHookReturn {
 
       // Transfer liked songs
       const matchedLikedSongs = Array.from(selection.likedSongs)
-        .filter(track => getTrackStatus(track.id) === MATCHING_STATUS.MATCHED)
+        .filter(track => track.status === "matched" && track.targetId)
         .map(track => ({
           ...track,
-          targetId: getTrackTargetId(track.id),
+          targetId: track.targetId,
         }));
 
       if (matchedLikedSongs.length > 0) {
@@ -94,11 +90,11 @@ export function useTransfer(): UseTransferHookReturn {
 
       // Transfer matched albums
       const albumsWithIds = Array.from(selection.albums)
+        .filter(album => album.status === "matched" && album.targetId)
         .map(album => ({
           ...album,
-          targetId: getAlbumTargetId(album.id),
-        }))
-        .filter((album): album is IAlbum & { targetId: string } => !!album.targetId);
+          targetId: album.targetId,
+        }));
 
       if (albumsWithIds.length > 0) {
         console.log(
@@ -122,10 +118,10 @@ export function useTransfer(): UseTransferHookReturn {
         console.log("Transferring playlist:", playlist);
 
         const matchedTracks = Array.from(selectedTracks)
-          .filter(track => getTrackStatus(track.id) === MATCHING_STATUS.MATCHED)
+          .filter(track => track.status === "matched" && track.targetId)
           .map(track => ({
             ...track,
-            targetId: getTrackTargetId(track.id),
+            targetId: track.targetId,
           }));
 
         if (matchedTracks.length > 0) {
@@ -173,10 +169,10 @@ export function useTransfer(): UseTransferHookReturn {
       }
 
       const matchedTracks = Array.from(selectedTracks)
-        .filter(track => getTrackStatus(track.id) === MATCHING_STATUS.MATCHED)
+        .filter(track => track.status === "matched" && track.targetId)
         .map(track => ({
           ...track,
-          targetId: getTrackTargetId(track.id),
+          targetId: track.targetId,
         }));
 
       if (matchedTracks.length === 0) {

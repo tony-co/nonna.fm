@@ -1,14 +1,11 @@
 "use client";
-import { FC, useRef, useEffect } from "react";
-import { useMatching } from "@/contexts/MatchingContext";
+import { FC } from "react";
 import { useLibrarySelection } from "@/contexts/LibraryContext";
 import { TrackList } from "@/components/library/TrackList";
 import { usePlaylistTracks } from "@/hooks/usePlaylistTracks";
 import { PlayOnButton } from "@/components/shared/PlayOnButton";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { useParams } from "next/navigation";
-import { MusicService } from "@/types/services";
 
 interface PlaylistProps {
   playlistId: string;
@@ -16,25 +13,7 @@ interface PlaylistProps {
 
 export const Playlist: FC<PlaylistProps> = ({ playlistId }) => {
   const { selectedItems } = useLibrarySelection();
-  const { getTrackStatus, matchPlaylistTracks } = useMatching();
   const { playlist, isLoading, error } = usePlaylistTracks(playlistId);
-  const params = useParams();
-  const targetService = params.target as MusicService;
-  const hasStartedMatching = useRef(false);
-
-  // Trigger matching for all playlist tracks when playlist is available
-  useEffect(() => {
-    if (
-      playlist && // Check playlist exists
-      Array.isArray(playlist.tracks) &&
-      playlist.tracks.length > 0 && // Ensure we have tracks
-      !isLoading && // Ensure loading is complete
-      !hasStartedMatching.current // Prevent duplicate matching
-    ) {
-      hasStartedMatching.current = true;
-      matchPlaylistTracks(playlist, targetService);
-    }
-  }, [playlist, isLoading, matchPlaylistTracks, targetService]);
 
   if (error) {
     return <div className="p-4 text-red-600">{error}</div>;
@@ -49,9 +28,9 @@ export const Playlist: FC<PlaylistProps> = ({ playlistId }) => {
     playlist.tracks.filter(track => selectedItems.tracks.has(track.id))
   );
 
-  // Count unmatched tracks
+  // Count unmatched tracks by reading status directly from track object
   const unmatchedCount = playlist.tracks.reduce((count, track) => {
-    return getTrackStatus(track.id) === "unmatched" ? count + 1 : count;
+    return track.status === "unmatched" ? count + 1 : count;
   }, 0);
 
   return (

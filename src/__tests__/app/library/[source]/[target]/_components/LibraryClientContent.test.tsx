@@ -6,9 +6,9 @@ import { mockNextNavigation } from "@/__tests__/testUtils";
 import { mockNavigationImplementation } from "@/__tests__/testUtils";
 mockNextNavigation();
 
-// Mock MatchingContext
-import * as MatchingContextMock from "@/__mocks__/contexts/MatchingContext";
-vi.mock("@/contexts/MatchingContext", () => MatchingContextMock);
+// Mock useMatching hook
+import { useMatching, resetMocks as resetMatchingMocks } from "@/__mocks__/hooks/useMatching";
+vi.mock("@/hooks/useMatching", () => ({ useMatching }));
 
 // Regular imports
 import React from "react";
@@ -24,6 +24,7 @@ const MockChildren = () => <div data-testid="mock-children">Child Content</div>;
 describe("LibraryClientContent", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetMatchingMocks(); // Reset useMatching mock state and spies
   });
 
   it("renders loading state when data is loading", () => {

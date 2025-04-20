@@ -2,6 +2,8 @@
 
 import { createContext, useReducer, useContext, useMemo } from "react";
 import type { LibraryState, LibraryAction, ITrack, IAlbum, IPlaylist } from "@/types/library";
+import { initialMatchingState } from "./LibraryContext.matchingState";
+import { matchingReducer } from "./LibraryContext.matchingReducer";
 
 // Initial state
 const initialLibraryState: LibraryState = {
@@ -17,6 +19,7 @@ const initialLibraryState: LibraryState = {
     isLoading: false,
     error: null,
   },
+  matching: initialMatchingState,
 };
 
 // Context type
@@ -27,8 +30,6 @@ interface LibraryContextType {
     // Selection actions
     selectAllTracks: () => void;
     deselectAllTracks: () => void;
-    selectAlbum: (albumId: string) => void;
-    deselectAlbum: (albumId: string) => void;
     selectPlaylist: (playlistId: string) => void;
     deselectPlaylist: (playlistId: string) => void;
     selectAllAlbums: () => void;
@@ -57,7 +58,17 @@ export const LibraryContext = createContext<LibraryContextType | null>(null);
 
 // Reducer function
 function libraryReducer(state: LibraryState, action: LibraryAction): LibraryState {
+  // Delegate matching actions to matchingReducer
   switch (action.type) {
+    case "MATCHING_START":
+    case "MATCHING_PROGRESS":
+    case "MATCHING_ERROR":
+    case "MATCHING_COMPLETE":
+    case "MATCHING_CANCEL":
+      return {
+        ...state,
+        matching: matchingReducer(state.matching, action),
+      };
     // Selection actions
     case "SELECT_ALL_TRACKS":
       return {
@@ -72,22 +83,6 @@ function libraryReducer(state: LibraryState, action: LibraryAction): LibraryStat
         ...state,
         selectedItems: { ...state.selectedItems, tracks: new Set() },
       };
-    case "SELECT_ALBUM": {
-      const newAlbums = new Set(state.selectedItems.albums);
-      newAlbums.add(action.payload);
-      return {
-        ...state,
-        selectedItems: { ...state.selectedItems, albums: newAlbums },
-      };
-    }
-    case "DESELECT_ALBUM": {
-      const newAlbums = new Set(state.selectedItems.albums);
-      newAlbums.delete(action.payload);
-      return {
-        ...state,
-        selectedItems: { ...state.selectedItems, albums: newAlbums },
-      };
-    }
     case "SELECT_PLAYLIST": {
       const newPlaylists = new Set(state.selectedItems.playlists);
       newPlaylists.add(action.payload);
@@ -175,8 +170,6 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
       // Selection actions
       selectAllTracks: () => dispatch({ type: "SELECT_ALL_TRACKS" }),
       deselectAllTracks: () => dispatch({ type: "DESELECT_ALL_TRACKS" }),
-      selectAlbum: (albumId: string) => dispatch({ type: "SELECT_ALBUM", payload: albumId }),
-      deselectAlbum: (albumId: string) => dispatch({ type: "DESELECT_ALBUM", payload: albumId }),
       selectPlaylist: (playlistId: string) =>
         dispatch({ type: "SELECT_PLAYLIST", payload: playlistId }),
       deselectPlaylist: (playlistId: string) =>

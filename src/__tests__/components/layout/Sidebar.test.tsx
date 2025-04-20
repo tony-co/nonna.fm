@@ -3,10 +3,13 @@ import { vi } from "vitest";
 
 // Mock the contexts first
 import * as LibraryContextMock from "@/__mocks__/contexts/LibraryContext";
+import {
+  useMatching,
+  resetMocks as resetMatchingMocks,
+  mockFns as matchingMockFns,
+} from "@/__mocks__/hooks/useMatching";
+vi.mock("@/hooks/useMatching", () => ({ useMatching }));
 vi.mock("@/contexts/LibraryContext", () => LibraryContextMock);
-
-import * as MatchingContextMock from "@/__mocks__/contexts/MatchingContext";
-vi.mock("@/contexts/MatchingContext", () => MatchingContextMock);
 
 import * as SelectionContextMock from "@/__mocks__/contexts/SelectionContext";
 vi.mock("@/contexts/SelectionContext", () => SelectionContextMock);
@@ -48,6 +51,7 @@ vi.mock("@/components/shared/TransferButton", () => ({
 describe("LibrarySidebar", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetMatchingMocks(); // Reset useMatching mock state and spies
   });
 
   describe("Rendering", () => {
@@ -148,7 +152,6 @@ describe("LibrarySidebar", () => {
   describe("Selection and Matching", () => {
     beforeEach(() => {
       vi.clearAllMocks();
-      MatchingContextMock.resetMocks();
       SelectionContextMock.resetMocks();
     });
 
@@ -164,7 +167,7 @@ describe("LibrarySidebar", () => {
 
       // Verify selection and matching were triggered
       expect(LibraryContextMock.mockActions.selectAllTracks).toHaveBeenCalled();
-      expect(MatchingContextMock.mockFns.matchLikedSongs).toHaveBeenCalledWith(
+      expect(matchingMockFns.matchLikedSongs).toHaveBeenCalledWith(
         Array.from(mockLibraryState.likedSongs!),
         "apple"
       );
@@ -186,7 +189,7 @@ describe("LibrarySidebar", () => {
       // Second click to deselect
       fireEvent.click(checkbox);
       expect(LibraryContextMock.mockActions.deselectAllTracks).toHaveBeenCalled();
-      expect(MatchingContextMock.mockFns.cancelMatching).toHaveBeenCalledWith("likedSongs");
+      expect(matchingMockFns.cancelMatching).toHaveBeenCalledWith("likedSongs");
     });
 
     it("handles playlist selection and fetching", () => {
