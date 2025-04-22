@@ -29,7 +29,6 @@ export interface IPlaylist {
   description?: string;
   trackCount: number;
   ownerId: string;
-  ownerName: string;
   tracks: ITrack[];
   selected?: boolean;
   artwork?: string; // URL to playlist artwork

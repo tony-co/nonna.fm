@@ -1,6 +1,7 @@
 import { ITrack, ILibraryData, IAlbum } from "@/types/library";
 import { SearchResult, TransferResult } from "@/types/services";
 import { getDeezerUserId } from "./auth";
+import { retryWithExponentialBackoff, type RetryOptions } from "@/lib/utils/retry";
 
 // Keep this for the handlers to use
 export const DEEZER_API_BASE = "https://api.deezer.com";
@@ -77,6 +78,14 @@ export interface DeezerApiResponse<T> {
   next?: string;
 }
 
+// Define Deezer-specific retry options for all API calls
+const DEEZER_RETRY_OPTIONS: RetryOptions = {
+  maxRetries: 5,
+  initialRetryDelay: 300, // Slightly faster retry than default
+  maxRetryDelay: 16000,
+  jitterFactor: 0.1,
+};
+
 /**
  * Fetches all playlists for a Deezer user with pagination support
  */
@@ -88,16 +97,19 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
 
   // Fetch playlists and albums in parallel
   const [allPlaylists, albums] = await Promise.all([
-    (async () => {
+    (async (): Promise<DeezerPlaylist[]> => {
       let playlists: DeezerPlaylist[] = [];
       let nextUrl: string | undefined = `/api/deezer/playlists/${userId}`;
 
-      // Fetch all pages of playlists
+      // Fetch all pages of playlists with retry logic
       while (nextUrl) {
-        const response = await fetch(nextUrl);
-        const data: DeezerApiResponse<DeezerPlaylist> = await response.json();
+        const url: string = nextUrl; // Ensure url is string
+        // Use retryWithExponentialBackoff for robust error handling
+        const data: DeezerApiResponse<DeezerPlaylist> = await retryWithExponentialBackoff<
+          DeezerApiResponse<DeezerPlaylist>
+        >(() => fetch(url), DEEZER_RETRY_OPTIONS);
 
-        if (!response.ok || data.error) {
+        if (data.error) {
           throw new Error(data.error?.message || "Failed to fetch Deezer library");
         }
 
@@ -132,7 +144,6 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
       name: playlist.title,
       trackCount: playlist.nb_tracks,
       ownerId: userId,
-      ownerName: playlist.creator.name,
       artwork: playlist.picture_medium,
       tracks: [], // We'll fetch tracks when needed
     }));
@@ -151,14 +162,16 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
   let allTracks: ITrack[] = [];
   let nextUrl: string | undefined = `/api/deezer/playlists/${playlistId}/tracks`;
 
-  // Fetch all pages of tracks
+  // Fetch all pages of tracks with retry logic
   while (nextUrl) {
-    const response = await fetch(nextUrl);
-    const data: DeezerApiResponse<DeezerTrack> = await response.json();
+    const url: string = nextUrl; // Ensure url is string
+    // Use retryWithExponentialBackoff for robust error handling
+    const data: DeezerApiResponse<DeezerTrack> = await retryWithExponentialBackoff<
+      DeezerApiResponse<DeezerTrack>
+    >(() => fetch(url), DEEZER_RETRY_OPTIONS);
 
-    if (!response.ok || data.error) {
+    if (data.error) {
       console.error("Deezer API error:", {
-        status: response.status,
         url: nextUrl,
         error: data.error,
       });
@@ -208,14 +221,16 @@ export async function fetchDeezerAlbums(): Promise<IAlbum[]> {
   let allAlbums: DeezerAlbum[] = [];
   let nextUrl: string | undefined = `/api/deezer/albums/${userId}`;
 
-  // Fetch all pages of albums
+  // Fetch all pages of albums with retry logic
   while (nextUrl) {
-    const response = await fetch(nextUrl);
-    const data: DeezerApiResponse<DeezerAlbum> = await response.json();
+    const url: string = nextUrl; // Ensure url is string
+    // Use retryWithExponentialBackoff for robust error handling
+    const data: DeezerApiResponse<DeezerAlbum> = await retryWithExponentialBackoff<
+      DeezerApiResponse<DeezerAlbum>
+    >(() => fetch(url), DEEZER_RETRY_OPTIONS);
 
-    if (!response.ok || data.error) {
+    if (data.error) {
       console.error("Deezer API error:", {
-        status: response.status,
         url: nextUrl,
         error: data.error,
       });

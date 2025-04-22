@@ -51,7 +51,6 @@ export function transformSpotifyTrackToTrack(spotifyTrack: SpotifyTrackItem["tra
     artist: spotifyTrack.artists[0].name,
     album: spotifyTrack.album.name,
     artwork: spotifyTrack.album.images?.[0]?.url,
-    status: "pending",
   };
 }
 
@@ -61,7 +60,6 @@ export function transformSpotifyAlbumToAlbum(spotifyAlbum: SpotifyAlbum): IAlbum
     name: spotifyAlbum.name,
     artist: spotifyAlbum.artists[0].name,
     artwork: spotifyAlbum.images?.[0]?.url,
-    status: "pending",
   };
 }
 
@@ -71,7 +69,6 @@ export function transformSpotifyPlaylistToPlaylist(spotifyPlaylist: SpotifyPlayl
     name: spotifyPlaylist.name,
     trackCount: spotifyPlaylist.tracks.total,
     ownerId: spotifyPlaylist.owner.id,
-    ownerName: spotifyPlaylist.owner.display_name,
     tracks: [],
     artwork: spotifyPlaylist.images?.[0]?.url,
   };

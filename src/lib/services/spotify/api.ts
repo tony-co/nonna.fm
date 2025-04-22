@@ -2,7 +2,7 @@ import { getSpotifyAuthData } from "./auth";
 import type { ITrack, ILibraryData, IAlbum, IPlaylist } from "@/types/library";
 import type { SearchResult, TransferResult } from "@/types/services";
 import type { AuthData } from "@/lib/auth/constants";
-import { retryWithExponentialBackoff } from "@/lib/utils/retry";
+import { retryWithExponentialBackoff, type RetryOptions } from "@/lib/utils/retry";
 import {
   SpotifyTrackItem,
   SpotifyTrack,
@@ -17,9 +17,17 @@ import {
   calculateAlbumMatchScore,
   DEFAULT_TRACK_CONFIG,
   DEFAULT_ALBUM_CONFIG,
-  type MatchScoreDetails,
 } from "@/lib/utils/matching";
 import { processInBatches } from "@/lib/utils/batch-processor";
+
+// Spotify-specific retry options for all API calls
+// These values can be tuned for Spotify's rate limits and error patterns
+const SPOTIFY_RETRY_OPTIONS: RetryOptions = {
+  maxRetries: 5, // Reasonable default for Spotify API
+  initialRetryDelay: 500, // Start with a moderate delay
+  maxRetryDelay: 32000, // Cap the delay to avoid excessive waits
+  jitterFactor: 0.1, // Add jitter to avoid thundering herd
+};
 
 // Type definition for Spotify Search API response
 interface SpotifySearchResponse {
@@ -37,12 +45,15 @@ async function performSearch(
   searchQuery: string,
   authData: AuthData
 ): Promise<string | null> {
-  const data = await retryWithExponentialBackoff<SpotifySearchResponse>(() =>
-    fetch(`https://api.spotify.com/v1/search?q=${searchQuery}&type=track&limit=3`, {
-      headers: {
-        Authorization: `Bearer ${authData.accessToken}`,
-      },
-    })
+  // Use Spotify-specific retry options for all API calls
+  const data = await retryWithExponentialBackoff<SpotifySearchResponse>(
+    () =>
+      fetch(`https://api.spotify.com/v1/search?q=${searchQuery}&type=track&limit=3`, {
+        headers: {
+          Authorization: `Bearer ${authData.accessToken}`,
+        },
+      }),
+    SPOTIFY_RETRY_OPTIONS
   );
 
   if (!data.tracks?.items?.length) {
@@ -75,15 +86,17 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
   if (!authData) throw new Error("Not authenticated with Spotify");
 
   // Fetch playlists with batching and retry
-  const initialPlaylistResponse = await retryWithExponentialBackoff<{ total: number }>(() =>
-    fetch("https://api.spotify.com/v1/me/playlists?limit=1", {
-      headers: {
-        Authorization: `Bearer ${authData.accessToken}`,
-      },
-    })
+  const initialPlaylistResponse = await retryWithExponentialBackoff<{ total: number }>(
+    () =>
+      fetch("https://api.spotify.com/v1/me/playlists?limit=1", {
+        headers: {
+          Authorization: `Bearer ${authData.accessToken}`,
+        },
+      }),
+    SPOTIFY_RETRY_OPTIONS
   );
 
-  console.log("[SPOTIFY] Initial playlist response:", initialPlaylistResponse);
+  console.log("initialPlaylistResponse", initialPlaylistResponse);
 
   if (!initialPlaylistResponse.total) {
     throw new Error("Failed to fetch playlists count");
@@ -93,12 +106,6 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
   const playlistBatchSize = 50;
   const playlistBatchCount = Math.ceil(totalPlaylists / playlistBatchSize);
 
-  console.log("[SPOTIFY] Playlist fetch details:", {
-    totalPlaylists,
-    playlistBatchSize,
-    playlistBatchCount,
-  });
-
   const playlistResults: IPlaylist[] = [];
   await processInBatches(
     async batch => {
@@ -107,11 +114,13 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
         `[SPOTIFY] Fetching playlists batch ${batch[0] + 1}/${playlistBatchCount} (offset: ${offset})`
       );
 
-      const data = await retryWithExponentialBackoff<{ items: SpotifyPlaylist[] }>(() =>
-        fetch(
-          `https://api.spotify.com/v1/me/playlists?limit=${playlistBatchSize}&offset=${offset}&fields=items(id,name,tracks(total),owner(id,display_name),images)`,
-          { headers: { Authorization: `Bearer ${authData.accessToken}` } }
-        )
+      const data = await retryWithExponentialBackoff<{ items: SpotifyPlaylist[] }>(
+        () =>
+          fetch(
+            `https://api.spotify.com/v1/me/playlists?limit=${playlistBatchSize}&offset=${offset}&fields=items(id,name,tracks(total),owner(id,display_name),images)`,
+            { headers: { Authorization: `Bearer ${authData.accessToken}` } }
+          ),
+        SPOTIFY_RETRY_OPTIONS
       );
 
       console.log(`[SPOTIFY] Playlists batch ${batch[0] + 1}/${playlistBatchCount}:`, {
@@ -148,10 +157,12 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
 
   // Fetch saved tracks (liked songs) with batching and retry
 
-  const initialResponse = await retryWithExponentialBackoff<{ total: number }>(() =>
-    fetch("https://api.spotify.com/v1/me/tracks?limit=1&fields=total", {
-      headers: { Authorization: `Bearer ${authData.accessToken}` },
-    })
+  const initialResponse = await retryWithExponentialBackoff<{ total: number }>(
+    () =>
+      fetch("https://api.spotify.com/v1/me/tracks?limit=1&fields=total", {
+        headers: { Authorization: `Bearer ${authData.accessToken}` },
+      }),
+    SPOTIFY_RETRY_OPTIONS
   );
 
   if (!initialResponse.total) {
@@ -178,11 +189,13 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
           `[SPOTIFY] Fetching liked songs batch ${index + 1}/${batchCount} (offset: ${offset})`
         );
 
-        const data = await retryWithExponentialBackoff<{ items: SpotifyTrackItem[] }>(() =>
-          fetch(
-            `https://api.spotify.com/v1/me/tracks?limit=${batchSize}&offset=${offset}&fields=items(track(id,name,artists(name),album(name,images)))`,
-            { headers: { Authorization: `Bearer ${authData.accessToken}` } }
-          )
+        const data = await retryWithExponentialBackoff<{ items: SpotifyTrackItem[] }>(
+          () =>
+            fetch(
+              `https://api.spotify.com/v1/me/tracks?limit=${batchSize}&offset=${offset}&fields=items(track(id,name,artists(name),album(name,images)))`,
+              { headers: { Authorization: `Bearer ${authData.accessToken}` } }
+            ),
+          SPOTIFY_RETRY_OPTIONS
         );
 
         console.log(`[SPOTIFY] Liked songs batch ${index + 1}/${batchCount}:`, {
@@ -218,10 +231,12 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
   const likedSongs = trackResults;
 
   // Fetch saved albums with batching and retry
-  const initialAlbumsResponse = await retryWithExponentialBackoff<{ total: number }>(() =>
-    fetch("https://api.spotify.com/v1/me/albums?limit=1", {
-      headers: { Authorization: `Bearer ${authData.accessToken}` },
-    })
+  const initialAlbumsResponse = await retryWithExponentialBackoff<{ total: number }>(
+    () =>
+      fetch("https://api.spotify.com/v1/me/albums?limit=1", {
+        headers: { Authorization: `Bearer ${authData.accessToken}` },
+      }),
+    SPOTIFY_RETRY_OPTIONS
   );
 
   if (!initialAlbumsResponse.total) {
@@ -248,11 +263,13 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
           `[SPOTIFY] Fetching albums batch ${index + 1}/${albumBatchCount} (offset: ${offset})`
         );
 
-        const data = await retryWithExponentialBackoff<{ items: { album: SpotifyAlbum }[] }>(() =>
-          fetch(
-            `https://api.spotify.com/v1/me/albums?limit=${albumBatchSize}&offset=${offset}&fields=items(album(id,name,artists(name),images))`,
-            { headers: { Authorization: `Bearer ${authData.accessToken}` } }
-          )
+        const data = await retryWithExponentialBackoff<{ items: { album: SpotifyAlbum }[] }>(
+          () =>
+            fetch(
+              `https://api.spotify.com/v1/me/albums?limit=${albumBatchSize}&offset=${offset}&fields=items(album(id,name,artists(name),images))`,
+              { headers: { Authorization: `Bearer ${authData.accessToken}` } }
+            ),
+          SPOTIFY_RETRY_OPTIONS
         );
 
         console.log(`[SPOTIFY] Albums batch ${index + 1}/${albumBatchCount}:`, {
@@ -299,12 +316,14 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
   if (!authData) throw new Error("Not authenticated with Spotify");
 
   // Fetch initial playlist info with retry
-  const initialResponse = await retryWithExponentialBackoff<{ total: number }>(() =>
-    fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=1&fields=total`, {
-      headers: {
-        Authorization: `Bearer ${authData.accessToken}`,
-      },
-    })
+  const initialResponse = await retryWithExponentialBackoff<{ total: number }>(
+    () =>
+      fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=1&fields=total`, {
+        headers: {
+          Authorization: `Bearer ${authData.accessToken}`,
+        },
+      }),
+    SPOTIFY_RETRY_OPTIONS
   );
 
   if (!initialResponse.total) {
@@ -331,15 +350,17 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
           `[SPOTIFY] Fetching playlist tracks batch ${index + 1}/${batchCount} (offset: ${offset})`
         );
 
-        const data = await retryWithExponentialBackoff<{ items: SpotifyTrackItem[] }>(() =>
-          fetch(
-            `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=${batchSize}&offset=${offset}&fields=items(track(id,name,artists(name),album(name,images)))`,
-            {
-              headers: {
-                Authorization: `Bearer ${authData.accessToken}`,
-              },
-            }
-          )
+        const data = await retryWithExponentialBackoff<{ items: SpotifyTrackItem[] }>(
+          () =>
+            fetch(
+              `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=${batchSize}&offset=${offset}&fields=items(track(id,name,artists(name),album(name,images)))`,
+              {
+                headers: {
+                  Authorization: `Bearer ${authData.accessToken}`,
+                },
+              }
+            ),
+          SPOTIFY_RETRY_OPTIONS
         );
 
         console.log(`[SPOTIFY] Playlist tracks batch ${index + 1}/${batchCount}:`, {
@@ -483,34 +504,25 @@ export async function createPlaylistWithTracks(
     const authData = await getSpotifyAuthData("target");
     if (!authData) throw new Error("Not authenticated with Spotify");
 
-    // Create the playlist
-    const createResponse = await fetch("https://api.spotify.com/v1/me/playlists", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${authData.accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name,
-        description: description || `Imported on ${new Date().toLocaleDateString()}`,
-      }),
-    });
+    // Create the playlist using retryWithExponentialBackoff
+    const playlistData = await retryWithExponentialBackoff<unknown>(
+      () =>
+        fetch("https://api.spotify.com/v1/me/playlists", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${authData.accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            description: description || `Imported on ${new Date().toLocaleDateString()}`,
+          }),
+        }),
+      SPOTIFY_RETRY_OPTIONS
+    );
 
-    if (!createResponse.ok) {
-      const errorText = await createResponse.text();
-      console.error("Failed to create playlist:", {
-        status: createResponse.status,
-        statusText: createResponse.statusText,
-        error: errorText,
-      });
-      throw new Error(
-        `Failed to create playlist: ${createResponse.status} ${createResponse.statusText} - ${errorText}`
-      );
-    }
-
-    const playlistData = await createResponse.json();
-    const playlistId = playlistData.id;
-
+    // The util parses JSON if available, so we can safely cast
+    const playlistId = (playlistData as { id?: string }).id;
     if (!playlistId) {
       console.error("No playlist ID in response:", playlistData);
       throw new Error("Failed to create playlist - no ID returned");
@@ -532,24 +544,22 @@ export async function createPlaylistWithTracks(
       };
     }
 
+    // Add tracks to playlist in batches using retryWithExponentialBackoff
     const result = await processInBatches(
       async batch => {
         const uris = batch.map(track => `spotify:track:${track.targetId}`);
-        const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${authData.accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ uris }),
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(
-            `Failed to add tracks to playlist: ${response.status} ${response.statusText} - ${errorText}`
-          );
-        }
+        await retryWithExponentialBackoff<unknown>(
+          () =>
+            fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${authData.accessToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ uris }),
+            }),
+          SPOTIFY_RETRY_OPTIONS
+        );
       },
       {
         items: tracksWithIds,
@@ -596,24 +606,22 @@ export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<Transfe
       };
     }
 
+    // Add tracks to library in batches using retryWithExponentialBackoff
     const result = await processInBatches(
       async batch => {
         const ids = batch.map(track => track.targetId);
-        const response = await fetch("https://api.spotify.com/v1/me/tracks", {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${authData.accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ ids }),
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(
-            `Failed to add tracks: ${response.status} ${response.statusText} - ${errorText}`
-          );
-        }
+        await retryWithExponentialBackoff<unknown>(
+          () =>
+            fetch("https://api.spotify.com/v1/me/tracks", {
+              method: "PUT",
+              headers: {
+                Authorization: `Bearer ${authData.accessToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ ids }),
+            }),
+          SPOTIFY_RETRY_OPTIONS
+        );
       },
       {
         items: tracksWithIds,
@@ -672,30 +680,22 @@ export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferR
       }))
     );
 
+    // Add albums to library in batches using retryWithExponentialBackoff
     const result = await processInBatches(
       async batch => {
         const ids = batch.map(album => album.targetId);
-        console.log(`Processing batch:`, { albumIds: ids });
-
-        const response = await fetch("https://api.spotify.com/v1/me/albums", {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${authData.accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ ids }),
-        });
-
-        const responseText = await response.text();
-        console.log("Spotify API response:", {
-          status: response.status,
-          statusText: response.statusText,
-          response: responseText,
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to add albums: ${response.status} ${response.statusText}`);
-        }
+        await retryWithExponentialBackoff<unknown>(
+          () =>
+            fetch("https://api.spotify.com/v1/me/albums", {
+              method: "PUT",
+              headers: {
+                Authorization: `Bearer ${authData.accessToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ ids }),
+            }),
+          SPOTIFY_RETRY_OPTIONS
+        );
       },
       {
         items: albumsWithIds,
@@ -738,25 +738,23 @@ async function findBestAlbumMatch(album: IAlbum, authData: AuthData): Promise<st
     const searchQuery = encodeURIComponent(`${album.name} ${album.artist}`);
 
     // Search for albums with retry
-    const response = await retryWithExponentialBackoff<Response>(() =>
-      fetch(`https://api.spotify.com/v1/search?q=${searchQuery}&type=album&limit=10`, {
-        headers: {
-          Authorization: `Bearer ${authData.accessToken}`,
-        },
-      })
+    const response = await retryWithExponentialBackoff<{ albums: { items: SpotifyAlbum[] } }>(
+      () =>
+        fetch(`https://api.spotify.com/v1/search?q=${searchQuery}&type=album&limit=10`, {
+          headers: {
+            Authorization: `Bearer ${authData.accessToken}`,
+          },
+        }),
+      SPOTIFY_RETRY_OPTIONS
     );
 
-    if (!response.ok) {
-      throw new Error(`Search failed: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    if (!data.albums?.items?.length) {
+    if (!response.albums?.items?.length) {
+      console.error(`[MATCHING] No results found for album "${album.name}" by ${album.artist}`);
       return null;
     }
 
     // Find the best match using our shared matching system
-    const matches = data.albums.items
+    const matches = response.albums.items
       .map((spotifyAlbum: SpotifyAlbum) => ({
         album: spotifyAlbum,
         ...calculateAlbumMatchScore(
@@ -769,19 +767,6 @@ async function findBestAlbumMatch(album: IAlbum, authData: AuthData): Promise<st
         ),
       }))
       .sort((a: { score: number }, b: { score: number }) => b.score - a.score);
-
-    // Log match details for debugging
-    console.log(
-      `[MATCHING] Results for album "${album.name}" by ${album.artist}:`,
-      matches
-        .slice(0, 3)
-        .map((match: { score: number; details: MatchScoreDetails; album: SpotifyAlbum }) => ({
-          score: match.score,
-          details: match.details,
-          name: match.album.name,
-          artist: match.album.artists[0].name,
-        }))
-    );
 
     // Return the ID if we have a good match (score >= minimum threshold)
     return matches[0].score >= DEFAULT_ALBUM_CONFIG.thresholds.minimum ? matches[0].album.id : null;

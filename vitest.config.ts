@@ -11,7 +11,7 @@ export default defineConfig({
     setupFiles: "./src/__tests__/setup.ts",
     include: ["**/__tests__/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
     exclude: [
-      "**/src/__tests__/services/**",
+      "**/src/__tests__/integration/**",
       "**/node_modules/**",
       "**/dist/**",
       "**/cypress/**",

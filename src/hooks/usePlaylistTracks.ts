@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { IPlaylist } from "@/types/library";
-import { fetchPlaylistCurator } from "@/lib/services/apple/api";
 import { fetchPlaylistTracks, getSourceService } from "@/lib/musicApi";
 import { useLibrary } from "@/contexts/LibraryContext";
 
@@ -40,13 +39,6 @@ export const usePlaylistTracks = (playlistId: string): UsePlaylistTracksReturn =
 
         const sourceService = await getSourceService();
 
-        // Fetch owner for Apple Music playlists
-        let curatorName = "";
-        if (sourceService === "apple") {
-          const curator = await fetchPlaylistCurator(playlistId);
-          curatorName = curator?.data?.[0]?.attributes?.curatorName || "";
-        }
-
         const tracks = await fetchPlaylistTracks(playlistId, sourceService);
 
         if (!isMounted) return;
@@ -54,12 +46,9 @@ export const usePlaylistTracks = (playlistId: string): UsePlaylistTracksReturn =
         const updatedPlaylist = {
           ...existingPlaylist,
           tracks,
-          ...(sourceService === "apple" && curatorName ? { ownerName: curatorName } : {}),
         };
 
-        const updatedPlaylists = new Map(state.playlists);
-        updatedPlaylists.set(playlistId, updatedPlaylist);
-        actions.setPlaylists(updatedPlaylists);
+        actions.updatePlaylist(updatedPlaylist);
       } catch (err) {
         if (!isMounted) return;
         const errorMessage = "Failed to fetch tracks. Please try again.";
