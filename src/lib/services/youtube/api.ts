@@ -82,6 +82,14 @@ interface YouTubePlaylistItemsResponse {
   nextPageToken?: string;
 }
 
+// YouTube-specific retry options for robust API error handling
+const YOUTUBE_RETRY_OPTIONS = {
+  maxRetries: 5,
+  initialRetryDelay: 200, // Start with a bit faster retry than default
+  maxRetryDelay: 32000,
+  jitterFactor: 0.1,
+};
+
 /**
  * Find the best matching album from YouTube search results
  */
@@ -92,24 +100,22 @@ async function findBestAlbumMatch(album: Pick<ITrack, "name" | "artist">): Promi
       return null;
     }
 
-    const response = await retryWithExponentialBackoff<Response>(() =>
-      fetch("/api/youtube/search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: `${album.name} ${album.artist}`,
-          token: authData.accessToken,
+    // Use retryWithExponentialBackoff for robust error handling and retries
+    const data = await retryWithExponentialBackoff<YouTubeSearchResponse>(
+      () =>
+        fetch("/api/youtube/search", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query: `${album.name} ${album.artist}`,
+            token: authData.accessToken,
+          }),
         }),
-      })
+      YOUTUBE_RETRY_OPTIONS
     );
 
-    if (!response.ok) {
-      throw new Error("Search request failed");
-    }
-
-    const data = (await response.json()) as YouTubeSearchResponse;
     if (!data.matches?.length) {
       return null;
     }
@@ -253,84 +259,56 @@ export async function createPlaylistWithTracks(
     }
     console.log("Creating playlist with tracks:", validTracks);
 
-    // Create the playlist - using a different implementation for this specific case
-    // since it needs to return a string, not a Response
-    const createPlaylist = async (): Promise<string> => {
-      const response = await fetch("https://www.googleapis.com/youtube/v3/playlists?part=snippet", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${authData.accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          snippet: {
-            title: name,
-            description: description || "",
-            privacyStatus: "private",
+    // Create the playlist using retryWithExponentialBackoff for reliability
+    const playlistData = await retryWithExponentialBackoff<YouTubePlaylistCreateResponse>(
+      () =>
+        fetch("https://www.googleapis.com/youtube/v3/playlists?part=snippet", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${authData.accessToken}`,
+            "Content-Type": "application/json",
           },
+          body: JSON.stringify({
+            snippet: {
+              title: name,
+              description: description || "",
+              privacyStatus: "private",
+            },
+          }),
         }),
-      });
+      YOUTUBE_RETRY_OPTIONS
+    );
+    const playlistId = playlistData.id;
 
-      if (!response.ok) {
-        throw new Error(`Failed to create playlist: ${response.status} ${response.statusText}`);
-      }
-
-      const data = (await response.json()) as YouTubePlaylistCreateResponse;
-      return data.id;
-    };
-
-    // Using a different approach for retry with this function since it returns a string
-    let retries = 0;
-    const maxRetries = 3;
-    let playlistId: string;
-
-    while (true) {
-      try {
-        playlistId = await createPlaylist();
-        break;
-      } catch (error) {
-        retries++;
-        if (retries >= maxRetries) {
-          throw error;
-        }
-        const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000;
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-
-    // Add tracks to the playlist
+    // Add tracks to the playlist in batches, using retryWithExponentialBackoff for each request
     const result = await processInBatches(
       async batch => {
         await Promise.all(
           batch
             .filter(track => track.targetId)
             .map(async track => {
-              const response = await retryWithExponentialBackoff<Response>(() =>
-                fetch("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet", {
-                  method: "POST",
-                  headers: {
-                    Authorization: `Bearer ${authData.accessToken}`,
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    snippet: {
-                      playlistId,
-                      resourceId: {
-                        kind: "youtube#video",
-                        videoId: track.targetId,
-                      },
+              // Use retryWithExponentialBackoff for each add-track request
+              const data = await retryWithExponentialBackoff<YouTubePlaylistItemInsertResponse>(
+                () =>
+                  fetch("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet", {
+                    method: "POST",
+                    headers: {
+                      Authorization: `Bearer ${authData.accessToken}`,
+                      "Content-Type": "application/json",
                     },
+                    body: JSON.stringify({
+                      snippet: {
+                        playlistId,
+                        resourceId: {
+                          kind: "youtube#video",
+                          videoId: track.targetId,
+                        },
+                      },
+                    }),
                   }),
-                })
+                YOUTUBE_RETRY_OPTIONS
               );
-
-              if (!response.ok) {
-                throw new Error(
-                  `Failed to add track to playlist: ${response.status} ${response.statusText}`
-                );
-              }
-
-              const data = (await response.json()) as YouTubePlaylistItemInsertResponse;
+              // If no data.id, treat as error
               if (!data.id) {
                 throw new Error("Failed to add track to playlist: No item ID returned");
               }
@@ -339,7 +317,7 @@ export async function createPlaylistWithTracks(
       },
       {
         items: validTracks,
-        batchSize: 3,
+        batchSize: 1,
         delayBetweenBatches: 200,
         onBatchStart: (batchNumber, totalBatches) => {
           console.log(`[YOUTUBE] Processing playlist tracks batch ${batchNumber}/${totalBatches}`);
@@ -385,12 +363,14 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
         url.searchParams.append("pageToken", nextPageToken);
       }
 
-      const response = await retryWithExponentialBackoff<YouTubePlaylistItemsResponse>(() =>
-        fetch(url.toString(), {
-          headers: {
-            Authorization: `Bearer ${authData.accessToken}`,
-          },
-        })
+      const response = await retryWithExponentialBackoff<YouTubePlaylistItemsResponse>(
+        () =>
+          fetch(url.toString(), {
+            headers: {
+              Authorization: `Bearer ${authData.accessToken}`,
+            },
+          }),
+        YOUTUBE_RETRY_OPTIONS
       );
 
       const data = response;
@@ -450,12 +430,14 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
       url.searchParams.append("pageToken", nextPageToken);
     }
 
-    const response = await retryWithExponentialBackoff<YouTubePlaylistResponse>(() =>
-      fetch(url.toString(), {
-        headers: {
-          Authorization: `Bearer ${authData.accessToken}`,
-        },
-      })
+    const response = await retryWithExponentialBackoff<YouTubePlaylistResponse>(
+      () =>
+        fetch(url.toString(), {
+          headers: {
+            Authorization: `Bearer ${authData.accessToken}`,
+          },
+        }),
+      YOUTUBE_RETRY_OPTIONS
     );
 
     const data: YouTubePlaylistResponse = response;
@@ -466,7 +448,6 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
         name: playlist.snippet.title,
         trackCount: playlist.contentDetails?.itemCount || 0,
         ownerId: authData.userId,
-        ownerName: playlist.snippet.channelTitle || "",
         tracks: [],
         artwork:
           playlist.snippet.thumbnails?.high?.url ||

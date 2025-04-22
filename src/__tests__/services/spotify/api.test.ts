@@ -1,301 +1,108 @@
-import { describe, it, expect, beforeAll, vi, afterAll } from "vitest";
-import {
-  fetchUserLibrary,
-  fetchPlaylistTracks,
-  search,
-  addTracksToLibrary,
-  createPlaylistWithTracks,
-} from "@/lib/services/spotify/api";
-import { setAuthData, AuthData, clearAuthData, setServiceType } from "@/lib/auth/constants";
-import type { ITrack } from "@/types/library";
-import { getCachedSpotifyAccessToken } from "@/__tests__/tokenCache";
+import * as api from "@/lib/services/spotify/api";
+import { mockTracks, mockAlbums, mockPlaylists } from "@/__mocks__/data/libraryData";
+import { describe, it, beforeEach, afterEach, expect, vi } from "vitest";
+import { setupSpotifyFetchMock, mockSpotifyAuth } from "@/__mocks__/services/spotify/fetchMocks";
 
-// Global test variables
-const TEST_PLAYLIST_ID = process.env.TEST_SPOTIFY_PLAYLIST_ID;
-const TEST_ALBUM_ID = process.env.TEST_SPOTIFY_ALBUM_ID;
+beforeEach(() => {
+  setupSpotifyFetchMock();
+  mockSpotifyAuth();
+});
 
-describe("Spotify API", () => {
-  // Auth data that will be initialized in beforeAll
-  let authDataSource: AuthData | null = null;
-  let authDataTarget: AuthData | null = null;
+afterEach(() => {
+  vi.clearAllMocks();
+});
 
-  beforeAll(async () => {
-    process.env.NEXT_PUBLIC_APP_URL = "http://localhost:3000";
-
-    // Mock window object for test environment
-    global.window = {
-      location: { href: "" },
-    } as unknown as Window & typeof globalThis;
-
-    // Setup mock DOM environment
-    global.document = {
-      cookie: "",
-    } as unknown as Document;
-
-    // Mock localStorage with a proper storage implementation
-    const store: { [key: string]: string } = {};
-    Object.defineProperty(global, "localStorage", {
-      value: {
-        getItem: vi.fn((key: string) => store[key] || null),
-        setItem: vi.fn((key: string, value: string) => {
-          store[key] = value.toString();
-        }),
-        removeItem: vi.fn((key: string) => {
-          delete store[key];
-        }),
-        clear: vi.fn(() => {
-          Object.keys(store).forEach(key => delete store[key]);
-        }),
-        length: 0,
-        key: vi.fn((index: number) => Object.keys(store)[index] || null),
-      },
-      writable: true,
-    });
-
-    // Update document.cookie configuration
-    Object.defineProperty(global.document, "cookie", {
-      writable: true,
-      value: "",
-    });
-
-    const authData = await getCachedSpotifyAccessToken("spotify");
-    // Same token - only for testing as we know its a read/write token
-    if (authData) {
-      authDataSource = { ...authData, role: "source" };
-      authDataTarget = { ...authData, role: "target" };
-      await setAuthData("source", authDataSource);
-      await setAuthData("target", authDataTarget);
-
-      // Also set the service type
-      setServiceType("source", "spotify");
-      setServiceType("target", "spotify");
-    } else {
-      console.warn("No auth data available from token cache - tests will fail");
-    }
-
-    // Check if we have the necessary environment variables
-    if (!TEST_ALBUM_ID || !TEST_PLAYLIST_ID) {
-      console.warn(
-        "Missing required variables for Spotify auth tests - some tests will be skipped"
-      );
-    }
+describe("Spotify API Service", () => {
+  it("fetchUserLibrary returns correct library data", async () => {
+    const data = await api.fetchUserLibrary();
+    expect(data.playlists.length).toBe(mockPlaylists.length);
+    expect(data.likedSongs.length).toBe(mockTracks.length);
+    expect(data.albums.length).toBe(mockAlbums.length);
   });
 
-  afterAll(() => {
-    // Clean up after each test
-    clearAuthData("source");
-    clearAuthData("target");
-    vi.clearAllMocks();
-    vi.restoreAllMocks();
+  it("fetchPlaylistTracks returns correct tracks", async () => {
+    const tracks = await api.fetchPlaylistTracks(mockPlaylists[0].id);
+    expect(tracks.length).toBe(mockPlaylists[0].tracks.length);
+    expect(tracks[0].name).toBe(mockPlaylists[0].tracks[0].name);
   });
 
-  it("should fetch user library", async () => {
-    vi.spyOn(global.localStorage, "getItem").mockImplementation(key => {
-      if (key.includes("token")) {
-        return JSON.stringify(authDataSource);
+  it("search matches tracks and returns SearchResult", async () => {
+    const result = await api.search(mockTracks, undefined);
+    expect(result.matched).toBeGreaterThan(0);
+    expect(result.tracks?.[0].status).toBe("matched");
+  });
+
+  it("createPlaylistWithTracks returns playlistId and counts", async () => {
+    const result = await api.createPlaylistWithTracks("Test Playlist", mockTracks);
+    expect(result.playlistId).toBe("new_playlist_id");
+    expect(result.total).toBe(mockTracks.length);
+  });
+
+  it("addTracksToLibrary returns correct counts", async () => {
+    const result = await api.addTracksToLibrary(mockTracks);
+    expect(result.added + result.failed).toBe(result.total);
+  });
+
+  it("addAlbumsToLibrary returns correct counts", async () => {
+    const result = await api.addAlbumsToLibrary(new Set(mockAlbums));
+    expect(result.added + result.failed).toBe(result.total);
+  });
+
+  it("searchAlbums matches albums and returns SearchResult", async () => {
+    const result = await api.searchAlbums(mockAlbums, undefined);
+    expect(result.matched).toBeGreaterThan(0);
+    expect(result.albums?.[0].status).toBe("matched");
+  });
+
+  it("handles empty playlists/tracks/albums gracefully", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockImplementationOnce(
+      async (input: string | URL | Request) => {
+        const url =
+          typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+        if (url.includes("/me/playlists?limit=1")) {
+          return new Response(JSON.stringify({ total: 0 }), { status: 200 });
+        }
+        return new Response(JSON.stringify({}), { status: 404 });
       }
-      return null;
-    });
-
-    // Skip if no auth data
-    if (!authDataSource) {
-      console.warn("Skipping fetchUserLibrary test - no auth data available");
-      return;
-    }
-
-    const library = await fetchUserLibrary();
-
-    // Verify library structure
-    expect(library).toBeDefined();
-    expect(library.playlists).toBeInstanceOf(Array);
-    expect(library.likedSongs).toBeInstanceOf(Array);
-    expect(library.albums).toBeInstanceOf(Array);
-
-    // Check some data is returned (test account should have some data)
-    if (library.playlists.length > 0) {
-      const playlist = library.playlists[0];
-      expect(playlist.id).toBeDefined();
-      expect(playlist.name).toBeDefined();
-      expect(playlist.tracks).toBeDefined();
-    }
-
-    // Log some stats about the fetched library
-    console.log(
-      `Fetched library: ${library.playlists.length} playlists, ${library.likedSongs.length} liked songs, ${library.albums.length} albums`
     );
+    await expect(api.fetchUserLibrary()).rejects.toThrow();
   });
 
-  it("should fetch tracks from a playlist", async () => {
-    vi.spyOn(global.localStorage, "getItem").mockImplementation(key => {
-      if (key.includes("token")) {
-        return JSON.stringify(authDataSource);
+  it("handles fetch errors gracefully", async () => {
+    // Attach a temporary unhandledRejection handler to suppress expected errors for this test
+    const unhandledRejectionHandler = (err: unknown): void => {
+      // Prevent Vitest from failing the test due to this expected error
+      // Only suppress the specific error we expect
+      if (err instanceof Error && err.message === "Network error") {
+        // Do nothing, this is expected
+        return;
       }
-      return null;
-    });
+      // For any other error, rethrow so the test fails as normal
+      throw err;
+    };
+    process.on("unhandledRejection", unhandledRejectionHandler);
 
-    // Skip if no auth data or test playlist ID
-    if (!authDataSource || !TEST_PLAYLIST_ID) {
-      console.warn("Skipping fetchPlaylistTracks test - missing auth data or playlist ID");
-      return;
+    try {
+      vi.useFakeTimers();
+      // The retry logic in fetchUserLibrary will retry 5 times before throwing.
+      // We mock fetch to throw an error for each attempt.
+      const fetchMock = vi.fn().mockImplementation(() => {
+        throw new Error("Network error");
+      });
+      global.fetch = fetchMock;
+
+      const promise = api.fetchUserLibrary();
+
+      // Fast-forward all timers (simulate all retries instantly)
+      await vi.runAllTimersAsync();
+
+      await expect(promise).rejects.toThrow("Network error");
+      expect(fetchMock).toHaveBeenCalledTimes(5);
+
+      vi.useRealTimers();
+    } finally {
+      // Always remove the handler after the test to avoid side effects
+      process.off("unhandledRejection", unhandledRejectionHandler);
     }
-
-    const tracks = await fetchPlaylistTracks(TEST_PLAYLIST_ID);
-
-    // Verify tracks array
-    expect(tracks).toBeInstanceOf(Array);
-
-    if (tracks.length > 0) {
-      // Verify track structure
-      const track = tracks[0];
-      expect(track.id).toBeDefined();
-      expect(track.name).equals("Axel F");
-      expect(track.artist).equals("Crazy Frog");
-      expect(track.album).equals("Crazy Frog presents Crazy Hits");
-
-      // Log some info about tracks
-      console.log(`Fetched ${tracks.length} tracks from playlist ${TEST_PLAYLIST_ID}`);
-      console.log(`First track: ${track.name} by ${track.artist}`);
-    }
-  });
-
-  it("should search for tracks", async () => {
-    vi.spyOn(global.localStorage, "getItem").mockImplementation(key => {
-      if (key.includes("token")) {
-        return JSON.stringify(authDataSource);
-      }
-      return null;
-    });
-
-    // Skip if no auth data
-    if (!authDataSource) {
-      console.warn("Skipping search test - no auth data available");
-      return;
-    }
-
-    // Create some test tracks to search for
-    const testTracks: ITrack[] = [
-      {
-        id: "test-id-1",
-        name: "Bohemian Rhapsody",
-        artist: "Queen",
-        album: "A Night at the Opera",
-        artwork: "",
-        status: "pending",
-      },
-      {
-        id: "test-id-2",
-        name: "Billie Jean",
-        artist: "Michael Jackson",
-        album: "Thriller",
-        artwork: "",
-        status: "pending",
-      },
-    ];
-
-    const searchResult = await search(testTracks, progress => {
-      // Optional: Log progress if needed
-      console.log(`Search progress: ${Math.round(progress * 100)}%`);
-    }); // Pass a progress callback function
-
-    // Verify search results
-    expect(searchResult).toBeDefined();
-    expect(searchResult.matched).toBeGreaterThanOrEqual(0);
-    expect(searchResult.unmatched).toBeGreaterThanOrEqual(0);
-    expect(searchResult.total).toBe(testTracks.length);
-    expect(searchResult.tracks).toBeInstanceOf(Array);
-
-    // Log search results
-    console.log(
-      `Search results: ${searchResult.matched} tracks found, ${searchResult.unmatched} failed`
-    );
-  });
-
-  it("should add tracks to a user library", async () => {
-    vi.spyOn(global.localStorage, "getItem").mockImplementation(key => {
-      if (key.includes("token")) {
-        return JSON.stringify(authDataTarget);
-      }
-      return null;
-    });
-
-    // Skip if no auth data
-    if (!authDataTarget) {
-      console.warn("Skipping addTracksToLibrary test - no auth data available");
-      return;
-    }
-
-    // Create test tracks with Spotify IDs
-    const testTracks: (ITrack & { targetId: string })[] = [
-      {
-        id: "test-1",
-        name: "Bohemian Rhapsody",
-        artist: "Queen",
-        album: "A Night at the Opera",
-        artwork: "",
-        status: "matched",
-        targetId: "7tFiyTwD0nx5a1eklYtX2J", // Bohemian Rhapsody Spotify ID
-      },
-    ];
-
-    const result = await addTracksToLibrary(testTracks);
-
-    expect(result).toBeDefined();
-    expect(result.total).toBe(testTracks.length);
-
-    // May not add if already in library, so we'll just verify the API call worked
-    expect(result.added + result.failed).toBe(testTracks.length);
-
-    console.log(`Library add result: added ${result.added}, failed ${result.failed}`);
-  });
-
-  it("should create a playlist with tracks", async () => {
-    vi.spyOn(global.localStorage, "getItem").mockImplementation(key => {
-      if (key.includes("token")) {
-        return JSON.stringify(authDataTarget);
-      }
-      return null;
-    });
-
-    // Skip if no auth data
-    if (!authDataTarget) {
-      console.warn("Skipping createPlaylistWithTracks test - no auth data available");
-      return;
-    }
-
-    // Create test tracks with Spotify IDs
-    const testTracks: (ITrack & { targetId: string })[] = [
-      {
-        id: "test-1",
-        name: "Bohemian Rhapsody",
-        artist: "Queen",
-        album: "A Night at the Opera",
-        artwork: "",
-        status: "matched",
-        targetId: "4u7EnebtmKWzUH433cf5Qv", // Bohemian Rhapsody Spotify ID
-      },
-      {
-        id: "test-2",
-        name: "Billie Jean",
-        artist: "Michael Jackson",
-        album: "Thriller",
-        artwork: "",
-        status: "matched",
-        targetId: "7J1uxwnxfQLu4APicE5Rnj", // Billie Jean Spotify ID
-      },
-    ];
-
-    const uniqueTestName = `Test Playlist ${Date.now()}`;
-    const result = await createPlaylistWithTracks(
-      uniqueTestName,
-      testTracks,
-      "Created by automated test"
-    );
-
-    expect(result).toBeDefined();
-    expect(result.total).toBe(testTracks.length);
-    expect(result.playlistId).toBeDefined();
-
-    console.log(`Playlist created: ${uniqueTestName}, ID: ${result.playlistId}`);
-    console.log(`Added ${result.added} tracks, failed ${result.failed}`);
   });
 });

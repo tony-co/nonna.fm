@@ -103,24 +103,6 @@ interface AppleAlbum {
   };
 }
 
-interface CuratorResponse {
-  data?: Array<{
-    attributes?: {
-      curatorName: string;
-    };
-    relationships?: {
-      curator?: {
-        data: {
-          id: string;
-          attributes: {
-            name: string;
-          };
-        };
-      };
-    };
-  }>;
-}
-
 interface AppleMusicSearchResponse {
   results: {
     songs?: {
@@ -140,31 +122,32 @@ const APPLE_RETRY_OPTIONS: RetryOptions = {
   jitterFactor: 0.1,
 };
 
-export async function initializeAppleMusic(): Promise<MusicKitInstance> {
+export async function initializeAppleMusic(
+  injectedMusicKit?: MusicKitGlobal
+): Promise<MusicKitInstance> {
   try {
-    // Check if MusicKit is available
-    if (typeof window === "undefined" || !window.MusicKit) {
-      console.error("MusicKit not available yet, waiting for it to load...");
-      // Wait for MusicKit to be available (up to 10 attempts, with increasing delay)
+    // Use the injected MusicKit if provided, otherwise use window.MusicKit
+    let musicKit =
+      injectedMusicKit ?? (typeof window !== "undefined" ? window.MusicKit : undefined);
+
+    if (!musicKit) {
+      // Retry logic as before
       let attempts = 0;
       while (attempts < 10) {
         await new Promise(resolve => setTimeout(resolve, 500 * (attempts + 1)));
-        if (window.MusicKit) {
-          console.info("MusicKit loaded after waiting");
+        musicKit =
+          injectedMusicKit ?? (typeof window !== "undefined" ? window.MusicKit : undefined);
+        if (musicKit) {
           break;
         }
         attempts++;
-        console.error(`Still waiting for MusicKit to load (attempt ${attempts + 1})`);
       }
-
-      // If MusicKit is still not available after retries, throw an error
-      if (!window.MusicKit) {
+      if (!musicKit) {
         throw new Error("MusicKit failed to load after multiple attempts");
       }
     }
 
-    // Configure MusicKit
-    await window.MusicKit.configure({
+    await musicKit.configure({
       developerToken: process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN || "",
       app: {
         name: "Nonna.fm",
@@ -172,18 +155,19 @@ export async function initializeAppleMusic(): Promise<MusicKitInstance> {
       },
     });
 
-    // Get the instance
-    const music = window.MusicKit.getInstance();
-    return music;
+    return musicKit.getInstance();
   } catch (error) {
     console.error("Error initializing Apple Music:", error);
     throw error;
   }
 }
 
-export async function authorizeAppleMusic(role: "source" | "target"): Promise<string> {
+export async function authorizeAppleMusic(
+  role: "source" | "target",
+  injectedMusicKit?: MusicKitGlobal
+): Promise<string> {
   try {
-    const music = await initializeAppleMusic();
+    const music = await initializeAppleMusic(injectedMusicKit);
     const musicUserToken = await music.authorize();
 
     // Store auth data in localStorage
@@ -307,10 +291,11 @@ async function findBestMatch(
 
 export async function search(
   tracks: Array<ITrack>,
-  onProgress: ((progress: number) => void) | undefined
+  onProgress: ((progress: number) => void) | undefined,
+  injectedMusicKit?: MusicKitGlobal
 ): Promise<SearchResult> {
   try {
-    const music = await initializeAppleMusic();
+    const music = await initializeAppleMusic(injectedMusicKit);
     const results: Array<ITrack> = [];
     let matched = 0;
     let unmatched = 0;
@@ -372,11 +357,12 @@ export async function search(
 export async function createPlaylistWithTracks(
   name: string,
   tracks: Array<ITrack>,
-  description?: string
+  description?: string,
+  injectedMusicKit?: MusicKitGlobal
 ): Promise<TransferResult> {
   try {
     console.log("createPlaylistWithTracks - starting:", { name, trackCount: tracks.length });
-    const music = await initializeAppleMusic();
+    const music = await initializeAppleMusic(injectedMusicKit);
     const userToken = await music.authorize();
 
     // Create the playlist with retry
@@ -454,10 +440,13 @@ export async function createPlaylistWithTracks(
   }
 }
 
-export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<TransferResult> {
+export async function addTracksToLibrary(
+  tracks: Array<ITrack>,
+  injectedMusicKit?: MusicKitGlobal
+): Promise<TransferResult> {
   try {
     console.log("addTracksToLibrary - starting:", { trackCount: tracks.length });
-    const music = await initializeAppleMusic();
+    const music = await initializeAppleMusic(injectedMusicKit);
     const userToken = await music.authorize();
 
     // Filter tracks with valid targetIds
@@ -506,10 +495,13 @@ export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<Transfe
   }
 }
 
-export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferResult> {
+export async function addAlbumsToLibrary(
+  albums: Set<IAlbum>,
+  injectedMusicKit?: MusicKitGlobal
+): Promise<TransferResult> {
   try {
     console.log("addAlbumsToLibrary - starting:", { albumCount: albums.size });
-    const music = await initializeAppleMusic();
+    const music = await initializeAppleMusic(injectedMusicKit);
     const userToken = await music.authorize();
 
     if (albums.size === 0) {
@@ -629,10 +621,11 @@ async function findBestAlbumMatch(
 
 export async function searchAlbums(
   albums: Array<IAlbum>,
-  onProgress: ((progress: number) => void) | undefined
+  onProgress: ((progress: number) => void) | undefined,
+  injectedMusicKit?: MusicKitGlobal
 ): Promise<SearchResult> {
   try {
-    const music = await initializeAppleMusic();
+    const music = await initializeAppleMusic(injectedMusicKit);
     const results: Array<IAlbum> = [];
     let matched = 0;
     let unmatched = 0;
@@ -753,7 +746,6 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
       name: playlist.attributes.name,
       trackCount: playlist.attributes.trackCount,
       ownerId: authData.userId,
-      ownerName: "", // TODO: get owner name
       artwork: formatArtworkUrl(playlist.attributes.artwork?.url),
       tracks: [], // We'll fetch tracks when needed
     }));
@@ -843,32 +835,6 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
     likedSongs: songs,
     albums,
   };
-}
-
-export async function fetchPlaylistCurator(playlistId: string): Promise<CuratorResponse | null> {
-  const authData = await getAppleAuthData("source");
-  if (!authData) throw new Error("Not authenticated with Apple Music");
-
-  try {
-    const curatorData = await retryWithExponentialBackoff<CuratorResponse>(
-      () =>
-        fetch(
-          `https://api.music.apple.com/v1/me/library/playlists/${playlistId}/catalog?include=curator`,
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-              "Music-User-Token": authData.accessToken,
-            },
-          }
-        ),
-      APPLE_RETRY_OPTIONS
-    );
-
-    return curatorData;
-  } catch (error) {
-    console.warn("Failed to fetch curator information:", error);
-    return null;
-  }
 }
 
 export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]> {

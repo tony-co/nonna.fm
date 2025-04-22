@@ -1,5 +1,5 @@
 import { cleanup } from "@testing-library/react";
-import { afterEach } from "vitest";
+import { afterEach, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 
 afterEach(() => {
@@ -52,3 +52,24 @@ Object.defineProperty(window, "IntersectionObserver", {
   configurable: true,
   value: MockIntersectionObserver,
 });
+
+// --- Mock MusicKit before anything else ---
+// This ensures that when the Apple API code is loaded, it finds window.MusicKit as expected.
+(globalThis as unknown as { window: Window & typeof globalThis }).window = globalThis as Window &
+  typeof globalThis;
+(globalThis as Window & typeof globalThis).window.MusicKit = {
+  configure: vi.fn(),
+  getInstance: vi.fn(() => ({
+    authorize: vi.fn().mockResolvedValue("mock-user-token"),
+    api: {
+      search: vi.fn().mockResolvedValue({ songs: { data: [] } }),
+      library: {
+        add: vi.fn(),
+        playlists: {
+          create: vi.fn().mockResolvedValue({ id: "mock-playlist-id" }),
+          addTracks: vi.fn(),
+        },
+      },
+    },
+  })),
+};
