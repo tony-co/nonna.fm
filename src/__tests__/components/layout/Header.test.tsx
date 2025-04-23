@@ -123,8 +123,8 @@ describe("Header", () => {
   });
 
   it("respects system dark mode preference", () => {
-    // Mock system dark mode preference
-    mockMatchMedia.mockImplementationOnce(query => ({
+    // Ensure the mock returns matches: true for dark mode BEFORE rendering
+    mockMatchMedia.mockImplementation(query => ({
       matches: query === "(prefers-color-scheme: dark)",
       media: query,
       onchange: null,
@@ -134,6 +134,7 @@ describe("Header", () => {
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
     }));
+    // This ensures ThemeProvider sees the correct system preference on mount
 
     render(
       <ThemeProvider>

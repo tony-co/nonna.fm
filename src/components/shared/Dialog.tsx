@@ -7,6 +7,7 @@ interface DialogProps {
   title: string;
   children: React.ReactNode;
   closeOnBackdropClick?: boolean;
+  // maxWidthClass prop removed as sizing is now handled directly in the className for Tailwind v4
 }
 
 /**
@@ -75,26 +76,33 @@ export default function Dialog({
 
   return (
     <div
-      className="fixed inset-0 isolate z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-md dark:bg-black/60"
+      // Use a very light black overlay (10% opacity) with minimal blur for a subtle, modern effect in both light and dark mode
+      className="fixed inset-0 isolate z-[9999] flex items-center justify-center bg-black/10 backdrop-blur-sm"
       aria-modal="true"
       role="dialog"
     >
       <div
         ref={dialogRef}
-        className="dark:bg-[var(--color-indigo-990)]/80 animate-in fade-in mx-4 flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl duration-200 dark:border-indigo-950"
+        // Dialog box: fullscreen on mobile, modal on sm+
+        // Use flex-col so header stays fixed and content scrolls if needed
+        // Increased dark mode background opacity from 80% to 95% for better readability
+        className="dark:bg-[var(--color-indigo-990)]/95 sm:dark:bg-[var(--color-indigo-990)]/95 mx-0 flex h-full max-h-none w-full max-w-none flex-col rounded-none border-none
+          bg-white p-0 shadow-none sm:mx-4 sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:rounded-xl sm:border sm:border-gray-200 sm:bg-white sm:p-0 sm:shadow"
       >
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-gray-800">
+        {/* Dialog header: matches Header height and close button on mobile */}
+        <div className="flex h-14 items-center justify-between border-b border-gray-100 px-4 py-0 sm:h-16 sm:px-6 dark:border-gray-800">
           <h2 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="cursor-pointer rounded-lg p-1 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 dark:focus:ring-indigo-400"
+            // On mobile: match menu button (rounded-full, p-2, size-6). On desktop: original style.
+            className="rounded-full p-0 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:rounded-lg sm:p-1 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 dark:focus:ring-indigo-400"
             aria-label="Close dialog"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
+              className="size-6 sm:h-5 sm:w-5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -108,7 +116,13 @@ export default function Dialog({
             </svg>
           </button>
         </div>
-        <div className="overflow-y-auto px-6 py-6 text-gray-700 dark:text-gray-200">{children}</div>
+        {/*
+          Content area is now flex-1 and scrollable, with max height minus header (64px).
+          This ensures content never overflows the modal and scrolls if too tall.
+        */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 text-gray-700 sm:max-h-[calc(85vh-64px)] dark:text-gray-200">
+          {children}
+        </div>
       </div>
     </div>
   );

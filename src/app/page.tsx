@@ -187,8 +187,9 @@ function HomePageContent() {
                   Generous Free Plan
                 </h3>
                 <p className="text-lg text-zinc-600 dark:text-stone-400">
-                  300 transfers for free <strong>everyday</strong> or upgrade to premium for 10x
-                  more.
+                  300 transfers for free <strong>everyday</strong>
+                  <br />
+                  Upgrade to Premium for 10x more.
                 </p>
               </div>
               <div className="rounded-3xl border border-indigo-200/50 bg-indigo-100 p-10 shadow-lg transition-all duration-200 hover:shadow-xl dark:border-indigo-800/30 dark:bg-indigo-950/70">
@@ -205,8 +206,9 @@ function HomePageContent() {
                   Secure and private
                 </h3>
                 <p className="text-lg text-zinc-600 dark:text-stone-400">
-                  We do not store or sell your data. Everything happens in your browser, and our
-                  code is open source for full transparency.
+                  We do not sell your data.
+                  <br />
+                  Our code is open source for full transparency.
                 </p>
               </div>
             </div>

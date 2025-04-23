@@ -5,7 +5,7 @@ interface NonnaLogoProps {
   size?: number;
 }
 
-export const NonnaLogo: React.FC<NonnaLogoProps> = ({ className = "", size = 56 }) => {
+export const NonnaLogo: React.FC<NonnaLogoProps> = ({ className = "", size = 50 }) => {
   return (
     <div className={`relative ${className}`} style={{ width: size, height: size }}>
       <svg

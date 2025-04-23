@@ -8,6 +8,7 @@ import { LanguageSwitch } from "./header/LanguageSwitch";
 import { MobileMenu } from "./header/MobileMenu";
 import { NonnaLogo } from "../icons/NonnaLogo";
 import { Inter } from "next/font/google";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -18,6 +19,7 @@ export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
   const isLibraryPage = pathname?.startsWith("/library");
+  const isMobile = useIsMobile();
 
   return (
     <>
@@ -35,7 +37,7 @@ export const Header = () => {
                 <NonnaLogo className="size-6 font-black sm:size-8 dark:text-white" />
                 <div className="flex items-center gap-1 pt-0.5 sm:gap-2">
                   <span
-                    className={`${inter.className} text-xl font-black uppercase italic leading-none text-gray-900 sm:text-2xl dark:text-white`}
+                    className={`${inter.className} text-md font-black uppercase italic leading-none text-gray-900 lg:text-xl dark:text-white`}
                   >
                     nonna.fm
                   </span>
@@ -48,28 +50,21 @@ export const Header = () => {
 
             {/* Desktop Navigation */}
             <div className="hidden items-center gap-8 sm:flex">
-              {isLibraryPage && <TransferUsageDisplay />}
+              {/* Only render TransferUsageDisplay on desktop if on library page and not mobile */}
+              {isLibraryPage && !isMobile && <TransferUsageDisplay />}
               <LanguageSwitch />
               <ThemeToggle />
             </div>
 
-            {/* Mobile Menu */}
-            <div className="sm:hidden">
+            {/* Mobile Menu + TransferUsageDisplay (Mobile Only) */}
+            <div className="flex items-center gap-2 sm:hidden">
+              {/* Only render TransferUsageDisplay on mobile if on library page and isMobile */}
+              {isLibraryPage && isMobile && <TransferUsageDisplay />}
               <MobileMenu onOpenChange={setIsMenuOpen} isOpen={isMenuOpen} />
             </div>
           </div>
         </div>
       </header>
-
-      {/* Mobile Menu Backdrop */}
-      <div
-        className={`
-          fixed inset-0 bg-black/60 backdrop-blur-md transition-all duration-300 ease-in-out sm:hidden dark:bg-black/80
-          ${isMenuOpen ? "z-[49] opacity-100" : "pointer-events-none -z-10 opacity-0"}
-        `}
-        onClick={() => setIsMenuOpen(false)}
-        aria-hidden="true"
-      />
     </>
   );
 };

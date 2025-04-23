@@ -3,6 +3,7 @@
 import React, { createContext, useContext, ReactNode } from "react";
 import { useTransferLimits, TransferLimits } from "@/hooks/useTransferLimits";
 import { TransferLimitModal } from "@/components/shared/TransferLimitModal";
+import Dialog from "@/components/shared/Dialog";
 
 interface TransferContextProps {
   children: ReactNode;
@@ -51,13 +52,10 @@ export function TransferProvider({ children }: TransferContextProps) {
       {children}
 
       {/* Render the modal conditionally based on status and modal state */}
-      {status && (
-        <TransferLimitModal
-          isOpen={isLimitExceededModalOpen}
-          onClose={handleCloseModal}
-          selectedCount={selectedCountForModal}
-          userStatus={status}
-        />
+      {status && isLimitExceededModalOpen && (
+        <Dialog isOpen={true} onClose={handleCloseModal} title="Transfer Limit">
+          <TransferLimitModal selectedCount={selectedCountForModal} userStatus={status} />
+        </Dialog>
       )}
     </TransferContext.Provider>
   );
