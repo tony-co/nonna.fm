@@ -35,17 +35,8 @@ export function TransferUsageDisplay() {
 
       {isModalOpen &&
         createPortal(
-          <Dialog
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            title="Transfer Limits"
-          >
-            <TransferLimitModal
-              isOpen={isModalOpen}
-              onClose={() => setIsModalOpen(false)}
-              selectedCount={0}
-              userStatus={status}
-            />
+          <Dialog isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Plans">
+            <TransferLimitModal selectedCount={0} userStatus={status} />
           </Dialog>,
           document.body
         )}

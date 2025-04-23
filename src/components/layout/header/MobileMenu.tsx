@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
+import Dialog from "@/components/shared/Dialog";
+import { createPortal } from "react-dom";
 
 const GITHUB_BASE_URL = "https://github.com/tony-co/nonna.fm/blob/main";
 const GITHUB_REPO = "https://github.com/tony-co/nonna.fm";
@@ -23,18 +25,6 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
   const [selectedLang, setSelectedLang] = useState("en");
   const { theme, toggleTheme } = useTheme();
 
-  // Prevent body scroll when menu is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen]);
-
   const handleLanguageSelect = (langCode: string) => {
     setSelectedLang(langCode);
     // todo: handle language change
@@ -42,8 +32,9 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
 
   return (
     <>
+      {/* Menu button: opens the dialog */}
       <button
-        onClick={() => onOpenChange(!isOpen)}
+        onClick={() => onOpenChange(true)}
         className="rounded-full p-2 transition-colors duration-200 hover:bg-gray-100 dark:text-white dark:hover:bg-white/10"
         aria-label="Open menu"
       >
@@ -60,37 +51,10 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
         </svg>
       </button>
 
-      {/* Bottom sheet modal */}
-      {isOpen && (
-        <div className="fixed inset-0 left-0 right-0 top-0 z-[9999] flex flex-col">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm dark:bg-black/80"
-            onClick={() => onOpenChange(false)}
-          />
-
-          <div
-            className="relative mt-auto w-full border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0A0A1B]"
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-4 dark:border-white/10">
-              <h2 className="text-[22px] font-semibold text-gray-900 dark:text-white">Settings</h2>
-              <button
-                onClick={() => onOpenChange(false)}
-                className="rounded-full p-2 text-gray-600 hover:bg-gray-100 dark:text-white dark:hover:bg-white/10"
-                aria-label="Close menu"
-              >
-                <svg className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-
+      {/* Portal for Dialog modal for mobile menu */}
+      {isOpen &&
+        createPortal(
+          <Dialog isOpen={isOpen} onClose={() => onOpenChange(false)} title="Settings">
             {/* Menu Items */}
             <div className="flex flex-col px-4">
               {/* Language Selection */}
@@ -249,9 +213,9 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
                 </a>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </Dialog>,
+          document.body
+        )}
     </>
   );
 };
