@@ -129,7 +129,7 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
   }
 
   return (
-    <div className="flex h-full p-4">
+    <div className="flex h-full">
       {/* Content Container */}
       <div className="flex h-full w-full md:flex-row">
         {/* Library Sidebar - Full width on mobile */}
@@ -140,9 +140,7 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
             isContentVisible ? "fixed -translate-x-full md:static md:translate-x-0" : ""
           }`}
         >
-          <div className="px-2">
-            <LibrarySidebar />
-          </div>
+          <LibrarySidebar />
         </aside>
 
         {/* Main Content - Slides in from right on mobile */}

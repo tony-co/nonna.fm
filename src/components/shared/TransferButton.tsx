@@ -1,11 +1,11 @@
 "use client";
 
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { useMatching } from "@/hooks/useMatching";
 import { useTransfer as useTransferHook } from "@/hooks/useTransfer";
 import { useTransfer } from "@/contexts/TransferContext";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { TransferSuccessModal } from "./TransferSuccessModal";
 import { MusicService } from "@/types/services";
 
@@ -13,7 +13,6 @@ import { MusicService } from "@/types/services";
 export const fetchingPlaylists = new Set<string>();
 
 export function TransferButton() {
-  const searchParams = useSearchParams();
   const { state } = useLibrary();
   const { isLoading: isMatching } = useMatching();
   const { userStatus: status } = useTransfer();
@@ -26,17 +25,10 @@ export function TransferButton() {
   } = useTransferHook();
   const [isTransferring, setIsTransferring] = useState(false);
 
-  // Initial check for fetching playlists to prevent flickering
-  const initialFetchingStatus = useMemo(() => {
-    for (const playlistId of state.selectedItems.playlists) {
-      if (fetchingPlaylists.has(playlistId)) {
-        return true;
-      }
-    }
-    return false;
-  }, [state.selectedItems.playlists]);
-
-  const [isFetchingPlaylists] = useState(initialFetchingStatus);
+  // Dynamically check if any selected playlist is currently being fetched (no memo, always up-to-date)
+  const isFetchingPlaylists = Array.from(state.selectedItems.playlists).some(playlistId =>
+    fetchingPlaylists.has(playlistId)
+  );
 
   // Get target service from URL parameters
   const params = useParams();
@@ -48,9 +40,10 @@ export function TransferButton() {
     state.selectedItems.albums.size > 0 ||
     state.selectedItems.playlists.size > 0;
 
-  // Get current mode from URL
-  const mode = searchParams.get("step") || "select";
-  const isCompleted = mode === "completed";
+  // Button is busy if any async operation is in progress
+  const isBusy = isTransferring || isMatching || isFetchingPlaylists;
+  // Disable if busy, completed, or nothing selected
+  const isDisabled = isBusy || !hasSelections;
 
   // Determine button text based on state
   const buttonText =
@@ -58,15 +51,7 @@ export function TransferButton() {
       ? "Finding Matches..."
       : isTransferring
         ? "Transferring..."
-        : isCompleted
-          ? "Complete"
-          : mode === "review"
-            ? "Begin Transfer"
-            : "Start Transfer";
-
-  // Determine button state
-  const isDisabled =
-    isTransferring || isCompleted || !hasSelections || isMatching || isFetchingPlaylists;
+        : "Start Transfer";
 
   // Format summary text of selected items
   const getSummaryText = () => {
@@ -150,7 +135,7 @@ export function TransferButton() {
   return (
     <>
       <div className="flex items-center gap-4">
-        {!isCompleted && status && (
+        {status && (
           <span className="text-sm text-gray-600 dark:text-gray-400">
             {status.availableToday} transfers available
           </span>
@@ -176,13 +161,6 @@ export function TransferButton() {
               {isMatching || isTransferring || isFetchingPlaylists ? (
                 <>
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  {buttonText}
-                </>
-              ) : isCompleted ? (
-                <>
-                  <div className="flex h-5 w-5 items-center justify-center">
-                    <div className="h-3 w-4 rotate-45 border-b-2 border-r-2 border-current" />
-                  </div>
                   {buttonText}
                 </>
               ) : (

@@ -163,7 +163,7 @@ export const LibrarySidebar: FC = () => {
 
   return (
     <div className="h-full">
-      <div className="flex flex-col p-4">
+      <div className="flex flex-col p-4 pb-8">
         <div className="mb-4 mt-2">
           <h1 className="mb-1 text-xl font-bold text-zinc-800 dark:text-white">Your library</h1>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">Select items to transfer</p>
