@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ServiceSelector } from "@/components/shared/ServiceSelector";
@@ -10,15 +10,16 @@ import { useState, Suspense } from "react";
 import { MusicService } from "@/types/services";
 import { initiateYouTubeAuth } from "@/lib/services/youtube/auth";
 import { SpotifyConsentModal } from "@/components/modals/SpotifyConsentModal";
+import { useRouter } from "next/navigation";
 
 function SourcePageContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { authorize: authorizeAppleMusic } = useAppleMusic();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSpotifyConsentModalOpen, setIsSpotifyConsentModalOpen] = useState(false);
   const [pendingTargetAction, setPendingTargetAction] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleTargetSelect = async (serviceId: string): Promise<void> => {
     setIsProcessing(true);
@@ -32,14 +33,18 @@ function SourcePageContent() {
 
       if (serviceId === "apple") {
         await authorizeAppleMusic("target");
-        router.push(`/library/${source}/${serviceId}`);
+        // Apple Music does not use OAuth redirects; after successful authorization, we navigate to the library page here.
+        router.push(`/library/${source}/apple`);
+        return;
       } else if (serviceId === "spotify") {
         setPendingTargetAction(serviceId);
         setIsSpotifyConsentModalOpen(true);
         setIsProcessing(false);
       } else if (serviceId === "youtube") {
         await initiateYouTubeAuth("target");
-        router.push(`/library/${source}/${serviceId}`);
+        // On success, initiateYouTubeAuth should redirect the user to YouTube's OAuth page.
+        // Our callback and redirect is handled in the YouTubeCallback route.
+        return;
       }
     } catch (err) {
       console.error("Authorization error:", err);
@@ -63,7 +68,9 @@ function SourcePageContent() {
       }
 
       await initiateSpotifyAuth("target");
-      router.push(`/library/${source}/spotify`);
+      // On success, initiateSpotifyAuth should redirect the user to Spotify's OAuth page.
+      // Our callback and redirect is handled in the SpotifyCallback route.
+      return;
     } catch (err) {
       console.error("Authorization error:", err);
       setError("Failed to connect to Spotify. Please try again.");
