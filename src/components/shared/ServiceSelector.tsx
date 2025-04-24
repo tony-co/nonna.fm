@@ -140,14 +140,17 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
             {isOpen && (
               <div className="dark:bg-indigo-990 absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-800">
                 {Object.values(SERVICES)
-                  .filter(service => service.id !== sourceService?.id)
+                  // Hide source service and any service marked as 'Coming Soon'
+                  .filter(
+                    service => service.id !== sourceService?.id && service.status !== "Coming Soon"
+                  )
                   .map(service => {
                     // Determine if service should be disabled - Deezer special case for target
                     const isDisabled =
                       service.status !== "Available" || isProcessing || service.id === "deezer";
 
                     const getStatusText = (): string => {
-                      if (service.id === "deezer") return "Not available as target";
+                      if (service.id === "deezer") return "Not available as target yet";
                       return service.status;
                     };
 
@@ -176,11 +179,6 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
                             {service.name}
                           </span>
                           <span className={`text-sm ${getStatusColor()}`}>{getStatusText()}</span>
-                          {service.id === "deezer" && (
-                            <span className="mt-0.5 text-left text-xs text-amber-500/70 dark:text-amber-400/70">
-                              Cannot be used as a target due to OAuth limitations
-                            </span>
-                          )}
                         </div>
                       </button>
                     );
