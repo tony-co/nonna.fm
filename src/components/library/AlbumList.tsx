@@ -23,9 +23,9 @@ const AlbumItem: FC<AlbumItemProps> = ({ album }) => {
       }
       role="album"
     >
-      <div className="h-10 w-10 flex-shrink-0 rounded">
+      <div className="flex-shrink-0 rounded">
         {isVisible ? (
-          <ArtworkImage src={album.artwork} alt={`${album.name} artwork`} size={40} type="album" />
+          <ArtworkImage src={album.artwork} alt={`${album.name} artwork`} type="album" />
         ) : (
           <div className="h-full w-full rounded bg-slate-100 dark:bg-slate-800" />
         )}
@@ -83,8 +83,8 @@ export const AlbumList: FC = () => {
           </div>
         </div>
         <div className="space-y-2">
-          {Array.from(state.albums).map(album => (
-            <AlbumItem key={album.id} album={album} />
+          {Array.from(state.albums).map((album, index) => (
+            <AlbumItem key={`${album.id}-${index}`} album={album} />
           ))}
         </div>
       </div>

@@ -120,9 +120,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
                   <ArtworkImage
                     src={selectedData.likedSongs[0]?.artwork}
                     alt="Liked Songs"
-                    size={48}
                     type="liked"
-                    className="group-hover:scale-105"
                   />
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white">Liked Songs</div>
@@ -155,13 +153,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
                 className="group flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 transition-all duration-200 hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-gray-800 dark:bg-gray-900/50 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/50"
               >
                 <div className="flex items-center gap-4">
-                  <ArtworkImage
-                    src={selectedData.albums[0]?.artwork}
-                    alt="Albums"
-                    size={48}
-                    type="album"
-                    className="group-hover:scale-105"
-                  />
+                  <ArtworkImage src={selectedData.albums[0]?.artwork} alt="Albums" type="album" />
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white">Albums</div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -204,9 +196,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
                     <ArtworkImage
                       src={firstTrack?.artwork}
                       alt={playlist.name || "Playlist"}
-                      size={48}
                       type="playlist"
-                      className="group-hover:scale-105"
                     />
                     <div>
                       <div className="font-medium text-gray-900 dark:text-white">

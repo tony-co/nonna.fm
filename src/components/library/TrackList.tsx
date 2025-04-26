@@ -39,9 +39,9 @@ const TrackRow: FC<{
       </div>
 
       {/* Artwork */}
-      <div className="h-10 w-10 flex-shrink-0 rounded">
+      <div className="flex-shrink-0 rounded">
         {isVisible ? (
-          <ArtworkImage src={track.artwork} alt={`${track.name} artwork`} size={40} type="album" />
+          <ArtworkImage src={track.artwork} alt={`${track.name} artwork`} type="album" />
         ) : (
           <div className="h-full w-full rounded bg-slate-100 dark:bg-slate-800" />
         )}
@@ -110,7 +110,7 @@ export const TrackList: FC<TrackListProps> = ({ tracks, selection = new Set(), p
 
           return (
             <TrackRow
-              key={track.id}
+              key={`${track.id}-${index}`}
               track={track}
               index={index}
               isSelected={isSelected}
