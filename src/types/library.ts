@@ -27,7 +27,7 @@ export interface IPlaylist {
   id: string;
   name: string;
   description?: string;
-  trackCount: number;
+  trackCount: number | null;
   ownerId: string;
   tracks: ITrack[];
   selected?: boolean;
@@ -97,6 +97,10 @@ export type LibraryAction =
   | { type: "SET_LIKED_SONGS"; payload: Set<ITrack> }
   | { type: "SET_ALBUMS"; payload: Set<IAlbum> }
   | { type: "SET_PLAYLISTS"; payload: Map<string, IPlaylist> }
+  | {
+      type: "SET_PLAYLISTS_FUNCTIONAL";
+      payload: (prev: Map<string, IPlaylist>) => Map<string, IPlaylist>;
+    }
   | { type: "UPDATE_PLAYLIST"; payload: IPlaylist }
   | {
       type: "UPDATE_LIBRARY";

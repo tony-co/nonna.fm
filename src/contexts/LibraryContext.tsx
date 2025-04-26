@@ -41,7 +41,9 @@ interface LibraryContextType {
     // Library data actions
     setLikedSongs: (songs: Set<ITrack>) => void;
     setAlbums: (albums: Set<IAlbum>) => void;
-    setPlaylists: (playlists: Map<string, IPlaylist>) => void;
+    setPlaylists: (
+      playlists: Map<string, IPlaylist> | ((prev: Map<string, IPlaylist>) => Map<string, IPlaylist>)
+    ) => void;
     updatePlaylist: (playlist: IPlaylist) => void;
     updateLibrary: (
       data: Partial<Pick<LibraryState, "likedSongs" | "albums" | "playlists">>
@@ -142,6 +144,8 @@ function libraryReducer(state: LibraryState, action: LibraryAction): LibraryStat
       return { ...state, albums: action.payload };
     case "SET_PLAYLISTS":
       return { ...state, playlists: action.payload };
+    case "SET_PLAYLISTS_FUNCTIONAL":
+      return { ...state, playlists: action.payload(state.playlists ?? new Map()) };
     case "UPDATE_PLAYLIST": {
       const newPlaylists = new Map(state.playlists);
       newPlaylists.set(action.payload.id, action.payload);
@@ -183,8 +187,17 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
       // Library data actions
       setLikedSongs: (songs: Set<ITrack>) => dispatch({ type: "SET_LIKED_SONGS", payload: songs }),
       setAlbums: (albums: Set<IAlbum>) => dispatch({ type: "SET_ALBUMS", payload: albums }),
-      setPlaylists: (playlists: Map<string, IPlaylist>) =>
-        dispatch({ type: "SET_PLAYLISTS", payload: playlists }),
+      setPlaylists: (
+        playlistsOrUpdater:
+          | Map<string, IPlaylist>
+          | ((prev: Map<string, IPlaylist>) => Map<string, IPlaylist>)
+      ) => {
+        if (typeof playlistsOrUpdater === "function") {
+          dispatch({ type: "SET_PLAYLISTS_FUNCTIONAL", payload: playlistsOrUpdater });
+        } else {
+          dispatch({ type: "SET_PLAYLISTS", payload: playlistsOrUpdater });
+        }
+      },
       updatePlaylist: (playlist: IPlaylist) =>
         dispatch({ type: "UPDATE_PLAYLIST", payload: playlist }),
       updateLibrary: (data: Partial<Pick<LibraryState, "likedSongs" | "albums" | "playlists">>) =>

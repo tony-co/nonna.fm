@@ -85,6 +85,9 @@ mockFns.cancelMatching.mockImplementation((id: string) => {
 export function getMockQueue(): string[] {
   return queue.map(t => t.id);
 }
+export function getMockQueueTasks(): MatchingTask[] {
+  return [...queue];
+}
 export function getMockCompleted(): string[] {
   return [...completed];
 }
