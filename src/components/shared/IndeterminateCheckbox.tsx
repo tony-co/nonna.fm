@@ -36,7 +36,7 @@ export const IndeterminateCheckbox: FC<IndeterminateCheckboxProps> = ({
       <input
         ref={checkboxRef}
         type="checkbox"
-        className={`h-4 w-4 flex-shrink-0 cursor-pointer rounded accent-[#8B7FFF] transition-colors duration-200 ${className}`}
+        className={`h-5 w-5 flex-shrink-0 cursor-pointer accent-[#8B7FFF] ${className}`}
         checked={isChecked}
         onChange={onChange}
         onClick={onClick}

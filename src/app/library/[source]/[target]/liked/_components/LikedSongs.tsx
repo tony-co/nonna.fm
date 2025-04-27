@@ -1,11 +1,23 @@
 "use client";
 
-import { FC } from "react";
+import { FC, useEffect } from "react";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { TrackList } from "@/components/library/TrackList";
+import { useItemTitle } from "@/contexts/ItemTitleContext";
 
 export const LikedSongs: FC = () => {
   const { state } = useLibrary();
+  const { setItemTitle, setMinimalMobileHeader } = useItemTitle();
+
+  // Set title and minimal header in header when mounted
+  useEffect(() => {
+    setItemTitle("Liked Songs");
+    setMinimalMobileHeader(true);
+    return () => {
+      setItemTitle(null);
+      setMinimalMobileHeader(false);
+    };
+  }, [setItemTitle, setMinimalMobileHeader]);
 
   if (!state.likedSongs) return null;
 

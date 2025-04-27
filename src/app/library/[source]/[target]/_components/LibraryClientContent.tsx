@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, TouchEvent } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { LibrarySidebar } from "@/components/layout/Sidebar";
 import { useLibrary } from "@/contexts/LibraryContext";
 import type { IPlaylist } from "@/types/library";
@@ -8,7 +8,8 @@ import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
 import { MusicService } from "@/types/services";
 import { authorizeAppleMusic } from "@/lib/services/apple/api";
 import { fetchInitialLibraryData } from "@/lib/server/library";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useItemTitle } from "@/contexts/ItemTitleContext";
 
 interface LibraryClientContentProps {
   source: MusicService;
@@ -18,11 +19,13 @@ interface LibraryClientContentProps {
 
 function LibraryContent({ source, _target, children }: LibraryClientContentProps) {
   const { state, actions } = useLibrary();
+  const { setShowTitle } = useItemTitle();
   const [isContentVisible, setIsContentVisible] = useState(false);
-  const [touchStart, setTouchStart] = useState(0);
-  const [touchEnd, setTouchEnd] = useState(0);
   const pathname = usePathname();
-  const router = useRouter();
+  const [mainEl, setMainEl] = useState<HTMLElement | null>(null);
+  const mainRef = useCallback((node: HTMLElement | null) => {
+    setMainEl(node);
+  }, []);
 
   // Show content when route changes (i.e., when an item is selected)
   useEffect(() => {
@@ -30,26 +33,57 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
     setIsContentVisible(!isHome);
   }, [pathname, source, _target]);
 
-  const handleTouchStart = (e: TouchEvent) => {
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchMove = (e: TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance < -50; // Threshold of 50px
-    if (isLeftSwipe) {
-      setIsContentVisible(false);
-      router.push(`/library/${source}/${_target}`);
+  // Effect to observe the h1 within the main content area
+  useEffect(() => {
+    if (!isContentVisible || !setShowTitle) {
+      setShowTitle(false);
+      return;
     }
-    // Reset values
-    setTouchStart(0);
-    setTouchEnd(0);
-  };
+
+    if (!mainEl) {
+      // Wait for main element to be set
+      return;
+    }
+
+    const scrollContainer = mainEl;
+    let intersectionObserver: IntersectionObserver | null = null;
+    let mutationObserver: MutationObserver | null = null;
+
+    function attachIntersectionObserver() {
+      const h1Element = scrollContainer.querySelector("h1");
+
+      if (!h1Element) return false;
+      intersectionObserver = new IntersectionObserver(
+        ([entry]) => {
+          setShowTitle(!entry.isIntersecting);
+        },
+        {
+          root: scrollContainer,
+          rootMargin: "0px",
+          threshold: 0.1,
+        }
+      );
+      intersectionObserver.observe(h1Element);
+      return true;
+    }
+
+    // Try to attach immediately
+    if (!attachIntersectionObserver()) {
+      // If h1 is not present, observe for DOM changes
+      mutationObserver = new MutationObserver(() => {
+        if (attachIntersectionObserver()) {
+          // Once attached, disconnect mutation observer
+          if (mutationObserver) mutationObserver.disconnect();
+        }
+      });
+      mutationObserver.observe(scrollContainer, { childList: true, subtree: true });
+    }
+
+    return () => {
+      if (intersectionObserver) intersectionObserver.disconnect();
+      if (mutationObserver) mutationObserver.disconnect();
+    };
+  }, [isContentVisible, setShowTitle, mainEl]);
 
   // Initialize library
   useEffect(() => {
@@ -132,11 +166,14 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
     <div className="flex h-full">
       {/* Content Container */}
       <div className="flex h-full w-full md:flex-row">
-        {/* Library Sidebar - Full width on mobile */}
+        {/* Library Sidebar - Full width on mobile, height based on content. Full height on desktop */}
         <aside
           role="sidebar"
           aria-label="Library Selection"
-          className={`h-full w-full overflow-y-auto transition-transform duration-300 md:relative md:w-[38rem] md:translate-x-0 md:border-r md:border-indigo-100/10 md:dark:bg-transparent ${
+          // DEBUG: Removed temporary background
+          // Removed h-full for mobile, added md:h-full for desktop
+          className={`w-full overflow-y-auto transition-transform duration-300 md:relative md:h-full md:w-[38rem] md:translate-x-0 md:border-r md:border-indigo-100/10 md:dark:bg-transparent ${
+            // Note: md:dark:bg-transparent might override debug color on desktop dark mode
             isContentVisible ? "fixed -translate-x-full md:static md:translate-x-0" : ""
           }`}
         >
@@ -145,47 +182,15 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
 
         {/* Main Content - Slides in from right on mobile */}
         <main
+          ref={mainRef}
           role="main"
           aria-label="Selected Content"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          className={`fixed inset-y-0 right-0 z-40 h-full w-full overflow-y-auto pt-14 transition-transform duration-300 sm:pt-16 md:relative md:z-0 md:translate-x-0 md:pt-0 ${
+          className={`fixed inset-y-0 right-0 z-40 h-full w-full overflow-y-auto pb-16 pt-14 transition-transform duration-300 sm:pt-16 md:relative md:z-0 md:translate-x-0 md:pb-0 md:pt-0 ${
             isContentVisible ? "translate-x-0" : "translate-x-full"
           }`}
         >
-          {/* Back Link - Mobile Only */}
-          <button
-            type="button"
-            data-testid="back-to-library"
-            onClick={() => {
-              setIsContentVisible(false);
-              router.push(`/library/${source}/${_target}`);
-            }}
-            className="container mx-auto flex items-center gap-1 px-4 py-4 text-sm font-medium text-indigo-600 md:hidden dark:text-indigo-400"
-            aria-label="Back to library"
-          >
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            Back to Library
-          </button>
-
-          <div className="container mx-auto">
-            <div className="h-full min-h-full overflow-auto rounded-xl p-4 shadow-sm">
-              {children}
-            </div>
+          <div className="h-full overflow-y-auto">
+            <div className="rounded-xl p-4 pb-12 shadow-sm md:p-6 md:pb-6">{children}</div>
           </div>
         </main>
       </div>

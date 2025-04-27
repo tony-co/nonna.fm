@@ -18,7 +18,7 @@ export default async function LibraryHomePage({ params }: LibraryHomePageProps) 
 
   return (
     <div
-      className="animate-fade-in mx-auto flex max-w-2xl flex-col items-center justify-center p-8"
+      className="animate-fade-in mx-auto hidden max-w-2xl flex-col items-center justify-center p-8 md:flex"
       role="guide"
       aria-label="Transfer Guide"
       style={{

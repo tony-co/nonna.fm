@@ -172,13 +172,19 @@ export const LibrarySidebar: FC = () => {
         {/* Liked Songs Section */}
         <div>
           <div
-            className="group flex cursor-pointer items-center gap-3 rounded-lg p-2.5 transition-all duration-200 hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
+            // Add margin-bottom to separate from next item, and reduce vertical padding
+            className={`group mb-1 flex cursor-pointer items-center gap-4 rounded-lg px-2.5 py-2 transition-all duration-200
+              ${
+                selectedLikedSongsCount === likedSongsCount && likedSongsCount > 0
+                  ? "bg-indigo-100/60 group-hover:bg-indigo-200/80 dark:bg-indigo-900/40 dark:group-hover:bg-indigo-800/60"
+                  : "hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
+              }`}
             onClick={handleLikedSongsClick}
             role="button"
             aria-label="View Liked Songs"
             data-testid="liked-songs-section"
           >
-            <div onClick={e => e.stopPropagation()}>
+            <div onClick={e => e.stopPropagation()} className="pl-2 sm:pl-0">
               <IndeterminateCheckbox
                 selectedCount={selectedLikedSongsCount}
                 totalCount={likedSongsCount}
@@ -188,7 +194,7 @@ export const LibrarySidebar: FC = () => {
                 testId="liked-songs-checkbox"
               />
             </div>
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-300">
+            <div className="relative flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-300">
               <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
               </svg>
@@ -226,13 +232,19 @@ export const LibrarySidebar: FC = () => {
         {/* Albums Section */}
         <div>
           <div
-            className="group flex cursor-pointer items-center gap-3 rounded-lg p-2.5 transition-all duration-200 hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
+            // Add margin-bottom to separate from next item, and reduce vertical padding
+            className={`group mb-1 flex cursor-pointer items-center gap-4 rounded-lg px-2.5 py-2 transition-all duration-200
+              ${
+                selectedAlbumsCount === albumsCount && albumsCount > 0
+                  ? "bg-indigo-100/60 group-hover:bg-indigo-200/80 dark:bg-indigo-900/40 dark:group-hover:bg-indigo-800/60"
+                  : "hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
+              }`}
             onClick={handleAlbumsClick}
             role="button"
             aria-label="View Albums"
             data-testid="albums-section"
           >
-            <div onClick={e => e.stopPropagation()}>
+            <div onClick={e => e.stopPropagation()} className="pl-2 sm:pl-0">
               <IndeterminateCheckbox
                 selectedCount={selectedAlbumsCount}
                 totalCount={albumsCount}
@@ -242,11 +254,10 @@ export const LibrarySidebar: FC = () => {
                 testId="albums-checkbox"
               />
             </div>
-            <div className="relative h-10 w-10 overflow-hidden rounded-lg">
+            <div className="relative overflow-hidden rounded-lg">
               <ArtworkImage
                 src={Array.from(state.albums ?? [])[0]?.artwork}
                 alt="First Album"
-                size={40}
                 type="album"
                 className="rounded-lg"
               />
@@ -279,27 +290,32 @@ export const LibrarySidebar: FC = () => {
         {/* Playlists Section */}
         <div>
           <div className="">
-            {Array.from(state.playlists?.values() ?? []).map(playlist => (
+            {Array.from(state.playlists?.values() ?? []).map((playlist, idx, arr) => (
               <div
                 key={playlist.id}
-                className="group flex cursor-pointer items-center gap-3 rounded-lg p-2.5 transition-all duration-200 hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
+                // Add margin-bottom to separate from next item, except last; reduce vertical padding
+                className={`group flex cursor-pointer items-center gap-4 rounded-lg ${idx !== arr.length - 1 ? "mb-1" : ""} px-2.5 py-2 transition-all duration-200
+                  ${
+                    selectedItems.playlists.has(playlist.id)
+                      ? "bg-indigo-100/60 group-hover:bg-indigo-200/80 dark:bg-indigo-900/40 dark:group-hover:bg-indigo-800/60"
+                      : "hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
+                  }`}
                 onClick={() => handlePlaylistClick(playlist.id)}
                 data-testid={`playlist-item-${playlist.id}`}
               >
-                <div onClick={e => e.stopPropagation()}>
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 cursor-pointer rounded accent-indigo-600 transition-colors duration-200 dark:accent-indigo-500"
-                    checked={selectedItems.playlists.has(playlist.id)}
+                <div onClick={e => e.stopPropagation()} className="pl-2 sm:pl-0">
+                  <IndeterminateCheckbox
+                    selectedCount={selectedItems.playlists.has(playlist.id) ? 1 : 0}
+                    totalCount={1}
                     onChange={() => handlePlaylistToggle(playlist)}
-                    data-testid={`playlist-checkbox-${playlist.id}`}
+                    label={playlist.name}
+                    testId={`playlist-checkbox-${playlist.id}`}
                   />
                 </div>
-                <div className="relative h-10 w-10 overflow-hidden rounded-lg">
+                <div className="relative overflow-hidden rounded-lg">
                   <ArtworkImage
                     src={playlist.artwork}
                     alt={playlist.name}
-                    size={40}
                     type="playlist"
                     className={`rounded-lg ${fetchingPlaylists.has(playlist.id) ? "animate-pulse" : ""}`}
                   />
@@ -333,7 +349,7 @@ export const LibrarySidebar: FC = () => {
                     className="truncate text-sm text-zinc-600 dark:text-zinc-400"
                     data-testid={`playlist-track-count-${playlist.id}`}
                   >
-                    {playlist.trackCount} tracks
+                    {playlist.tracks?.length || playlist.trackCount} tracks
                     {/* Show unmatched count if any */}
                     {playlist.tracks &&
                       playlist.tracks.length > 0 &&

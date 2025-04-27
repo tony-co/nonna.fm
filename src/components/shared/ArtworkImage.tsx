@@ -5,7 +5,10 @@ type ArtworkType = "liked" | "album" | "playlist";
 interface ArtworkImageProps {
   src?: string | null;
   alt: string;
-  size: number;
+  /**
+   * Artwork size in pixels. Defaults to 48 if not provided.
+   */
+  size?: number;
   type?: ArtworkType;
   className?: string;
   objectFit?: "cover" | "contain";
@@ -48,13 +51,13 @@ const FALLBACK_CONFIGS = {
 export const ArtworkImage: React.FC<ArtworkImageProps> = ({
   src,
   alt,
-  size,
+  size = 48,
   type = "playlist",
   className = "",
   objectFit = "cover",
 }) => {
   const baseClassName =
-    "relative overflow-hidden rounded-md shadow-sm transition-transform duration-200 group-hover:scale-105";
+    "relative overflow-hidden rounded-md shadow-sm transition-transform duration-200";
   const finalClassName = `${baseClassName} ${className}`;
 
   if (!src) {

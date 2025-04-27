@@ -148,5 +148,48 @@ describe("useMatching", () => {
     expect(cancelled).toContain(ids[1]);
   });
 
+  it("preserves tracks array of first playlist when a second playlist is queued", async () => {
+    // This test ensures that when two playlists are queued, the tracks array of the first is not lost or replaced
+    // Define two playlists with unique tracks arrays
+    const playlist1 = { id: "playlist1", tracks: ["trackA", "trackB"] };
+    const playlist2 = { id: "playlist2", tracks: ["trackX", "trackY"] };
+
+    // Test component to queue playlists with tracks
+    function PlaylistMatchingConsumer() {
+      const { matchLikedSongs } = useMatching();
+      return (
+        <div>
+          <button onClick={() => matchLikedSongs(playlist1.tracks, "spotify")}>
+            Queue Playlist 1
+          </button>
+          <button onClick={() => matchLikedSongs(playlist2.tracks, "spotify")}>
+            Queue Playlist 2
+          </button>
+        </div>
+      );
+    }
+
+    render(
+      <TestWrapper>
+        <PlaylistMatchingConsumer />
+      </TestWrapper>
+    );
+
+    // Queue both playlists
+    screen.getByText("Queue Playlist 1").click();
+    screen.getByText("Queue Playlist 2").click();
+
+    // Get the queued tasks (full objects)
+    const { getMockQueueTasks } = await import("@/__mocks__/hooks/useMatching");
+    const queueTasks = getMockQueueTasks();
+    // Find the first playlist in the queue by its tracks
+    const first = queueTasks.find(
+      item => Array.isArray(item.items) && item.items.includes("trackA")
+    );
+    // Assert that the tracks array is intact and not replaced
+    expect(first).toBeDefined();
+    expect(first?.items).toEqual(["trackA", "trackB"]);
+  });
+
   // Add more tests for queueing, completion, edge cases, etc.
 });

@@ -138,17 +138,19 @@ export const useMatching = (): UseMatchingReturn => {
           return;
         }
         // Set all to pending first (including already matched, for UI consistency)
-        const updatedPlaylists = new Map(state.playlists ?? []);
         const playlistId = task.playlist.id;
-        // Always use the playlist from the task, which is guaranteed to have the latest tracks
         const playlist = task.playlist;
         if (playlist) {
-          const pendingTracks = playlist.tracks.map(track => ({
-            ...track,
-            status: MATCHING_STATUS.PENDING,
-          }));
-          updatedPlaylists.set(playlistId, { ...playlist, tracks: pendingTracks });
-          actions.setPlaylists(updatedPlaylists);
+          // Use functional update to avoid stale state bugs when multiple playlists are queued
+          actions.setPlaylists(prev => {
+            const updated = new Map(prev ?? []);
+            const pendingTracks = playlist.tracks.map(track => ({
+              ...track,
+              status: MATCHING_STATUS.PENDING,
+            }));
+            updated.set(playlistId, { ...playlist, tracks: pendingTracks });
+            return updated;
+          });
         }
         const result = await provider.search(tracksToMatch, progressValue => {
           if (signal.aborted) throw new DOMException("Aborted", "AbortError");
@@ -162,18 +164,20 @@ export const useMatching = (): UseMatchingReturn => {
         });
         if (result.tracks) {
           // Batch update: merge all result.tracks into the playlist's tracks
-          // Always use the playlist from the task, which is guaranteed to have the latest tracks
-          const updatedPlaylists = new Map(state.playlists ?? []);
+          // Use functional update to avoid stale state bugs when multiple playlists are queued
           const playlist = task.playlist;
           if (playlist) {
             const updatedTracksMap = new Map(result.tracks.map(track => [track.id, track]));
-            const updatedTracks = playlist.tracks.map(track =>
-              updatedTracksMap.has(track.id)
-                ? { ...track, ...updatedTracksMap.get(track.id) }
-                : track
-            );
-            updatedPlaylists.set(playlistId, { ...playlist, tracks: updatedTracks });
-            actions.setPlaylists(updatedPlaylists);
+            actions.setPlaylists(prev => {
+              const updated = new Map(prev ?? []);
+              const updatedTracks = playlist.tracks.map(track =>
+                updatedTracksMap.has(track.id)
+                  ? { ...track, ...updatedTracksMap.get(track.id) }
+                  : track
+              );
+              updated.set(playlistId, { ...playlist, tracks: updatedTracks });
+              return updated;
+            });
           }
         }
         // Use action creator for complete
@@ -198,7 +202,7 @@ export const useMatching = (): UseMatchingReturn => {
         setTimeout(() => processQueue(), 0);
       }
     }
-  }, [actions, state.likedSongs, state.albums, state.playlists, dispatch]);
+  }, [actions, state.likedSongs, state.albums, dispatch]);
 
   // Public API
   const matchLikedSongs = useCallback(

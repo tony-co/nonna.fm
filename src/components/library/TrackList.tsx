@@ -39,9 +39,9 @@ const TrackRow: FC<{
       </div>
 
       {/* Artwork */}
-      <div className="h-10 w-10 flex-shrink-0 rounded">
+      <div className="flex-shrink-0 rounded">
         {isVisible ? (
-          <ArtworkImage src={track.artwork} alt={`${track.name} artwork`} size={40} type="album" />
+          <ArtworkImage src={track.artwork} alt={`${track.name} artwork`} type="album" />
         ) : (
           <div className="h-full w-full rounded bg-slate-100 dark:bg-slate-800" />
         )}
@@ -83,7 +83,7 @@ export const TrackList: FC<TrackListProps> = ({ tracks, selection = new Set(), p
     <div className="relative bg-transparent dark:bg-transparent" role="tracklist">
       {/* Header */}
       <div
-        className="sticky top-0 mb-4 grid grid-cols-[32px_1fr_32px] gap-2 border-b border-slate-200 bg-white/80 p-1.5 py-2 text-xs font-normal text-slate-500 backdrop-blur-sm md:grid-cols-[32px_32px_1fr_231px_32px] md:gap-4 md:p-2 md:text-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400"
+        className="mb-4 grid grid-cols-[32px_1fr_32px] gap-2 border-b border-slate-200 bg-white/80 p-1.5 py-2 text-xs font-normal text-slate-500 backdrop-blur-sm md:grid-cols-[32px_32px_1fr_231px_32px] md:gap-4 md:p-2 md:text-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400"
         role="row"
       >
         <div className="hidden items-center md:flex" role="columnheader">
@@ -110,7 +110,7 @@ export const TrackList: FC<TrackListProps> = ({ tracks, selection = new Set(), p
 
           return (
             <TrackRow
-              key={track.id}
+              key={`${track.id}-${index}`}
               track={track}
               index={index}
               isSelected={isSelected}
