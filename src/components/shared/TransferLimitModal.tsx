@@ -80,7 +80,7 @@ export function TransferLimitModal({ selectedCount, userStatus }: TransferLimitM
         <div className="flex items-center gap-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-900/50">
             <svg
-              className="h-5 w-5 text-gray-600 dark:text-gray-400"
+              className="mt-1 h-5 w-5 text-gray-600 dark:text-gray-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -93,36 +93,33 @@ export function TransferLimitModal({ selectedCount, userStatus }: TransferLimitM
               />
             </svg>
           </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Free Plan</h3>
-              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                Current Plan
-              </span>
-            </div>
-            <ul className="mb-4 mt-2 space-y-2 text-gray-600 dark:text-gray-300">
-              <li className="flex items-center gap-2.5">
-                <div className="flex h-5 w-5 items-center justify-center">
-                  <svg className="h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                {FREE_TIER_LIMIT} daily transfers
-              </li>
-            </ul>
+          <div className="flex flex-col items-start">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Free Plan</h3>
+            <span className="mt-2 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+              Current Plan
+            </span>
           </div>
         </div>
+        <ul className="mb-4 mt-4 space-y-2 text-gray-600 dark:text-gray-300">
+          <li className="flex items-center gap-2.5">
+            <div className="flex h-5 w-5 items-center justify-center">
+              <svg className="h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            {FREE_TIER_LIMIT} daily transfers
+          </li>
+        </ul>
       </div>
 
       {/* Premium Plan - Coming Soon */}
       <div className="relative overflow-hidden rounded-lg border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-6 dark:border-indigo-900 dark:from-indigo-950/30 dark:to-indigo-900/10">
-        <div className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2"></div>
         <div className="flex items-center gap-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/50">
+          <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/50">
             <svg
               className="h-5 w-5 text-indigo-600 dark:text-indigo-400"
               fill="none"
@@ -137,40 +134,38 @@ export function TransferLimitModal({ selectedCount, userStatus }: TransferLimitM
               />
             </svg>
           </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Premium Plan</h3>
-              <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400">
-                Coming Soon
-              </span>
-            </div>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Upgrade to Premium for a higher limit
-            </p>
-            <ul className="mb-4 mt-3 space-y-2 text-gray-600 dark:text-gray-300">
-              <li className="flex items-center gap-2.5">
-                <div className="flex h-5 w-5 items-center justify-center">
-                  <svg className="h-4 w-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <span className="flex items-center gap-1.5">
-                  <span>{PREMIUM_TIER_LIMIT} daily transfers</span>
-                </span>
-              </li>
-            </ul>
-            <button
-              disabled
-              className="w-full cursor-not-allowed rounded-lg bg-gray-100 px-6 py-2.5 text-center font-medium text-gray-400 dark:bg-gray-800 dark:text-gray-500"
-            >
+          <div className="flex flex-col items-start">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Premium Plan</h3>
+            <span className="mt-2 rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400">
               Coming Soon
-            </button>
+            </span>
           </div>
         </div>
+        <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+          Upgrade to Premium for a higher limit
+        </p>
+        <ul className="mb-4 mt-3 space-y-2 text-gray-600 dark:text-gray-300">
+          <li className="flex items-center gap-2.5">
+            <div className="flex h-5 w-5 items-center justify-center">
+              <svg className="h-4 w-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <span className="flex items-center gap-1.5">
+              <span>{PREMIUM_TIER_LIMIT} daily transfers</span>
+            </span>
+          </li>
+        </ul>
+        <button
+          disabled
+          className="w-full cursor-not-allowed rounded-lg bg-gray-100 px-6 py-2.5 text-center font-medium text-gray-400 dark:bg-gray-800 dark:text-gray-500"
+        >
+          Coming Soon
+        </button>
       </div>
     </div>
   );

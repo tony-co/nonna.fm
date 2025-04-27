@@ -1,10 +1,11 @@
 "use client";
-import { FC, useRef } from "react";
+import { FC, useRef, useEffect } from "react";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import { useIsVisible } from "@/hooks/useIsVisible";
 import { StatusIcon } from "@/components/shared/StatusIcon";
 import type { IAlbum } from "@/types/library";
+import { useItemTitle } from "@/contexts/ItemTitleContext";
 
 interface AlbumItemProps {
   album: IAlbum;
@@ -55,6 +56,18 @@ const AlbumItem: FC<AlbumItemProps> = ({ album }) => {
 
 export const AlbumList: FC = () => {
   const { state } = useLibrary();
+  const { setItemTitle, setMinimalMobileHeader } = useItemTitle();
+
+  // Set title and minimal header in header when mounted
+  useEffect(() => {
+    setItemTitle("Albums");
+    setMinimalMobileHeader(true);
+    return () => {
+      setItemTitle(null);
+      setMinimalMobileHeader(false);
+    };
+  }, [setItemTitle, setMinimalMobileHeader]);
+
   if (!state.albums) return null;
 
   const unmatchedCount = Array.from(state.albums).reduce((count, album) => {
@@ -71,7 +84,7 @@ export const AlbumList: FC = () => {
       </div>
       <div className="relative bg-transparent dark:bg-transparent" role="albumlist">
         <div
-          className="sticky top-0 mb-4 grid grid-cols-[32px_1fr_32px] gap-2 border-b border-slate-200 bg-white/80 p-1.5 py-2 text-xs font-normal text-slate-500 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400"
+          className="mb-4 grid grid-cols-[32px_1fr_32px] gap-2 border-b border-slate-200 bg-white/80 p-1.5 py-2 text-xs font-normal text-slate-500 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400"
           role="row"
         >
           <div className="flex items-center" role="columnheader">

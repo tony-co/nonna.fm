@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useParams } from "next/navigation";
 import { TransferUsageDisplay } from "../shared/TransferUsageDisplay";
 import { ThemeToggle } from "./header/ThemeToggle";
 import { LanguageSwitch } from "./header/LanguageSwitch";
@@ -9,17 +9,84 @@ import { MobileMenu } from "./header/MobileMenu";
 import { NonnaLogo } from "../icons/NonnaLogo";
 import { Inter } from "next/font/google";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import Link from "next/link";
+import { useItemTitle } from "@/contexts/ItemTitleContext";
 
 const inter = Inter({
   subsets: ["latin"],
   weight: ["900"],
 });
 
+// Remove props for minimal mobile header
+// interface HeaderProps {
+//   minimalMobileHeader?: boolean; // Show minimal header on mobile
+//   itemTitle?: string; // Title to display in minimal header
+//   backHref?: string; // Back link URL
+// }
+
+// Remove props from Header
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
   const isLibraryPage = pathname?.startsWith("/library");
   const isMobile = useIsMobile();
+  const { itemTitle, minimalMobileHeader, showTitle } = useItemTitle();
+  const params = useParams();
+  const source = params?.source as string;
+  const target = params?.target as string;
+  // Compute backHref for detail pages
+  const backHref = `/library/${source}/${target}`;
+
+  // Remove local showTitle state and useEffect
+  // const [showTitle, setShowTitle] = useState(false);
+  // useEffect(() => { ... IntersectionObserver logic ... }, [minimalMobileHeader, isMobile]);
+
+  // If minimalMobileHeader is true and on mobile, render minimal header
+  if (minimalMobileHeader && isMobile) {
+    return (
+      <header
+        className="relative w-full backdrop-blur transition-colors duration-200 ease-in-out sm:hidden"
+        style={{ zIndex: 50 }}
+      >
+        <div className="container mx-auto">
+          {/* Use w-full for the flex container to prevent overflow and horizontal scroll on mobile */}
+          <div className="relative flex h-14 w-full items-center justify-center">
+            {/* Back link: Absolutely positioned to the left, so it doesn't affect centering */}
+            <Link
+              href={backHref}
+              className="absolute left-0 flex items-center px-4 text-gray-900 hover:underline focus:outline-none dark:text-white"
+              aria-label="Back"
+              data-testid="back-to-library"
+            >
+              <svg
+                className="mr-2 size-6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="sr-only">Back</span>
+            </Link>
+            {/* Centered, truncated item title. Use showTitle from context. */}
+            <span
+              className={`
+                mx-auto max-w-[65%] overflow-hidden truncate text-ellipsis whitespace-nowrap text-center text-lg font-semibold
+                transition duration-300 ease-out
+                ${showTitle ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0"}
+              `}
+              title={itemTitle || "Item"}
+            >
+              {/* Always render the title text; CSS handles visibility/animation */}
+              {itemTitle || "Item"}
+            </span>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <>

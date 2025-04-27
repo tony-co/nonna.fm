@@ -173,7 +173,7 @@ export const LibrarySidebar: FC = () => {
         <div>
           <div
             // Add margin-bottom to separate from next item, and reduce vertical padding
-            className={`group mb-1 flex cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 transition-all duration-200
+            className={`group mb-1 flex cursor-pointer items-center gap-4 rounded-lg px-2.5 py-2 transition-all duration-200
               ${
                 selectedLikedSongsCount === likedSongsCount && likedSongsCount > 0
                   ? "bg-indigo-100/60 group-hover:bg-indigo-200/80 dark:bg-indigo-900/40 dark:group-hover:bg-indigo-800/60"
@@ -184,7 +184,7 @@ export const LibrarySidebar: FC = () => {
             aria-label="View Liked Songs"
             data-testid="liked-songs-section"
           >
-            <div onClick={e => e.stopPropagation()}>
+            <div onClick={e => e.stopPropagation()} className="pl-2 sm:pl-0">
               <IndeterminateCheckbox
                 selectedCount={selectedLikedSongsCount}
                 totalCount={likedSongsCount}
@@ -233,7 +233,7 @@ export const LibrarySidebar: FC = () => {
         <div>
           <div
             // Add margin-bottom to separate from next item, and reduce vertical padding
-            className={`group mb-1 flex cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 transition-all duration-200
+            className={`group mb-1 flex cursor-pointer items-center gap-4 rounded-lg px-2.5 py-2 transition-all duration-200
               ${
                 selectedAlbumsCount === albumsCount && albumsCount > 0
                   ? "bg-indigo-100/60 group-hover:bg-indigo-200/80 dark:bg-indigo-900/40 dark:group-hover:bg-indigo-800/60"
@@ -244,7 +244,7 @@ export const LibrarySidebar: FC = () => {
             aria-label="View Albums"
             data-testid="albums-section"
           >
-            <div onClick={e => e.stopPropagation()}>
+            <div onClick={e => e.stopPropagation()} className="pl-2 sm:pl-0">
               <IndeterminateCheckbox
                 selectedCount={selectedAlbumsCount}
                 totalCount={albumsCount}
@@ -294,7 +294,7 @@ export const LibrarySidebar: FC = () => {
               <div
                 key={playlist.id}
                 // Add margin-bottom to separate from next item, except last; reduce vertical padding
-                className={`group flex cursor-pointer items-center gap-3 rounded-lg ${idx !== arr.length - 1 ? "mb-1" : ""} px-2.5 py-2 transition-all duration-200
+                className={`group flex cursor-pointer items-center gap-4 rounded-lg ${idx !== arr.length - 1 ? "mb-1" : ""} px-2.5 py-2 transition-all duration-200
                   ${
                     selectedItems.playlists.has(playlist.id)
                       ? "bg-indigo-100/60 group-hover:bg-indigo-200/80 dark:bg-indigo-900/40 dark:group-hover:bg-indigo-800/60"
@@ -303,7 +303,7 @@ export const LibrarySidebar: FC = () => {
                 onClick={() => handlePlaylistClick(playlist.id)}
                 data-testid={`playlist-item-${playlist.id}`}
               >
-                <div onClick={e => e.stopPropagation()}>
+                <div onClick={e => e.stopPropagation()} className="pl-2 sm:pl-0">
                   <IndeterminateCheckbox
                     selectedCount={selectedItems.playlists.has(playlist.id) ? 1 : 0}
                     totalCount={1}

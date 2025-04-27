@@ -22,7 +22,7 @@ export const LoadingOverlay: React.FC = () => (
       </div>
     </div>
     {/* Loading text directly below the logo/spinner, centered */}
-    <div className="mt-8 text-center">
+    <div className="mb-16 mt-2 text-center">
       <h2 className="animate-pulse text-xl font-normal text-white">Loading your library</h2>
       <p className="mt-2 text-sm text-indigo-200">Just a moment while we get everything ready</p>
     </div>
