@@ -35,7 +35,7 @@ export const Header = () => {
   const source = params?.source as string;
   const target = params?.target as string;
   // Compute backHref for detail pages
-  const backHref = `/library/${source}/${target}`;
+  const backHref = source && target ? `/library/${source}/${target}` : "/library";
 
   // Remove local showTitle state and useEffect
   // const [showTitle, setShowTitle] = useState(false);

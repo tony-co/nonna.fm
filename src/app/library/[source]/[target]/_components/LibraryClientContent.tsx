@@ -83,7 +83,7 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
       if (intersectionObserver) intersectionObserver.disconnect();
       if (mutationObserver) mutationObserver.disconnect();
     };
-  }, [isContentVisible, setShowTitle, children, mainEl]);
+  }, [isContentVisible, setShowTitle, mainEl]);
 
   // Initialize library
   useEffect(() => {

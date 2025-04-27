@@ -144,8 +144,10 @@ function libraryReducer(state: LibraryState, action: LibraryAction): LibraryStat
       return { ...state, albums: action.payload };
     case "SET_PLAYLISTS":
       return { ...state, playlists: action.payload };
-    case "SET_PLAYLISTS_FUNCTIONAL":
-      return { ...state, playlists: action.payload(state.playlists ?? new Map()) };
+    case "SET_PLAYLISTS_FUNCTIONAL": {
+      const next = action.payload(state.playlists ?? new Map());
+      return { ...state, playlists: new Map(next) };
+    }
     case "UPDATE_PLAYLIST": {
       const newPlaylists = new Map(state.playlists);
       newPlaylists.set(action.payload.id, action.payload);
