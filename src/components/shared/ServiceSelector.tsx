@@ -46,15 +46,15 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
 
   return (
     <div className="mb-8">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-8">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-8">
         {/* Source Service - Non-interactive */}
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
             From
           </label>
           <div className="relative">
-            <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:gap-4 sm:p-4 dark:border-indigo-900 dark:bg-indigo-950/50">
-              <div className="flex h-8 w-8 items-center justify-center sm:h-10 sm:w-10">
+            <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-lg lg:gap-4 lg:p-4 dark:border-indigo-900 dark:bg-indigo-950/50">
+              <div className="flex h-8 w-8 items-center justify-center lg:h-10 lg:w-10">
                 <sourceService.image size={24} />
               </div>
               <div>
@@ -77,7 +77,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
           <div className="relative">
             <button
               onClick={() => !isProcessing && setIsOpen(!isOpen)}
-              className={`dark:bg-indigo-990 flex w-full items-center gap-3 rounded-xl border bg-white p-3 transition-all duration-200 sm:gap-4 sm:p-4
+              className={`dark:bg-indigo-990 flex w-full items-center gap-3 rounded-xl border bg-white p-3 transition-all duration-200 lg:gap-4 lg:p-4
                 ${
                   !selectedService
                     ? "animate-pulse border-indigo-500 ring-2 ring-indigo-500/20"
@@ -87,7 +87,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
             >
               {selectedService ? (
                 <>
-                  <div className="flex h-8 w-8 items-center justify-center sm:h-10 sm:w-10">
+                  <div className="flex h-8 w-8 items-center justify-center lg:h-10 lg:w-10">
                     <selectedService.image size={24} />
                   </div>
                   <div className="flex-1 text-left">
@@ -101,9 +101,9 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
                 </>
               ) : (
                 <>
-                  <div className="flex h-8 w-8 items-center justify-center sm:h-10 sm:w-10">
+                  <div className="flex h-8 w-8 items-center justify-center lg:h-10 lg:w-10">
                     <svg
-                      className="h-5 w-5 text-indigo-500 sm:h-6 sm:w-6"
+                      className="h-5 w-5 text-indigo-500 lg:h-6 lg:w-6"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -122,7 +122,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
                 </>
               )}
               <svg
-                className={`ml-1 h-5 w-5 text-gray-400 transition-transform sm:ml-2 ${isOpen ? "rotate-180" : ""}`}
+                className={`ml-1 h-5 w-5 text-gray-400 transition-transform lg:ml-2 ${isOpen ? "rotate-180" : ""}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -165,13 +165,13 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
                         onClick={() => handleServiceSelect(service)}
                         disabled={isDisabled}
                         className={`
-                          flex w-full items-center gap-3 p-3 transition-all duration-200 sm:gap-4 sm:p-4
+                          flex w-full items-center gap-3 p-3 transition-all duration-200 lg:gap-4 lg:p-4
                           ${!isDisabled ? "dark:hover:bg-indigo-970 cursor-pointer hover:bg-gray-50" : "cursor-not-allowed opacity-50"}
                           ${selectedService?.id === service.id ? "bg-gray-50 dark:bg-gray-800" : ""}
                           group relative
                         `}
                       >
-                        <div className="flex h-8 w-8 items-center justify-center sm:h-10 sm:w-10">
+                        <div className="flex h-8 w-8 items-center justify-center lg:h-10 lg:w-10">
                           <service.image size={24} />
                         </div>
                         <div className="flex w-full flex-col items-start">

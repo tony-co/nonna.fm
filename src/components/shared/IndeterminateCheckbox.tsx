@@ -44,7 +44,7 @@ export const IndeterminateCheckbox: FC<IndeterminateCheckboxProps> = ({
         aria-label={label}
         data-testid={testId || `checkbox-${label.toLowerCase().replace(/\s+/g, "-")}`}
       />
-      <span className="sr-only">{label}</span>
+      <span className="sr-only fixed">{label}</span>
     </div>
   );
 };

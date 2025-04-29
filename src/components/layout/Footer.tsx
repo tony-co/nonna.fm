@@ -5,10 +5,10 @@ const GITHUB_REPO = "https://github.com/tony-co/nonna.fm";
 
 export function Footer({ children }: { children?: React.ReactNode }): React.ReactElement {
   return (
-    <footer className="border-t border-indigo-200/20 bg-white/80 px-4 py-4 backdrop-blur-sm dark:border-indigo-800/20 dark:bg-[#0A0A1B]/80">
+    <footer className="sticky bottom-0 z-40 border-t border-indigo-200/20 bg-white/80 px-4 py-4 backdrop-blur-sm dark:border-indigo-800/20 dark:bg-[#0A0A1B]/80">
       <div className="container mx-auto flex items-center justify-between">
-        {/* Links on the left */}
-        <div className="hidden items-center gap-4 pl-8 md:flex">
+        {/* Links on the left - hidden on mobile */}
+        <div className="hidden items-center gap-4 lg:flex">
           <a
             href={`${GITHUB_BASE_URL}/PRIVACY.md`}
             target="_blank"
@@ -71,10 +71,8 @@ export function Footer({ children }: { children?: React.ReactNode }): React.Reac
           </a>
         </div>
 
-        {/* Transfer button container */}
-        <div className="flex flex-1 items-center justify-center md:mr-8 md:flex-none md:justify-end">
-          {children}
-        </div>
+        {/* TransferButton on the right */}
+        <div className="ml-auto flex w-full justify-end lg:w-auto">{children}</div>
       </div>
     </footer>
   );

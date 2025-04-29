@@ -86,23 +86,23 @@ export default function Dialog({
         // Dialog box: fullscreen on mobile, modal on sm+
         // Use flex-col so header stays fixed and content scrolls if needed
         // Increased dark mode background opacity from 80% to 95% for better readability
-        className="dark:bg-[var(--color-indigo-990)]/95 sm:dark:bg-[var(--color-indigo-990)]/95 mx-0 flex h-full max-h-none w-full max-w-none flex-col rounded-none border-none
-          bg-white p-0 shadow-none sm:mx-4 sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:rounded-xl sm:border sm:border-gray-200 sm:bg-white sm:p-0 sm:shadow"
+        className="dark:bg-[var(--color-indigo-990)]/95 lg:dark:bg-[var(--color-indigo-990)]/95 mx-0 flex h-full max-h-none w-full max-w-none flex-col rounded-none border-none
+          bg-white p-0 shadow-none lg:mx-4 lg:h-auto lg:max-h-[85vh] lg:max-w-2xl lg:rounded-xl lg:border lg:border-gray-200 lg:bg-white lg:p-0 lg:shadow"
       >
         {/* Dialog header: matches Header height and close button on mobile */}
-        <div className="flex h-14 items-center justify-between border-b border-gray-100 px-4 py-0 sm:h-16 sm:px-6 dark:border-gray-800">
+        <div className="flex h-14 items-center justify-between border-b border-gray-100 px-4 py-0 lg:h-16 lg:px-6 dark:border-gray-800">
           <h2 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">
             {title}
           </h2>
           <button
             onClick={onClose}
             // On mobile: match menu button (rounded-full, p-2, size-6). On desktop: original style.
-            className="rounded-full p-0 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:rounded-lg sm:p-1 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 dark:focus:ring-indigo-400"
+            className="rounded-full p-0 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 lg:rounded-lg lg:p-1 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 dark:focus:ring-indigo-400"
             aria-label="Close dialog"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="size-6 sm:h-5 sm:w-5"
+              className="size-6 lg:h-5 lg:w-5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -120,7 +120,7 @@ export default function Dialog({
           Content area is now flex-1 and scrollable, with max height minus header (64px).
           This ensures content never overflows the modal and scrolls if too tall.
         */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 text-gray-700 sm:max-h-[calc(85vh-64px)] dark:text-gray-200">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 text-gray-700 lg:max-h-[calc(85vh-64px)] dark:text-gray-200">
           {children}
         </div>
       </div>
