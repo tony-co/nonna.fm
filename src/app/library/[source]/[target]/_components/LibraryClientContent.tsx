@@ -163,37 +163,37 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
   }
 
   return (
-    <div className="flex h-full">
-      {/* Content Container */}
-      <div className="flex h-full w-full md:flex-row">
-        {/* Library Sidebar - Full width on mobile, height based on content. Full height on desktop */}
-        <aside
-          role="sidebar"
-          aria-label="Library Selection"
-          // DEBUG: Removed temporary background
-          // Removed h-full for mobile, added md:h-full for desktop
-          className={`w-full overflow-y-auto transition-transform duration-300 md:relative md:h-full md:w-[38rem] md:translate-x-0 md:border-r md:border-indigo-100/10 md:dark:bg-transparent ${
-            // Note: md:dark:bg-transparent might override debug color on desktop dark mode
-            isContentVisible ? "fixed -translate-x-full md:static md:translate-x-0" : ""
-          }`}
-        >
-          <LibrarySidebar />
-        </aside>
-
-        {/* Main Content - Slides in from right on mobile */}
-        <main
-          ref={mainRef}
-          role="main"
-          aria-label="Selected Content"
-          className={`fixed inset-y-0 right-0 z-40 h-full w-full overflow-y-auto pb-16 pt-14 transition-transform duration-300 sm:pt-16 md:relative md:z-0 md:translate-x-0 md:pb-0 md:pt-0 ${
-            isContentVisible ? "translate-x-0" : "translate-x-full"
-          }`}
-        >
-          <div className="h-full overflow-y-auto">
-            <div className="rounded-xl p-4 pb-12 shadow-sm md:p-6 md:pb-6">{children}</div>
-          </div>
-        </main>
-      </div>
+    // Main grid layout for sidebar and content area.
+    // The 'container' class applies max-width and centers the grid horizontally.
+    // Takes full height of its parent grid row.
+    // md:grid-cols defines the two-column layout for desktop.
+    // overflow-hidden ensures children's scrolling is contained.
+    <div className="container mx-auto grid h-full min-h-0 min-w-0 overflow-hidden lg:grid-cols-[25rem_1fr]">
+      <aside
+        role="sidebar"
+        aria-label="Library Selection"
+        className={`overflow-y-auto transition-transform duration-200 lg:h-full lg:translate-x-0 lg:border-r lg:border-indigo-100/10 lg:dark:bg-transparent ${
+          isContentVisible
+            ? "fixed inset-0 z-50 -translate-x-full lg:static lg:z-auto lg:translate-x-0"
+            : "relative z-40"
+        }`}
+        // On mobile: fixed, full width, slides in/out
+        // On desktop: static, fixed width, always visible
+      >
+        <LibrarySidebar />
+      </aside>
+      <main
+        ref={mainRef}
+        role="main"
+        aria-label="Selected Content"
+        className={`z-40 overflow-y-auto p-8 transition-transform duration-200 lg:translate-x-0 ${
+          isContentVisible ? "translate-x-0" : "hidden lg:relative lg:block"
+        }`}
+        // On mobile: hidden when aside is visible, shown otherwise
+        // On desktop: always visible
+      >
+        {children}
+      </main>
     </div>
   );
 }

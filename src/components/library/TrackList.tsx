@@ -26,7 +26,7 @@ const TrackRow: FC<{
   return (
     <div
       ref={ref}
-      className={`group grid grid-cols-[32px_1fr_32px] items-center gap-2 rounded-md p-1.5 transition-colors duration-200 md:grid-cols-[32px_32px_1fr_231px_32px] md:gap-4 md:p-2 ${
+      className={`group grid grid-cols-[32px_1fr_32px] items-center gap-2 rounded-md p-1.5 transition-colors duration-200 lg:grid-cols-[32px_32px_1fr_231px_32px] lg:gap-4 lg:p-2 ${
         isSelected
           ? "bg-indigo-50 dark:bg-indigo-950/30"
           : "bg-transparent hover:bg-indigo-50/70 dark:bg-transparent dark:hover:bg-indigo-950/20"
@@ -34,7 +34,7 @@ const TrackRow: FC<{
       role="track"
     >
       {/* Index number */}
-      <div className="hidden text-sm font-normal text-slate-500 md:block dark:text-slate-400">
+      <div className="hidden text-sm font-normal text-slate-500 lg:block dark:text-slate-400">
         {index + 1}
       </div>
 
@@ -66,7 +66,7 @@ const TrackRow: FC<{
       </div>
 
       {/* Album */}
-      <div className="hidden truncate text-sm text-slate-500 md:flex md:text-slate-400">
+      <div className="hidden truncate text-sm text-slate-500 lg:flex lg:text-slate-400">
         {track.album}
       </div>
 
@@ -83,17 +83,17 @@ export const TrackList: FC<TrackListProps> = ({ tracks, selection = new Set(), p
     <div className="relative bg-transparent dark:bg-transparent" role="tracklist">
       {/* Header */}
       <div
-        className="mb-4 grid grid-cols-[32px_1fr_32px] gap-2 border-b border-slate-200 bg-white/80 p-1.5 py-2 text-xs font-normal text-slate-500 backdrop-blur-sm md:grid-cols-[32px_32px_1fr_231px_32px] md:gap-4 md:p-2 md:text-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400"
+        className="mb-4 grid grid-cols-[32px_1fr_32px] gap-2 border-b border-slate-200 bg-white/80 p-1.5 py-2 text-xs font-normal text-slate-500 backdrop-blur-sm lg:grid-cols-[32px_32px_1fr_231px_32px] lg:gap-4 lg:p-2 lg:text-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400"
         role="row"
       >
-        <div className="hidden items-center md:flex" role="columnheader">
+        <div className="hidden items-center lg:flex" role="columnheader">
           #
         </div>
         <div className="flex items-center" role="columnheader">
           Title
         </div>
         <div className="flex items-center" role="columnheader"></div>
-        <div className="hidden items-center md:flex" role="columnheader">
+        <div className="hidden items-center lg:flex" role="columnheader">
           Album
         </div>
         <div className="flex items-center justify-end" role="columnheader">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 /**
- * useIsMobile - React hook to detect if viewport is below the 'sm' Tailwind breakpoint (640px).
+ * useIsMobile - React hook to detect if viewport is below the 'lg' Tailwind breakpoint (1024px).
  * Returns true if on mobile, false otherwise.
  * Handles SSR by defaulting to false on the server.
  */
@@ -10,8 +10,8 @@ export function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Tailwind 'sm' breakpoint is 640px
-    const mediaQuery = window.matchMedia("(max-width: 639px)");
+    // Tailwind 'lg' breakpoint is 1024px
+    const mediaQuery = window.matchMedia("(max-width: 1023px)");
     // Handler to update state
     const handleChange: () => void = () => setIsMobile(mediaQuery.matches);
     // Set initial value

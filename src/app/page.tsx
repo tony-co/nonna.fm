@@ -93,7 +93,7 @@ function HomePageContent() {
             <div className="mx-auto max-w-4xl text-center">
               <div className="mb-2">
                 <h1
-                  className="mb-4 bg-gradient-to-r from-zinc-800 to-indigo-700 bg-clip-text text-6xl font-bold tracking-tight text-transparent sm:text-7xl dark:from-stone-50 dark:to-indigo-600"
+                  className="mb-4 bg-gradient-to-br from-indigo-500 to-purple-600 bg-clip-text text-5xl font-bold tracking-tight text-transparent lg:text-7xl dark:from-stone-50 dark:to-indigo-600"
                   style={{
                     contain: "content",
                   }}
@@ -101,7 +101,7 @@ function HomePageContent() {
                   Your Music, Anywhere
                 </h1>
                 <p
-                  className="mx-auto text-xl leading-relaxed text-zinc-800 sm:text-2xl dark:text-indigo-100"
+                  className="mx-auto text-xl leading-relaxed text-zinc-800 lg:text-2xl dark:text-indigo-100"
                   style={{
                     contain: "content",
                     textRendering: "optimizeLegibility",
@@ -133,7 +133,7 @@ function HomePageContent() {
                 <AudioEqualizer className="opacity-90" />
               </div>
 
-              <h2 className="mb-8 flex items-center justify-center gap-3 text-2xl font-semibold text-zinc-800 sm:text-3xl dark:text-stone-200">
+              <h2 className="mb-8 flex items-center justify-center gap-3 text-2xl font-semibold text-zinc-800 lg:text-3xl dark:text-stone-200">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-stone-100 text-lg text-zinc-800 dark:text-indigo-800">
                   1
                 </span>
@@ -141,7 +141,7 @@ function HomePageContent() {
               </h2>
 
               {/* Service Buttons */}
-              <div className="mx-auto grid max-w-4xl grid-cols-2 items-stretch justify-center gap-4 py-4 pb-16 sm:grid-cols-2 md:grid-cols-4">
+              <div className="mx-auto grid max-w-4xl grid-cols-2 items-stretch justify-center gap-4 py-4 pb-16 lg:grid-cols-4">
                 {getAvailableServices().map(service => (
                   <button
                     key={service.id}
@@ -172,7 +172,7 @@ function HomePageContent() {
 
           {/* Features Section */}
           <div className="relative mx-auto max-w-7xl px-4 py-20">
-            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-2">
+            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 lg:grid-cols-2">
               <div className="rounded-3xl border border-indigo-200/50 bg-indigo-100 p-10 shadow-lg transition-all duration-200 hover:shadow-xl dark:border-indigo-800/30 dark:bg-indigo-950/70">
                 <div className="mb-8 flex h-16 w-16 transform items-center justify-center rounded-2xl bg-indigo-200 shadow-sm transition-transform duration-200 hover:scale-110 dark:bg-indigo-900/70">
                   <span
@@ -218,13 +218,13 @@ function HomePageContent() {
           <section className="px-4 py-20">
             <div className="mx-auto max-w-6xl">
               <div className="rounded-[2.5rem]">
-                <h2 className="mb-4 bg-gradient-to-r from-indigo-950 to-indigo-700 bg-clip-text text-center text-4xl font-bold tracking-tight text-transparent sm:text-5xl dark:from-white dark:to-white/70">
+                <h2 className="mb-4 bg-gradient-to-br from-stone-900 to-stone-700 bg-clip-text text-4xl font-bold tracking-tight text-transparent lg:text-5xl dark:from-white dark:to-white/70">
                   Supported Services
                 </h2>
                 <p className="mx-auto mb-12 max-w-2xl text-center text-lg text-indigo-950/60 dark:text-white/60">
                   We support major music streaming platforms, with more to come.
                 </p>
-                <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
                   {Object.values(SERVICES).map(service => (
                     <div
                       key={service.id}

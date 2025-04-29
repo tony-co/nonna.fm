@@ -16,50 +16,38 @@ interface LibraryLayoutProps {
 }
 
 export default async function LibraryLayout({ children, params }: LibraryLayoutProps) {
-  // Properly await params in Next.js 15
+  // Next.js 15 async params handling
   const { source, target } = await params;
 
   return (
     <LibraryProvider>
       <TransferProvider>
-        {/* Provide item title context to all children */}
         <ItemTitleProvider>
-          {/* Main container using CSS Grid for layout */}
-          {/* Rows: Header (auto), Main Content (1fr), Footer (auto) */}
+          {/*
+            Main page grid layout:
+            - Row 1: Header (auto height, sticky)
+            - Row 2: Content (takes remaining space, overflow handled internally)
+            - Row 3: Footer (auto height, sticky)
+            Ensures header/footer are fixed and content area fills space.
+          */}
           <div className="grid h-screen grid-rows-[auto_1fr_auto]">
-            {/* Header: Placed in the first grid row */}
-            {/* NOTE: Removed fixed positioning, grid handles placement. Added z-index for potential overlaps. */}
-            <header className="bg-background z-50">
-              {/* Header content maintains its own height */}
+            {/* Header: Sticky at the top */}
+            <header className="sticky top-0 z-50 h-auto">
               <Header />
             </header>
 
-            {/* Main Content Area: Takes remaining space (1fr row). */}
-            {/* Apply container styles here to constrain LibraryClientContent */}
-            {/* NOTE: Added container mx-auto px-0 (or adjust px as needed) */}
-            {/* NOTE: Added h-full to ensure the container fills the grid row height */}
-            <div className="relative h-full overflow-hidden">
-              {/* This inner div now acts as the container for the library content */}
-              <div className="container mx-auto h-full px-0">
-                {" "}
-                {/* Adjust px-* if needed, e.g., px-4 sm:px-6 lg:px-8 */}
-                {/* LibraryClientContent renders sidebar and main content within the container */}
-                <LibraryClientContent source={source} _target={target}>
-                  {children}
-                </LibraryClientContent>
-              </div>
+            {/* Content Area: Takes remaining height, contains sidebar/main */}
+            {/* overflow-hidden prevents content scroll from affecting sticky header/footer */}
+            <div className="min-w-0 overflow-hidden">
+              <LibraryClientContent source={source} _target={target}>
+                {children}
+              </LibraryClientContent>
             </div>
 
-            {/* Footer: Placed in the last grid row */}
-            {/* NOTE: Removed fixed positioning. Grid handles placement. */}
-            <footer className="bg-background z-40">
-              {/* Footer content maintains its own height */}
-              <Footer>
-                <div className="container mx-auto flex h-16 items-center justify-between">
-                  <TransferButton />
-                </div>
-              </Footer>
-            </footer>
+            {/* Footer */}
+            <Footer>
+              <TransferButton />
+            </Footer>
           </div>
         </ItemTitleProvider>
       </TransferProvider>

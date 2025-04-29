@@ -137,7 +137,7 @@ export function TransferButton() {
       <div className="flex items-center gap-4">
         {status && (
           <span className="text-sm text-gray-600 dark:text-gray-400">
-            {status.availableToday} transfers available
+            {status.availableToday} transfers left
           </span>
         )}
         <button

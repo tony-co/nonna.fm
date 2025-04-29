@@ -48,19 +48,19 @@ export const Playlist: FC<PlaylistProps> = ({ playlistId }) => {
   return (
     <div className="space-y-6">
       {/* Playlist Header */}
-      <div className="flex flex-col items-center sm:flex-row sm:gap-8">
+      <div className="flex flex-col items-center lg:flex-row lg:gap-8">
         <div className="w-48 overflow-hidden rounded-lg bg-indigo-50/50 dark:bg-indigo-950/20">
           <ArtworkImage src={playlist.artwork} alt={playlist.name} size={192} type="playlist" />
         </div>
-        <div className="mt-6 min-w-0 flex-1 text-center sm:mt-0 sm:text-left">
+        <div className="mt-6 min-w-0 flex-1 text-center lg:mt-0 lg:text-left">
           {/* Allow playlist name to wrap and break long words instead of truncating */}
-          <h1 className="w-full max-w-full whitespace-normal break-words text-2xl font-bold text-indigo-900 sm:text-3xl dark:text-indigo-50">
+          <h1 className="w-full max-w-full whitespace-normal break-words text-2xl font-bold text-indigo-900 lg:text-3xl dark:text-indigo-50">
             {playlist.name}
           </h1>
           <p className="mt-2 text-sm text-indigo-700 dark:text-indigo-300">
             {playlist.tracks.length} tracks • {unmatchedCount} unmatched
           </p>
-          <div className="mt-4 sm:mt-6">
+          <div className="mt-4 lg:mt-6">
             <PlayOnButton playlistId={playlist.id} />
           </div>
         </div>

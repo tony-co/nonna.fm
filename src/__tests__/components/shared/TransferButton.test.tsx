@@ -78,7 +78,7 @@ describe("TransferButton", () => {
     expect(transferButton).not.toBeDisabled();
 
     // Check the usage text shows correct counts
-    const usageText = screen.getByText("10 transfers available");
+    const usageText = screen.getByText("10 transfers left");
     expect(usageText).toBeInTheDocument();
   });
 });

@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script";
-import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -59,10 +59,8 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.className} text-text-primary min-h-screen antialiased`}>
-        <ThemeProvider>
-          <div className="relative flex min-h-screen flex-col">{children}</div>
-        </ThemeProvider>
+      <body className={`${inter.className} text-text-primary antialiased`}>
+        <ThemeProvider>{children}</ThemeProvider>
         <Analytics />
         <SpeedInsights />
       </body>

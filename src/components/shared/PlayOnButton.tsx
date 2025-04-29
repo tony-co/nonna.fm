@@ -22,10 +22,10 @@ export const PlayOnButton: FC<PlayOnButtonProps> = ({ playlistId }) => {
           "--service-color": service.color,
         } as React.CSSProperties
       }
-      className="hover:text-[var(--service-color)]/80 hover:bg-[var(--service-color)]/5 inline-flex w-fit items-center gap-2 rounded-full px-3 py-1.5 text-[var(--service-color)] transition-colors md:px-4 md:py-2"
+      className="hover:text-[var(--service-color)]/80 hover:bg-[var(--service-color)]/5 inline-flex w-fit items-center gap-2 rounded-full px-3 py-1.5 text-[var(--service-color)] transition-colors lg:px-4 lg:py-2"
     >
-      <service.image size={20} className="md:h-6 md:w-6" />
-      <span className="text-xs font-medium md:text-sm">Play on {service.name}</span>
+      <service.image size={20} className="lg:h-6 lg:w-6" />
+      <span className="text-xs font-medium lg:text-sm">Play on {service.name}</span>
     </a>
   );
 };
