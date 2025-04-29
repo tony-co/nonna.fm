@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbo",
-    "dev:https": "next dev --turbo --experimental-https --hostname 0.0.0.0",
+    "dev:https": "next dev --turbo --experimental-https --hostname nonnalocal.fm",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
