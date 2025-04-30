@@ -16,6 +16,7 @@ import { AUTH_STORAGE_KEYS, type AuthData, setServiceType } from "@/lib/auth/con
 
 interface MusicKitInstance {
   authorize: () => Promise<string>;
+  storefrontId?: string;
   api: {
     search: (
       term: string,
