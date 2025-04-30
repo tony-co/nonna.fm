@@ -164,11 +164,9 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
 
   return (
     // Main grid layout for sidebar and content area.
-    // The 'container' class applies max-width and centers the grid horizontally.
     // Takes full height of its parent grid row.
-    // md:grid-cols defines the two-column layout for desktop.
-    // overflow-hidden ensures children's scrolling is contained.
-    <div className="container mx-auto grid h-full min-h-0 min-w-0 overflow-hidden lg:grid-cols-[25rem_1fr]">
+    // lg:grid-cols defines the two-column layout for desktop.
+    <div className="container mx-auto grid h-full lg:grid-cols-[25rem_1fr]">
       <aside
         role="sidebar"
         aria-label="Library Selection"
@@ -186,7 +184,7 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
         ref={mainRef}
         role="main"
         aria-label="Selected Content"
-        className={`z-40 overflow-y-auto p-8 transition-transform duration-200 lg:translate-x-0 ${
+        className={`z-40 h-full overflow-y-auto p-8 transition-transform duration-200 lg:translate-x-0 ${
           isContentVisible ? "translate-x-0" : "hidden lg:relative lg:block"
         }`}
         // On mobile: hidden when aside is visible, shown otherwise
