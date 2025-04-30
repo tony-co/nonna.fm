@@ -25,26 +25,25 @@ export default async function LibraryLayout({ children, params }: LibraryLayoutP
         <ItemTitleProvider>
           {/*
             Main page grid layout:
-            - Row 1: Header (auto height, sticky)
-            - Row 2: Content (takes remaining space, overflow handled internally)
-            - Row 3: Footer (auto height, sticky)
-            Ensures header/footer are fixed and content area fills space.
+            - Row 1: Header (fixed height, fixed position)
+            - Row 2: Content (takes remaining space, handles its own scrolling)
+            - Row 3: Footer (fixed height, fixed position)
+            Ensures header/footer are fixed and only content area scrolls.
           */}
-          <div className="grid h-screen grid-rows-[auto_1fr_auto]">
-            {/* Header: Sticky at the top */}
+          <div className="grid h-[100dvh] grid-rows-[auto_1fr_auto] overflow-hidden">
+            {/* Header: Fixed at the top */}
             <header className="sticky top-0 z-50 h-auto">
               <Header />
             </header>
 
-            {/* Content Area: Takes remaining height, contains sidebar/main */}
-            {/* overflow-hidden prevents content scroll from affecting sticky header/footer */}
-            <div className="min-w-0 overflow-hidden">
+            {/* Content Area: Takes remaining height with a single scrollable container */}
+            <div className="h-full min-w-0 overflow-hidden">
               <LibraryClientContent source={source} _target={target}>
                 {children}
               </LibraryClientContent>
             </div>
 
-            {/* Footer */}
+            {/* Footer: Fixed at the bottom */}
             <Footer>
               <TransferButton />
             </Footer>
