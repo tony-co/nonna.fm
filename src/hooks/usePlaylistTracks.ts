@@ -9,6 +9,9 @@ interface UsePlaylistTracksReturn {
   error: string | null;
 }
 
+// Module-level Set to track which playlist IDs have been fetched
+const fetchedPlaylists = new Set<string>();
+
 export const usePlaylistTracks = (playlistId: string): UsePlaylistTracksReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +28,11 @@ export const usePlaylistTracks = (playlistId: string): UsePlaylistTracksReturn =
       const existingPlaylist = state.playlists.get(playlistId);
       if (!existingPlaylist) {
         setError("Playlist not found");
+        return;
+      }
+
+      // If we've already fetched for this playlist, do not fetch again (prevents infinite loop)
+      if (fetchedPlaylists.has(playlistId)) {
         return;
       }
 
@@ -55,6 +63,8 @@ export const usePlaylistTracks = (playlistId: string): UsePlaylistTracksReturn =
         console.error("Error fetching playlist tracks:", err);
         setError(errorMessage);
       } finally {
+        // Mark this playlist as fetched, regardless of success or failure, to prevent infinite loop
+        fetchedPlaylists.add(playlistId);
         if (isMounted) {
           setIsLoading(false);
         }
