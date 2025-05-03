@@ -16,6 +16,7 @@ import { AUTH_STORAGE_KEYS, type AuthData, setServiceType } from "@/lib/auth/con
 
 interface MusicKitInstance {
   authorize: () => Promise<string>;
+  storefrontId?: string;
   api: {
     search: (
       term: string,
@@ -851,7 +852,7 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
   const tracks = [];
   let nextUrl = `https://api.music.apple.com/v1/me/library/playlists/${playlistId}/tracks`;
 
-  do {
+  while (nextUrl) {
     const data = await retryWithExponentialBackoff<AppleResponse<AppleSong>>(
       () =>
         fetch(nextUrl, {
@@ -860,7 +861,10 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
             "Music-User-Token": authData.accessToken,
           },
         }),
-      APPLE_RETRY_OPTIONS
+      {
+        ...APPLE_RETRY_OPTIONS,
+        treat404AsEmpty: true,
+      }
     );
 
     const trackItems = data.data.map(item => ({
@@ -873,9 +877,7 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
 
     tracks.push(...trackItems);
     nextUrl = data.next || "";
-
-    if (!nextUrl) break;
-  } while (nextUrl);
+  }
 
   return tracks;
 }

@@ -12,6 +12,8 @@ export interface RetryOptions {
   jitterFactor?: number;
   /** Additional status codes to retry (beyond the defaults) */
   additionalRetryStatusCodes?: number[];
+  /** Allow handling of 404s as empty content for specific paths */
+  treat404AsEmpty?: boolean;
 }
 
 /**
@@ -23,6 +25,7 @@ const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
   maxRetryDelay: 64000, // 64 seconds
   jitterFactor: 0.1, // 10% jitter
   additionalRetryStatusCodes: [],
+  treat404AsEmpty: false,
 };
 
 /**
@@ -60,6 +63,7 @@ export async function retryWithExponentialBackoff<T>(
     maxRetryDelay = DEFAULT_RETRY_OPTIONS.maxRetryDelay,
     jitterFactor = DEFAULT_RETRY_OPTIONS.jitterFactor,
     additionalRetryStatusCodes = DEFAULT_RETRY_OPTIONS.additionalRetryStatusCodes,
+    treat404AsEmpty = DEFAULT_RETRY_OPTIONS.treat404AsEmpty,
   } = options;
 
   let attempt = 0;
@@ -147,6 +151,11 @@ export async function retryWithExponentialBackoff<T>(
 
       // For errors that we don't want to retry, throw immediately
       if (nonRetryableStatusCodes.has(response.status)) {
+        // Special handling for 404 responses that should be treated as empty
+        if (response.status === 404 && treat404AsEmpty) {
+          console.log("Resource not found but treating as empty result per configuration");
+          return { data: [] } as T;
+        }
         throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
       }
 

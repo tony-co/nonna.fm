@@ -47,7 +47,20 @@ export const SERVICES: Record<string, ServiceConfig> = {
     image: AppleMusicLogo,
     color: "#FA243C",
     status: "Available",
-    getPlaylistUrl: (id: string) => `https://music.apple.com/library/playlist/${id}`,
+    getPlaylistUrl: (id: string) => {
+      try {
+        if (typeof window !== "undefined" && window.MusicKit) {
+          const music = window.MusicKit.getInstance();
+          const storefrontId = music?.storefrontId;
+          if (storefrontId) {
+            return `https://music.apple.com/${storefrontId}/library/playlist/${id}`;
+          }
+        }
+      } catch (error) {
+        console.error("Error retrieving Apple Music storefront ID:", error);
+      }
+      return `https://music.apple.com/library/playlist/${id}`;
+    },
   },
   amazonMusic: {
     id: "amazonMusic",
