@@ -6,17 +6,15 @@ import { getSpotifyAuthData } from "./services/spotify/auth";
 import { getAppleMusicAuthData } from "./services/apple/auth";
 import type { ILibraryData, ITrack, IAlbum } from "@/types/library";
 
-async function getCurrentService(service?: MusicService): Promise<IMusicServiceProvider> {
-  if (service) {
-    return musicServiceFactory.getProvider(service);
+async function getCurrentService(
+  role: "source" | "target" = "source"
+): Promise<IMusicServiceProvider> {
+  const service = await getActiveService(role);
+  if (!service) {
+    throw new Error(`No active ${role} service found`);
   }
 
-  const sourceService = await getActiveService("source");
-  if (!sourceService) {
-    throw new Error("No active service found");
-  }
-
-  return musicServiceFactory.getProvider(sourceService);
+  return musicServiceFactory.getProvider(service);
 }
 
 async function getActiveService(role: "source" | "target"): Promise<MusicService> {
@@ -59,47 +57,40 @@ export async function getTargetService(): Promise<MusicService> {
   return await getActiveService("target");
 }
 
-export async function fetchUserLibrary(service?: MusicService): Promise<ILibraryData> {
-  const provider = await getCurrentService(service);
+export async function fetchUserLibrary(): Promise<ILibraryData> {
+  const provider = await getCurrentService("source");
   return provider.fetchUserLibrary();
 }
 
 export async function fetchPlaylistTracks(
   playlistId: string,
-  service?: MusicService
+  onProgress?: (tracks: ITrack[], progress: number) => void
 ): Promise<ITrack[]> {
-  const provider = await getCurrentService(service);
-  return provider.fetchPlaylistTracks(playlistId);
+  const provider = await getCurrentService("source");
+  return provider.fetchPlaylistTracks(playlistId, onProgress);
 }
 
-export async function addTracksToLibrary(
-  tracks: ITrack[],
-  service?: MusicService
-): Promise<TransferResult> {
-  const provider = await getCurrentService(service);
+export async function addTracksToLibrary(tracks: ITrack[]): Promise<TransferResult> {
+  const provider = await getCurrentService("target");
   return provider.addTracksToLibrary(tracks);
 }
 
 export async function createPlaylistWithTracks(
   name: string,
   tracks: ITrack[],
-  description?: string,
-  service?: MusicService
+  description?: string
 ): Promise<TransferResult> {
-  const provider = await getCurrentService(service);
+  const provider = await getCurrentService("target");
   return provider.createPlaylistWithTracks(name, tracks, description);
 }
 
-export async function addAlbumsToLibrary(
-  albums: Set<IAlbum>,
-  service?: MusicService
-): Promise<TransferResult> {
-  const provider = await getCurrentService(service);
+export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferResult> {
+  const provider = await getCurrentService("target");
   return provider.addAlbumsToLibrary(albums);
 }
 
-export async function getLibraryData(service: MusicService): Promise<ILibraryData> {
-  const provider = musicServiceFactory.getProvider(service);
+export async function getLibraryData(): Promise<ILibraryData> {
+  const provider = await getCurrentService("source");
   return provider.fetchUserLibrary();
 }
 
@@ -108,5 +99,5 @@ export async function getSourceLibrary(): Promise<ILibraryData> {
   if (!sourceService) {
     throw new Error("No source service selected");
   }
-  return getLibraryData(sourceService);
+  return getLibraryData();
 }

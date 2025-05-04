@@ -838,7 +838,10 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
   };
 }
 
-export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]> {
+export async function fetchPlaylistTracks(
+  playlistId: string,
+  onProgress?: (tracks: ITrack[], progress: number) => void
+): Promise<ITrack[]> {
   // Helper function to format artwork URL
   const formatArtworkUrl = (url: string | undefined): string | undefined => {
     if (!url) return undefined;
@@ -849,7 +852,7 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
   const authData = await getAppleAuthData("source");
   if (!authData) throw new Error("Not authenticated with Apple Music");
 
-  const tracks = [];
+  const tracks: ITrack[] = [];
   let nextUrl = `https://api.music.apple.com/v1/me/library/playlists/${playlistId}/tracks`;
 
   while (nextUrl) {
@@ -867,6 +870,7 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
       }
     );
 
+    // Apple API does not return total, so we estimate progress by assuming 100 per page
     const trackItems = data.data.map(item => ({
       id: item.id,
       name: item.attributes.name,
@@ -876,6 +880,14 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
     }));
 
     tracks.push(...trackItems);
+
+    // Call onProgress after each page
+    if (onProgress) {
+      // Estimate progress: if no nextUrl, we're done
+      const progress = data.next ? 0.99 : 1;
+      onProgress([...tracks], progress);
+    }
+
     nextUrl = data.next || "";
   }
 

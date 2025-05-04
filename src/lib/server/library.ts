@@ -19,7 +19,7 @@ export async function fetchInitialLibraryData(
       };
     }
 
-    const initialData = await fetchUserLibrary(sourceService);
+    const initialData = await fetchUserLibrary();
     return { initialData, error: null };
   } catch (error) {
     return {

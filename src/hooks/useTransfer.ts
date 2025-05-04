@@ -85,7 +85,7 @@ export function useTransfer(): UseTransferHookReturn {
         }));
 
       if (matchedLikedSongs.length > 0) {
-        results.likedSongs = await addTracksToLibrary(matchedLikedSongs, targetService);
+        results.likedSongs = await addTracksToLibrary(matchedLikedSongs);
       }
 
       // Transfer matched albums
@@ -102,7 +102,7 @@ export function useTransfer(): UseTransferHookReturn {
           albumsWithIds.map(a => ({ name: a.name, targetId: a.targetId }))
         );
         const albumsSet = new Set<IAlbum>(albumsWithIds);
-        results.albums = await addAlbumsToLibrary(albumsSet, targetService);
+        results.albums = await addAlbumsToLibrary(albumsSet);
       }
 
       // Transfer playlists
@@ -128,8 +128,7 @@ export function useTransfer(): UseTransferHookReturn {
           const result = await createPlaylistWithTracks(
             playlist.name,
             matchedTracks,
-            `Imported from ${sourceService} on ${new Date().toLocaleDateString()}`,
-            targetService
+            `Imported from ${sourceService} on ${new Date().toLocaleDateString()}`
           );
           results.playlists.set(playlistId, result);
         }
@@ -189,8 +188,7 @@ export function useTransfer(): UseTransferHookReturn {
       const result = await createPlaylistWithTracks(
         playlist.name,
         matchedTracks,
-        `Imported from ${sourceService} on ${new Date().toLocaleDateString()}`,
-        targetService
+        `Imported from ${sourceService} on ${new Date().toLocaleDateString()}`
       );
 
       // Update usage count in Redis after successful transfer

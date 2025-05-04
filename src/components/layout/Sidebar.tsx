@@ -103,7 +103,7 @@ export const LibrarySidebar: FC = () => {
       if (!playlist.tracks || playlist.tracks.length === 0) {
         try {
           // Fetch tracks in the background
-          const tracks = await fetchPlaylistTracks(playlistId, source);
+          const tracks = await fetchPlaylistTracks(playlistId);
 
           // After fetch completes, check if playlist is still being processed
           if (tracks && fetchingPlaylistsRef.current.has(playlistId)) {
