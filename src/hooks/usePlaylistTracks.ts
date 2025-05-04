@@ -15,13 +15,14 @@ export const usePlaylistTracks = (playlistId: string): UsePlaylistTracksReturn =
   const { state, actions } = useLibrary();
   const [error, setError] = useState<string | null>(null);
 
-  // Store fetch status per playlist ID
-  const fetchStatusRef = useRef<Record<string, FetchStatus>>({});
+  // Store fetch status per playlist ID using useState instead of useRef
+  const [fetchStatuses, setFetchStatuses] = useState<Record<string, FetchStatus>>({});
+
   // Track mount status with a persistent ref
   const isMountedRef = useRef(false);
 
   // Get current status for this playlistId
-  const currentStatus = fetchStatusRef.current[playlistId] ?? "idle";
+  const currentStatus = fetchStatuses[playlistId] ?? "idle";
   const isLoading = currentStatus === "loading";
 
   // Get stable actions reference
@@ -42,15 +43,15 @@ export const usePlaylistTracks = (playlistId: string): UsePlaylistTracksReturn =
 
       // Skip if already fetched or fetching
       if (
-        fetchStatusRef.current[playlistId] === "loading" ||
-        fetchStatusRef.current[playlistId] === "fetched" ||
+        fetchStatuses[playlistId] === "loading" ||
+        fetchStatuses[playlistId] === "fetched" ||
         (currentPlaylist.tracks && currentPlaylist.tracks.length > 0)
       ) {
         return;
       }
 
       // Mark as loading
-      fetchStatusRef.current[playlistId] = "loading";
+      setFetchStatuses(prev => ({ ...prev, [playlistId]: "loading" }));
       if (isMountedRef.current) {
         setError(null);
       }
@@ -78,13 +79,13 @@ export const usePlaylistTracks = (playlistId: string): UsePlaylistTracksReturn =
 
         // Mark as fetched once complete (if still mounted)
         if (isMountedRef.current) {
-          fetchStatusRef.current[playlistId] = "fetched";
+          setFetchStatuses(prev => ({ ...prev, [playlistId]: "fetched" }));
         }
       } catch (err) {
         console.error(`Error fetching playlist ${playlistId}:`, err);
         if (isMountedRef.current) {
           setError("Failed to fetch tracks.");
-          fetchStatusRef.current[playlistId] = "error";
+          setFetchStatuses(prev => ({ ...prev, [playlistId]: "error" }));
         }
       }
     };
@@ -95,7 +96,7 @@ export const usePlaylistTracks = (playlistId: string): UsePlaylistTracksReturn =
     return () => {
       isMountedRef.current = false;
     };
-  }, [playlistId, updatePlaylist, state]);
+  }, [playlistId, updatePlaylist, state, fetchStatuses]);
 
   // Return current playlist from context
   const playlist = state?.playlists?.get(playlistId);
