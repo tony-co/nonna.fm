@@ -156,7 +156,7 @@ function HomePageContent() {
                               ? handleAppleLogin
                               : undefined
                     }
-                    className="group flex h-[180px] w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-3xl bg-indigo-100 px-8 py-6 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-indigo-200 dark:bg-indigo-950 dark:hover:bg-indigo-900/70"
+                    className="group flex h-[180px] w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-3xl bg-indigo-100 px-5 py-5 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-indigo-200 dark:bg-indigo-950 dark:hover:bg-indigo-900/70"
                   >
                     <service.image className="h-12 w-12" />
                     <span className="text-text text-center text-base font-semibold">

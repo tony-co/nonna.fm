@@ -311,7 +311,10 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
   };
 }
 
-export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]> {
+export async function fetchPlaylistTracks(
+  playlistId: string,
+  onProgress?: (tracks: ITrack[], progress: number) => void
+): Promise<ITrack[]> {
   const authData = await getSpotifyAuthData("source");
   if (!authData) throw new Error("Not authenticated with Spotify");
 
@@ -341,6 +344,7 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
   });
 
   const trackResults: ITrack[] = [];
+  let loadedCount = 0;
   await processInBatches(
     async batch => {
       // Process multiple offsets in parallel within each batch
@@ -373,7 +377,13 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
 
       // Wait for all requests in this batch to complete
       const batchResults = await Promise.all(batchPromises);
-      trackResults.push(...batchResults.flat());
+      const flatBatch = batchResults.flat();
+      trackResults.push(...flatBatch);
+      loadedCount += flatBatch.length;
+      // Call onProgress with a shallow copy of the loaded tracks and progress ratio
+      if (onProgress) {
+        onProgress([...trackResults], Math.min(loadedCount / total, 1));
+      }
     },
     {
       items: Array.from({ length: batchCount }, (_, i) => i),

@@ -14,7 +14,7 @@ interface PlaylistProps {
 
 export const Playlist: FC<PlaylistProps> = ({ playlistId }) => {
   const { selectedItems } = useLibrarySelection();
-  const { playlist, isLoading, error } = usePlaylistTracks(playlistId);
+  const { playlist, error, isLoading } = usePlaylistTracks(playlistId);
   const { setItemTitle, setMinimalMobileHeader } = useItemTitle();
 
   // Set playlist name, minimal header, and backHref in header when loaded
@@ -31,7 +31,7 @@ export const Playlist: FC<PlaylistProps> = ({ playlistId }) => {
     return <div className="p-4 text-red-600">{error}</div>;
   }
 
-  if (isLoading || !playlist) {
+  if (!playlist) {
     return <LoadingSpinner />;
   }
 
@@ -66,8 +66,14 @@ export const Playlist: FC<PlaylistProps> = ({ playlistId }) => {
         </div>
       </div>
 
-      {/* Track List */}
-      <TrackList tracks={playlist.tracks} selection={selectedTracks} playlist={playlist} />
+      {/* Show loading spinner instead of TrackList while tracks are being fetched */}
+      {isLoading && (!playlist.tracks || playlist.tracks.length === 0) ? (
+        <div className="py-12 text-center">
+          <LoadingSpinner />
+        </div>
+      ) : (
+        <TrackList tracks={playlist.tracks} selection={selectedTracks} playlist={playlist} />
+      )}
     </div>
   );
 };

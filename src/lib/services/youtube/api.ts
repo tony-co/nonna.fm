@@ -346,13 +346,17 @@ export async function createPlaylistWithTracks(
 /**
  * Get playlist details
  */
-export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]> {
+export async function fetchPlaylistTracks(
+  playlistId: string,
+  onProgress?: (tracks: ITrack[], progress: number) => void
+): Promise<ITrack[]> {
   try {
     const authData = await getYouTubeAuthData("source");
     if (!authData) throw new Error("Not authenticated with YouTube");
 
     const tracks: ITrack[] = [];
     let nextPageToken: string | undefined;
+    let total: number | undefined = undefined;
 
     do {
       const url = new URL("https://www.googleapis.com/youtube/v3/playlistItems");
@@ -363,7 +367,9 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
         url.searchParams.append("pageToken", nextPageToken);
       }
 
-      const response = await retryWithExponentialBackoff<YouTubePlaylistItemsResponse>(
+      const response = await retryWithExponentialBackoff<
+        YouTubePlaylistItemsResponse & { pageInfo?: { totalResults?: number } }
+      >(
         () =>
           fetch(url.toString(), {
             headers: {
@@ -372,6 +378,11 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
           }),
         YOUTUBE_RETRY_OPTIONS
       );
+
+      // Set total from the first response
+      if (total === undefined && response.pageInfo?.totalResults) {
+        total = response.pageInfo.totalResults;
+      }
 
       const data = response;
 
@@ -399,6 +410,12 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
             };
           })
       );
+
+      // Call onProgress after each page
+      if (onProgress && total) {
+        const progress = Math.min(tracks.length / total, 1);
+        onProgress([...tracks], progress);
+      }
 
       nextPageToken = data.nextPageToken;
     } while (nextPageToken);

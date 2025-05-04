@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { IPlaylist } from "@/types/library";
-import { fetchPlaylistTracks, getSourceService } from "@/lib/musicApi";
+import { useState, useEffect, useRef } from "react";
+import { IPlaylist, ITrack } from "@/types/library";
+import { fetchPlaylistTracks } from "@/lib/musicApi";
 import { useLibrary } from "@/contexts/LibraryContext";
 
 interface UsePlaylistTracksReturn {
@@ -9,77 +9,99 @@ interface UsePlaylistTracksReturn {
   error: string | null;
 }
 
-// Module-level Set to track which playlist IDs have been fetched
-const fetchedPlaylists = new Set<string>();
+type FetchStatus = "idle" | "loading" | "fetched" | "error";
 
 export const usePlaylistTracks = (playlistId: string): UsePlaylistTracksReturn => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { state, actions } = useLibrary();
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch tracks if they don't exist
+  // Store fetch status per playlist ID
+  const fetchStatusRef = useRef<Record<string, FetchStatus>>({});
+  // Track mount status with a persistent ref
+  const isMountedRef = useRef(false);
+
+  // Get current status for this playlistId
+  const currentStatus = fetchStatusRef.current[playlistId] ?? "idle";
+  const isLoading = currentStatus === "loading";
+
+  // Get stable actions reference
+  const updatePlaylist = actions.updatePlaylist;
+
   useEffect(() => {
-    let isMounted = true;
+    // Set mount status to true when effect runs
+    isMountedRef.current = true;
 
     const fetchTracks = async (): Promise<void> => {
-      if (!state || !state.playlists) return;
+      // Get current state
+      const currentState = state;
+      if (!currentState?.playlists) return;
 
-      // Get the existing playlist
-      const existingPlaylist = state.playlists.get(playlistId);
-      if (!existingPlaylist) {
-        setError("Playlist not found");
+      // Get current playlist
+      const currentPlaylist = currentState.playlists.get(playlistId);
+      if (!currentPlaylist) return;
+
+      // Skip if already fetched or fetching
+      if (
+        fetchStatusRef.current[playlistId] === "loading" ||
+        fetchStatusRef.current[playlistId] === "fetched" ||
+        (currentPlaylist.tracks && currentPlaylist.tracks.length > 0)
+      ) {
         return;
       }
 
-      // If we've already fetched for this playlist, do not fetch again (prevents infinite loop)
-      if (fetchedPlaylists.has(playlistId)) {
-        return;
-      }
-
-      // Only fetch if tracks array is empty or undefined
-      if (existingPlaylist.tracks && existingPlaylist.tracks.length > 0) {
-        return;
+      // Mark as loading
+      fetchStatusRef.current[playlistId] = "loading";
+      if (isMountedRef.current) {
+        setError(null);
       }
 
       try {
-        setIsLoading(true);
-        setError(null);
+        // Define onProgress to update tracks as they arrive
+        const onProgress = (partialTracks: ITrack[], _progress: number): void => {
+          if (!isMountedRef.current) return;
 
-        const sourceService = await getSourceService();
+          // Get latest playlist
+          const latestState = state;
+          const latestPlaylist = latestState?.playlists?.get(playlistId);
+          if (!latestPlaylist) return;
 
-        const tracks = await fetchPlaylistTracks(playlistId, sourceService);
-
-        if (!isMounted) return;
-
-        const updatedPlaylist = {
-          ...existingPlaylist,
-          tracks,
+          // Update playlist with partial tracks
+          const updatedPlaylist = {
+            ...latestPlaylist,
+            tracks: partialTracks,
+          };
+          updatePlaylist(updatedPlaylist);
         };
 
-        actions.updatePlaylist(updatedPlaylist);
+        // Fetch tracks with progressive updates
+        await fetchPlaylistTracks(playlistId, onProgress);
+
+        // Mark as fetched once complete (if still mounted)
+        if (isMountedRef.current) {
+          fetchStatusRef.current[playlistId] = "fetched";
+        }
       } catch (err) {
-        if (!isMounted) return;
-        const errorMessage = "Failed to fetch tracks. Please try again.";
-        console.error("Error fetching playlist tracks:", err);
-        setError(errorMessage);
-      } finally {
-        // Mark this playlist as fetched, regardless of success or failure, to prevent infinite loop
-        fetchedPlaylists.add(playlistId);
-        if (isMounted) {
-          setIsLoading(false);
+        console.error(`Error fetching playlist ${playlistId}:`, err);
+        if (isMountedRef.current) {
+          setError("Failed to fetch tracks.");
+          fetchStatusRef.current[playlistId] = "error";
         }
       }
     };
 
     fetchTracks();
 
+    // Cleanup function
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
     };
-  }, [playlistId, state, actions]);
+  }, [playlistId, updatePlaylist, state]);
+
+  // Return current playlist from context
+  const playlist = state?.playlists?.get(playlistId);
 
   return {
-    playlist: state?.playlists?.get(playlistId),
+    playlist,
     isLoading,
     error,
   };

@@ -44,7 +44,10 @@ export interface IMusicServiceProvider {
   fetchUserLibrary: () => Promise<ILibraryData>;
 
   // Fetch playlist tracks
-  fetchPlaylistTracks: (playlistId: string) => Promise<ITrack[]>;
+  fetchPlaylistTracks: (
+    playlistId: string,
+    onProgress?: (tracks: ITrack[], progress: number) => void
+  ) => Promise<ITrack[]>;
 }
 
 export interface IServiceFactory {

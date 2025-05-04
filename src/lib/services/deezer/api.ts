@@ -158,9 +158,13 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
 /**
  * Fetches tracks for a specific Deezer playlist with pagination support
  */
-export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]> {
+export async function fetchPlaylistTracks(
+  playlistId: string,
+  onProgress?: (tracks: ITrack[], progress: number) => void
+): Promise<ITrack[]> {
   let allTracks: ITrack[] = [];
   let nextUrl: string | undefined = `/api/deezer/playlists/${playlistId}/tracks`;
+  let total: number | undefined = undefined;
 
   // Fetch all pages of tracks with retry logic
   while (nextUrl) {
@@ -182,6 +186,11 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
       throw new Error("Invalid response format from Deezer API");
     }
 
+    // Set total from the first response
+    if (total === undefined && typeof data.total === "number") {
+      total = data.total;
+    }
+
     // Transform tracks to our format
     const tracks = data.data.map((track: DeezerTrack) => ({
       id: track.id.toString(),
@@ -196,6 +205,12 @@ export async function fetchPlaylistTracks(playlistId: string): Promise<ITrack[]>
     }));
 
     allTracks = [...allTracks, ...tracks];
+
+    // Call onProgress after each page
+    if (onProgress && total) {
+      const progress = Math.min(allTracks.length / total, 1);
+      onProgress([...allTracks], progress);
+    }
 
     // If we get a next URL from Deezer API, convert it to our API route
     if (data.next) {
