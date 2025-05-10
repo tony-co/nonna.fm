@@ -1,5 +1,9 @@
 import { refreshSpotifyToken, getSpotifyAuthData } from "../lib/services/spotify/auth";
+import { getDeezerUserId } from "../lib/services/deezer/auth";
+import { getYouTubeAuthData } from "../lib/services/youtube/auth";
+import { getAppleMusicAuthData, refreshAppleToken } from "../lib/services/apple/auth";
 import { AuthData } from "../lib/auth/constants";
+import { MusicService } from "@/types/services";
 import fs from "fs";
 import path from "path";
 
@@ -17,6 +21,9 @@ const TOKEN_CACHE_DIR = path.join(process.cwd(), "tokens");
 
 // Buffer time in milliseconds to refresh token before it actually expires (5 minutes)
 const EXPIRY_BUFFER = 5 * 60 * 1000;
+
+// List of supported music services for testing
+export const SUPPORTED_TEST_SERVICES: MusicService[] = ["youtube"];
 
 /**
  * Get the token cache file path for a specific service
@@ -74,13 +81,13 @@ export function writeTokenCacheToFile(service: string, cache: ServiceTokenCache)
 }
 
 /**
- * Get a valid Spotify access token, using cache if available and not expired
+ * Get a valid access token for any supported service
  * @param service - The service identifier (e.g., 'spotify', 'youtube')
  * @param forceRefresh - Whether to force a token refresh regardless of cache
  * @returns Access token or null if unavailable
  */
-export async function getCachedSpotifyAccessToken(
-  service: string,
+export async function getCachedAccessToken(
+  service: MusicService,
   forceRefresh = false
 ): Promise<AuthData | null> {
   // Read current cache from file
@@ -102,8 +109,38 @@ export async function getCachedSpotifyAccessToken(
     };
   }
 
-  // Try to get auth data from storage (using 'target' as default since we now use a single token)
-  const authData = await getSpotifyAuthData("target");
+  let authData: AuthData | null = null;
+  let refreshedAuth: AuthData | null = null;
+
+  // Get auth data based on service type
+  switch (service) {
+    case "spotify":
+      authData = await getSpotifyAuthData("target");
+      break;
+    case "youtube":
+      authData = await getYouTubeAuthData("target");
+      break;
+    case "apple":
+      authData = await getAppleMusicAuthData("target");
+      break;
+    case "deezer":
+      // Deezer doesn't use the same auth model, it uses user ID
+      const userId = getDeezerUserId();
+      if (userId) {
+        authData = {
+          accessToken: "deezer-no-token-needed",
+          expiresIn: 3600,
+          timestamp: Date.now(),
+          userId: userId,
+          tokenType: "Bearer",
+          role: "target",
+          serviceId: "deezer",
+        };
+      }
+      break;
+    default:
+      throw new Error(`Unsupported service type: ${service}`);
+  }
 
   if (!authData) {
     return null;
@@ -134,7 +171,24 @@ export async function getCachedSpotifyAccessToken(
   const refreshToken = authData.refreshToken || cache.refreshToken;
   if (refreshToken) {
     try {
-      const refreshedAuth = await refreshSpotifyToken(refreshToken, "target", true);
+      // Different refresh method depending on service
+      switch (service) {
+        case "spotify":
+          refreshedAuth = await refreshSpotifyToken(refreshToken, "target", true);
+          break;
+        case "youtube":
+          // YouTube refresh is private in auth.ts, we'll need to get a fresh token
+          authData = await getYouTubeAuthData("target");
+          refreshedAuth = authData;
+          break;
+        case "apple":
+          refreshedAuth = await refreshAppleToken(refreshToken, "target");
+          break;
+        case "deezer":
+          // Deezer doesn't use this token flow in our app
+          console.log("Deezer doesn't support token refresh in the same way");
+          break;
+      }
 
       if (refreshedAuth?.accessToken) {
         // Update cache with new token and refresh token (if provided)
@@ -151,7 +205,7 @@ export async function getCachedSpotifyAccessToken(
         return refreshedAuth;
       }
     } catch (error) {
-      console.error("Failed to refresh Spotify token:", error);
+      console.error(`Failed to refresh ${service} token:`, error);
     }
   }
 
@@ -159,4 +213,14 @@ export async function getCachedSpotifyAccessToken(
   const clearedCache = { token: null, refreshToken: cache.refreshToken, expiresAt: null };
   writeTokenCacheToFile(service, clearedCache);
   return null;
+}
+
+/**
+ * Get a valid Spotify access token (legacy function for backward compatibility)
+ */
+export async function getCachedSpotifyAccessToken(
+  service: string,
+  forceRefresh = false
+): Promise<AuthData | null> {
+  return getCachedAccessToken("spotify", forceRefresh);
 }

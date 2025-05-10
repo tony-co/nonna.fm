@@ -41,6 +41,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       case "searchSongs":
         result = await ytmusic.searchSongs(params.query);
         break;
+      case "searchAlbums":
+        result = await ytmusic.searchAlbums(params.query);
+        break;
       case "getPlaylist":
         result = await ytmusic.getPlaylist(params.playlistId);
         break;

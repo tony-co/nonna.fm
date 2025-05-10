@@ -82,7 +82,7 @@ export async function initiateYouTubeAuth(role: "source" | "target"): Promise<vo
 
 export async function handleYouTubeCallback(
   searchParams: string
-): Promise<{ success: boolean; role?: "source" | "target" }> {
+): Promise<{ success: boolean; role?: "source" | "target"; error?: string }> {
   console.log("Starting YouTube callback handling...");
 
   initializeEncryption();
@@ -195,9 +195,8 @@ export async function handleYouTubeCallback(
   // Clear state and verifier
   clearAuthData(storedState.role);
 
-  // Store auth data
+  // Store auth data and fetch user profile
   try {
-    // Fetch user profile
     const userProfile = await fetchYouTubeUserProfile(tokenData.access_token);
 
     const authData: AuthData = {
@@ -215,30 +214,104 @@ export async function handleYouTubeCallback(
     setServiceType(storedState.role, "youtube");
     return { success: true, role: storedState.role };
   } catch (error) {
-    console.error("Failed to store auth data:", error);
+    console.error("Failed to store auth data or fetch user profile:", error);
+
+    if (error instanceof Error && error.message === "No channel found for user") {
+      return {
+        success: false,
+        error: "You don't have a YouTube channel. Please create one to continue.",
+        role: storedState.role,
+      };
+    }
+
     return { success: false };
   }
 }
 
-async function refreshYouTubeToken(refreshToken: string): Promise<YouTubeTokenResponse | null> {
+export async function refreshYouTubeToken(
+  refreshToken: string,
+  role: "source" | "target",
+  directRequest = false
+): Promise<AuthData | null> {
   try {
-    const response = await fetch("/api/auth/youtube/refresh", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ refreshToken }),
-    });
+    if (!refreshToken || refreshToken.trim() === "") {
+      throw new Error("Empty refresh token provided");
+    }
 
-    if (!response.ok) {
-      await response.text(); // Consume the response
-      console.error("Token refresh failed");
+    console.log(
+      "Attempting to refresh YouTube token with refresh token length:",
+      refreshToken?.length
+    );
+
+    // Get existing auth data to preserve user info
+    const existingAuthData = getAuthData(role);
+
+    let responseData;
+
+    if (directRequest) {
+      const clientId = process.env.NEXT_PUBLIC_YOUTUBE_CLIENT_ID;
+      const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
+
+      if (!clientId || !clientSecret) {
+        throw new Error("Missing YouTube client credentials");
+      }
+
+      const response = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          client_id: clientId,
+          client_secret: clientSecret,
+          refresh_token: refreshToken,
+          grant_type: "refresh_token",
+        }).toString(),
+      });
+
+      if (!response.ok) {
+        console.error("Direct YouTube API request failed:", response.status, response.statusText);
+        return null;
+      }
+
+      responseData = await response.json();
+    } else {
+      const response = await fetch("/api/auth/youtube/refresh", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok) {
+        console.error("Failed to refresh token:", response.status, response.statusText);
+        return null;
+      }
+
+      responseData = await response.json();
+    }
+
+    if (!responseData.access_token) {
+      console.error("Invalid token response - missing access_token:", responseData);
       return null;
     }
 
-    return await response.json();
-  } catch {
-    console.error("Token refresh failed");
+    const authData: AuthData = {
+      accessToken: responseData.access_token,
+      refreshToken: responseData.refresh_token || refreshToken, // Use old refresh token if new one is not provided
+      expiresIn: responseData.expires_in,
+      timestamp: Date.now(),
+      userId: existingAuthData?.userId || "",
+      tokenType: responseData.token_type || "Bearer",
+      role: role,
+      serviceId: "youtube",
+    };
+
+    setAuthData(role, authData);
+    return authData;
+  } catch (error) {
+    console.error("Error refreshing token:", error);
     return null;
   }
 }
@@ -260,20 +333,9 @@ export async function getYouTubeAuthData(role: "source" | "target"): Promise<Aut
   // If token is expired and we have a refresh token, try to refresh
   if (isExpired && authData.refreshToken) {
     console.log("Starting token refresh...");
-    const tokenData = await refreshYouTubeToken(authData.refreshToken);
+    const updatedAuthData = await refreshYouTubeToken(authData.refreshToken, role);
 
-    if (tokenData) {
-      // Update auth data with new access token
-      const updatedAuthData: AuthData = {
-        ...authData,
-        accessToken: tokenData.access_token,
-        expiresIn: tokenData.expires_in,
-        timestamp: Date.now(),
-        // If a new refresh token is provided, update it
-        refreshToken: tokenData.refresh_token || authData.refreshToken,
-      };
-
-      setAuthData(role, updatedAuthData);
+    if (updatedAuthData) {
       console.log("Token refresh successful");
       return updatedAuthData;
     } else {

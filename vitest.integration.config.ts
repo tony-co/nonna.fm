@@ -8,10 +8,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    setupFiles: "./src/__tests__/setup.ts",
     include: [
-      "**/src/__tests__/services/**/auth.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
-      "**/src/__tests__/services/**/api.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+      "**/src/__tests__/integration/auth.test.ts",
+      "**/src/__tests__/integration/api.test.ts",
     ],
     exclude: [
       "**/node_modules/**",
