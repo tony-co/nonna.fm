@@ -1,9 +1,11 @@
-import type { ITrack } from "@/types/library";
+import type { IAlbum, ITrack } from "@/types/library";
+import { MATCHING_STATUS } from "@/types/library";
 import { getYouTubeAuthData } from "./auth";
 
 // Define types for the search result items from ytmusic-api
 interface YTMusicSearchItem {
   videoId: string;
+  albumId?: string;
   name: string;
   artist?: { artistId: string | null; name: string };
   album?: { name: string; albumId: string };
@@ -37,6 +39,21 @@ interface YouTubePlaylistItemsResponse {
       };
     };
   }>;
+}
+
+/**
+ * Returns an absolute URL for the YouTube Music API proxy.
+ * In Node.js (test) environments, fetch requires an absolute URL.
+ * Uses NEXT_PUBLIC_APP_URL or defaults to http://localhost:3000.
+ */
+function getYouTubeApiUrl(path: string): string {
+  // If already absolute, return as is
+  if (/^https?:\/\//.test(path)) return path;
+  // Use env or fallback
+
+  const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  // Ensure no double slashes
+  return base.replace(/\/$/, "") + (path.startsWith("/") ? path : "/" + path);
 }
 
 /**
@@ -86,7 +103,10 @@ export class YTMusicAdapter {
     token: string
   ): Promise<T> {
     try {
-      const response = await fetch("/api/youtube/music", {
+      // Use absolute URL for Node.js compatibility
+      const url = getYouTubeApiUrl("/api/youtube/music");
+
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -224,13 +244,61 @@ export class YTMusicAdapter {
           return {
             ...track,
             targetId: songMatch?.videoId || undefined,
-            status: songMatch?.videoId ? "matched" : "unmatched",
+            status: songMatch?.videoId ? MATCHING_STATUS.MATCHED : MATCHING_STATUS.UNMATCHED,
           };
         } catch (error) {
           console.error(`Error finding match for track "${track.name}":`, error);
           return {
             ...track,
-            status: "unmatched",
+            status: MATCHING_STATUS.UNMATCHED,
+          };
+        }
+      })
+    );
+  }
+
+  /**
+   * Find matching albums in YouTube Music
+   * Used for matching source albums to YouTube Music albums
+   */
+  async findMatchingAlbums(albums: IAlbum[]): Promise<IAlbum[]> {
+    if (!this.initialized) {
+      await this.initialize("target");
+    }
+
+    const authData = await getYouTubeAuthData(this.currentRole || "target");
+    if (!authData) throw new Error("Not authenticated with YouTube");
+
+    return Promise.all(
+      albums.map(async album => {
+        try {
+          // Construct a search query combining album name and artist
+          const searchQuery = `${album.name} ${album.artist}`;
+
+          // Search for albums
+          const searchResults = await this.makeApiCall<YTMusicSearchItem[]>(
+            "searchAlbums",
+            { query: searchQuery },
+            authData.accessToken
+          );
+
+          // Find the best album match
+          const albumMatch = searchResults.find(
+            item => item.type === "ALBUM" && item.albumId // Ensure it has a browseId
+          );
+
+          const result = {
+            ...album,
+            targetId: albumMatch?.albumId || undefined,
+            status: albumMatch?.albumId ? MATCHING_STATUS.MATCHED : MATCHING_STATUS.UNMATCHED,
+          };
+
+          return result;
+        } catch (error) {
+          console.error(`Error finding match for album "${album.name}":`, error);
+          return {
+            ...album,
+            status: MATCHING_STATUS.UNMATCHED,
           };
         }
       })

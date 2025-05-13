@@ -161,6 +161,12 @@ export const LibrarySidebar: FC = () => {
     return state.matching.progress[key] ?? 0;
   };
 
+  // Helper function to check if a service is YouTube Music
+  // MusicService type: 'spotify' | 'apple' | 'youtube' | 'deezer' (see src/types/services.ts)
+  const isYouTubeService = (service: MusicService) => {
+    return service === "youtube";
+  };
+
   return (
     <div className="min-w-0 p-4">
       <div className="mb-4 mt-2">
@@ -224,61 +230,64 @@ export const LibrarySidebar: FC = () => {
         </div>
       </div>
 
-      {/* Albums Section */}
-      <div
-        // Add margin-bottom to separate from next item, and reduce vertical padding
-        className={`group mb-1 flex cursor-pointer items-center gap-4 rounded-lg px-2.5 py-2 transition-all duration-200
-            ${
-              selectedAlbumsCount === albumsCount && albumsCount > 0
-                ? "bg-indigo-100/60 group-hover:bg-indigo-200/80 dark:bg-indigo-900/40 dark:group-hover:bg-indigo-800/60"
-                : "hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
-            }`}
-        onClick={handleAlbumsClick}
-        role="button"
-        aria-label="View Albums"
-        data-testid="albums-section"
-      >
-        <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
-          <IndeterminateCheckbox
-            selectedCount={selectedAlbumsCount}
-            totalCount={albumsCount}
-            onChange={handleAlbumsToggle}
-            className=""
-            label="Albums"
-            testId="albums-checkbox"
-          />
-        </div>
-        <div className="relative overflow-hidden rounded-lg">
-          <ArtworkImage
-            src={Array.from(state.albums ?? [])[0]?.artwork}
-            alt="First Album"
-            type="album"
-            className="rounded-lg"
-          />
-          {/* Show progress if matching albums */}
-          {currentTask && currentTask.type === "albums" && isMatching && (
-            <CircularProgress progress={getProgress("albums")} data-testid="albums-progress" />
-          )}
-        </div>
-        <div className="min-w-0">
-          <p
-            className={`truncate font-normal text-zinc-600 group-hover:text-zinc-950 dark:text-zinc-300 dark:group-hover:text-zinc-200 ${
-              currentTask && currentTask.type === "albums" && isMatching ? "animate-pulse" : ""
-            }`}
-          >
-            Albums
-          </p>
-          <p className="truncate text-sm text-zinc-600 dark:text-zinc-400">
-            {albumsCount} albums
-            {/* Show unmatched count if any */}
-            {unmatchedAlbumsCount > 0 && (
-              <span className="ml-1 text-red-500 dark:text-red-400">
-                • {unmatchedAlbumsCount} unmatched
-              </span>
+      {/* Only show Albums section if neither source nor target is YouTube Music */}
+      {/* YouTube Music API does not support adding albums to the user library as source or target */}
+      {!isYouTubeService(source) && !isYouTubeService(target) && (
+        <div
+          // Add margin-bottom to separate from next item, and reduce vertical padding
+          className={`group mb-1 flex cursor-pointer items-center gap-4 rounded-lg px-2.5 py-2 transition-all duration-200
+                ${
+                  selectedAlbumsCount === albumsCount && albumsCount > 0
+                    ? "bg-indigo-100/60 group-hover:bg-indigo-200/80 dark:bg-indigo-900/40 dark:group-hover:bg-indigo-800/60"
+                    : "hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
+                }`}
+          onClick={handleAlbumsClick}
+          role="button"
+          aria-label="View Albums"
+          data-testid="albums-section"
+        >
+          <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
+            <IndeterminateCheckbox
+              selectedCount={selectedAlbumsCount}
+              totalCount={albumsCount}
+              onChange={handleAlbumsToggle}
+              className=""
+              label="Albums"
+              testId="albums-checkbox"
+            />
+          </div>
+          <div className="relative overflow-hidden rounded-lg">
+            <ArtworkImage
+              src={Array.from(state.albums ?? [])[0]?.artwork}
+              alt="First Album"
+              type="album"
+              className="rounded-lg"
+            />
+            {/* Show progress if matching albums */}
+            {currentTask && currentTask.type === "albums" && isMatching && (
+              <CircularProgress progress={getProgress("albums")} data-testid="albums-progress" />
             )}
-          </p>
+          </div>
+          <div className="min-w-0">
+            <p
+              className={`truncate font-normal text-zinc-600 group-hover:text-zinc-950 dark:text-zinc-300 dark:group-hover:text-zinc-200 ${
+                currentTask && currentTask.type === "albums" && isMatching ? "animate-pulse" : ""
+              }`}
+            >
+              Albums
+            </p>
+            <p className="truncate text-sm text-zinc-600 dark:text-zinc-400">
+              {albumsCount} albums
+              {/* Show unmatched count if any */}
+              {unmatchedAlbumsCount > 0 && (
+                <span className="ml-1 text-red-500 dark:text-red-400">
+                  • {unmatchedAlbumsCount} unmatched
+                </span>
+              )}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Playlists Section */}
       {Array.from(state.playlists?.values() ?? []).map((playlist, idx, arr) => (

@@ -257,7 +257,6 @@ export async function createPlaylistWithTracks(
         playlistId: null,
       };
     }
-    console.log("Creating playlist with tracks:", validTracks);
 
     // Create the playlist using retryWithExponentialBackoff for reliability
     const playlistData = await retryWithExponentialBackoff<YouTubePlaylistCreateResponse>(
@@ -350,6 +349,7 @@ export async function fetchPlaylistTracks(
   playlistId: string,
   onProgress?: (tracks: ITrack[], progress: number) => void
 ): Promise<ITrack[]> {
+  console.log("[YOUTUBE] Fetching playlist tracks:", playlistId);
   try {
     const authData = await getYouTubeAuthData("source");
     if (!authData) throw new Error("Not authenticated with YouTube");
@@ -740,22 +740,29 @@ export async function searchAlbums(
   onProgress: ((progress: number) => void) | undefined
 ): Promise<SearchResult> {
   try {
+    // Use the YTMusicAdapter for album matching, just like search uses it for tracks
+    const ytAdapter = new YTMusicAdapter();
+    await ytAdapter.initialize("target");
+
     const results: IAlbum[] = [];
     let matched = 0;
     let unmatched = 0;
 
     await processInBatches(
       async batch => {
-        const batchResults = await Promise.all(
-          batch.map(async album => {
-            const result = await findMatchingAlbums([album]);
-            return result[0] || { ...album, tracks: [], targetId: undefined };
-          })
-        );
+        // Use the adapter's findMatchingAlbums for each batch
+        const batchResults = await ytAdapter.findMatchingAlbums(batch);
 
-        results.push(...batchResults);
+        // Map results to IAlbum with targetId
+        const mappedResults = batchResults.map((album, i) => ({
+          ...batch[i],
+          targetId: album.targetId,
+          status: album.status,
+        }));
 
-        const validAlbums = batchResults.filter(album => album.targetId);
+        results.push(...mappedResults);
+
+        const validAlbums = mappedResults.filter(album => album.targetId);
         matched += validAlbums.length;
         unmatched += batch.length - validAlbums.length;
 
@@ -836,55 +843,12 @@ export async function addTracksToLibrary(tracks: ITrack[]): Promise<TransferResu
   }
 }
 
-/**
- * Add albums to YouTube Music library
- */
-export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferResult> {
-  try {
-    const authData = await getYouTubeAuthData("target");
-    if (!authData) {
-      throw new Error("Not authenticated with YouTube");
-    }
-
-    const albumsArray = Array.from(albums);
-    const matchedAlbums = await findMatchingAlbums(albumsArray);
-    const validAlbums = matchedAlbums.filter(album => album.targetId);
-
-    if (validAlbums.length === 0) {
-      return {
-        added: 0,
-        failed: albums.size,
-        total: albums.size,
-        playlistId: null,
-      };
-    }
-
-    // Create a playlist for the albums
-    const playlistName = `Imported Albums from Nonna.fm - ${new Date().toLocaleDateString()}`;
-    const playlistId = await createPlaylistWithTracks(
-      playlistName,
-      validAlbums.map(album => ({
-        id: album.targetId || "", // Use targetId as the track id
-        name: album.name,
-        artist: album.artist,
-        album: album.name, // Use album name as the album name
-        targetId: album.targetId,
-      }))
-    );
-
-    return {
-      added: validAlbums.length,
-      failed: albums.size - validAlbums.length,
-      total: albums.size,
-      playlistId: playlistId.playlistId,
-    };
-  } catch (error) {
-    console.error("[LIBRARY] Error adding albums to library:", error);
-    return {
-      added: 0,
-      failed: albums.size,
-      total: albums.size,
-      playlistId: null,
-    };
-  }
+export async function addAlbumsToLibrary(_albums: Set<IAlbum>): Promise<TransferResult> {
+  // no way to add albums to YouTube Music library yet
+  return {
+    added: 0,
+    failed: 0,
+    total: 0,
+    playlistId: null,
+  };
 }

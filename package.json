@@ -3,20 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo",
     "dev:https": "next dev --turbo --experimental-https --hostname nonnalocal.fm",
     "build": "next build",
-    "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest watch",
-    "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "test:integration": "vitest --config vitest.integration.config.ts",
-    "test:integration:watch": "vitest --config vitest.integration.config.ts watch",
-    "test:e2e": "playwright test",
     "prepare": "husky"
   },
   "dependencies": {
