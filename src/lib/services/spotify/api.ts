@@ -96,8 +96,6 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
     SPOTIFY_RETRY_OPTIONS
   );
 
-  console.log("initialPlaylistResponse", initialPlaylistResponse);
-
   if (!initialPlaylistResponse.total) {
     throw new Error("Failed to fetch playlists count");
   }
@@ -110,10 +108,6 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
   await processInBatches(
     async batch => {
       const offset = batch[0] * playlistBatchSize;
-      console.log(
-        `[SPOTIFY] Fetching playlists batch ${batch[0] + 1}/${playlistBatchCount} (offset: ${offset})`
-      );
-
       const data = await retryWithExponentialBackoff<{ items: SpotifyPlaylist[] }>(
         () =>
           fetch(
@@ -122,12 +116,6 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
           ),
         SPOTIFY_RETRY_OPTIONS
       );
-
-      console.log(`[SPOTIFY] Playlists batch ${batch[0] + 1}/${playlistBatchCount}:`, {
-        offset,
-        count: data.items.length,
-        total: data.items.length,
-      });
 
       playlistResults.push(
         ...data.items.map((playlist: SpotifyPlaylist) =>
@@ -138,9 +126,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
     {
       items: Array.from({ length: playlistBatchCount }, (_, i) => i),
       batchSize: playlistBatchSize,
-      onBatchStart: (batchNumber, totalBatches) => {
-        console.log(`[SPOTIFY] Starting batch ${batchNumber}/${totalBatches}`);
-      },
+      onBatchStart: () => {},
       onError: (error, batch) => {
         console.error("[SPOTIFY] Error fetching playlist batch:", {
           error: error.message,
@@ -150,8 +136,6 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
       },
     }
   );
-
-  console.log("[SPOTIFY] Final playlist count:", playlistResults.length);
 
   const playlists = playlistResults;
 
@@ -173,22 +157,12 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
   const batchSize = 50;
   const batchCount = Math.ceil(totalTracks / batchSize);
 
-  console.log("[SPOTIFY] Liked songs fetch details:", {
-    totalTracks,
-    batchSize,
-    batchCount,
-  });
-
   const trackResults: ITrack[] = [];
   await processInBatches(
     async batch => {
       // Process multiple offsets in parallel within each batch
       const batchPromises = batch.map(async index => {
         const offset = index * batchSize;
-        console.log(
-          `[SPOTIFY] Fetching liked songs batch ${index + 1}/${batchCount} (offset: ${offset})`
-        );
-
         const data = await retryWithExponentialBackoff<{ items: SpotifyTrackItem[] }>(
           () =>
             fetch(
@@ -197,11 +171,6 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
             ),
           SPOTIFY_RETRY_OPTIONS
         );
-
-        console.log(`[SPOTIFY] Liked songs batch ${index + 1}/${batchCount}:`, {
-          offset,
-          count: data.items.length,
-        });
 
         return data.items.map((item: SpotifyTrackItem) => transformSpotifyTrackToTrack(item.track));
       });
@@ -213,9 +182,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
     {
       items: Array.from({ length: batchCount }, (_, i) => i),
       batchSize: 3, // Process 5 API requests in parallel at a time
-      onBatchStart: (batchNumber, totalBatches) => {
-        console.log(`[SPOTIFY] Starting liked songs batch group ${batchNumber}/${totalBatches}`);
-      },
+      onBatchStart: () => {},
       onError: (error, batch) => {
         console.error("[SPOTIFY] Error fetching liked songs batch:", {
           error: error.message,
@@ -225,8 +192,6 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
       },
     }
   );
-
-  console.log("[SPOTIFY] Final liked songs count:", trackResults.length);
 
   const likedSongs = trackResults;
 
@@ -246,23 +211,12 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
   const { total: totalAlbums } = initialAlbumsResponse;
   const albumBatchSize = 50; // Spotify's recommended batch size for albums
   const albumBatchCount = Math.ceil(totalAlbums / albumBatchSize);
-
-  console.log("[SPOTIFY] Album fetch details:", {
-    totalAlbums,
-    albumBatchSize,
-    albumBatchCount,
-  });
-
   const albumResults: IAlbum[] = [];
   await processInBatches(
     async batch => {
       // Process multiple offsets in parallel within each batch
       const batchPromises = batch.map(async index => {
         const offset = index * albumBatchSize;
-        console.log(
-          `[SPOTIFY] Fetching albums batch ${index + 1}/${albumBatchCount} (offset: ${offset})`
-        );
-
         const data = await retryWithExponentialBackoff<{ items: { album: SpotifyAlbum }[] }>(
           () =>
             fetch(
@@ -271,11 +225,6 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
             ),
           SPOTIFY_RETRY_OPTIONS
         );
-
-        console.log(`[SPOTIFY] Albums batch ${index + 1}/${albumBatchCount}:`, {
-          offset,
-          count: data.items.length,
-        });
 
         return data.items.map((item: { album: SpotifyAlbum }) =>
           transformSpotifyAlbumToAlbum(item.album)
@@ -289,9 +238,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
     {
       items: Array.from({ length: albumBatchCount }, (_, i) => i),
       batchSize: 3, // Process 3 API requests in parallel at a time
-      onBatchStart: (batchNumber, totalBatches) => {
-        console.log(`[SPOTIFY] Starting albums batch group ${batchNumber}/${totalBatches}`);
-      },
+      onBatchStart: () => {},
       onError: (error, batch) => {
         console.error("[SPOTIFY] Error fetching albums batch:", {
           error: error.message,
@@ -301,8 +248,6 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
       },
     }
   );
-
-  console.log("[SPOTIFY] Final albums count:", albumResults.length);
 
   return {
     playlists,
@@ -336,13 +281,6 @@ export async function fetchPlaylistTracks(
   const { total } = initialResponse;
   const batchSize = 50;
   const batchCount = Math.ceil(total / batchSize);
-
-  console.log("[SPOTIFY] Playlist tracks fetch details:", {
-    total,
-    batchSize,
-    batchCount,
-  });
-
   const trackResults: ITrack[] = [];
   let loadedCount = 0;
   await processInBatches(
@@ -350,10 +288,6 @@ export async function fetchPlaylistTracks(
       // Process multiple offsets in parallel within each batch
       const batchPromises = batch.map(async index => {
         const offset = index * batchSize;
-        console.log(
-          `[SPOTIFY] Fetching playlist tracks batch ${index + 1}/${batchCount} (offset: ${offset})`
-        );
-
         const data = await retryWithExponentialBackoff<{ items: SpotifyTrackItem[] }>(
           () =>
             fetch(
@@ -366,11 +300,6 @@ export async function fetchPlaylistTracks(
             ),
           SPOTIFY_RETRY_OPTIONS
         );
-
-        console.log(`[SPOTIFY] Playlist tracks batch ${index + 1}/${batchCount}:`, {
-          offset,
-          count: data.items.length,
-        });
 
         return data.items.map((item: SpotifyTrackItem) => transformSpotifyTrackToTrack(item.track));
       });
@@ -387,12 +316,8 @@ export async function fetchPlaylistTracks(
     },
     {
       items: Array.from({ length: batchCount }, (_, i) => i),
-      batchSize: 3, // Process 3 API requests in parallel at a time
-      onBatchStart: (batchNumber, totalBatches) => {
-        console.log(
-          `[SPOTIFY] Starting playlist tracks batch group ${batchNumber}/${totalBatches}`
-        );
-      },
+      batchSize: 1, // Process 3 API requests in parallel at a time
+      onBatchStart: () => {},
       onError: (error, batch) => {
         console.error("[SPOTIFY] Error fetching playlist tracks batch:", {
           error: error.message,
@@ -402,8 +327,6 @@ export async function fetchPlaylistTracks(
       },
     }
   );
-
-  console.log("[SPOTIFY] Final playlist tracks count:", trackResults.length);
 
   return trackResults;
 }
@@ -416,9 +339,6 @@ async function findBestMatch(track: ITrack, authData: AuthData): Promise<string 
 
     // If no good match found and track is from YouTube, retry with just the track name
     if (bestMatch === null && track.videoId) {
-      console.log(
-        `[MATCHING] Retrying search for YouTube track "${track.name}" without artist name`
-      );
       const retrySearchQuery = encodeURIComponent(track.name);
       bestMatch = await performSearch(track, retrySearchQuery, authData);
     }
@@ -452,8 +372,6 @@ export async function search(
   let unmatched = 0;
   let processedCount = 0;
 
-  console.log("TCO - search - starting:", { trackCount: tracks.length });
-
   // Process tracks in batches
   await processInBatches(
     async batch => {
@@ -480,9 +398,7 @@ export async function search(
       items: tracks,
       batchSize: 4,
       delayBetweenBatches: 200,
-      onBatchStart: (batchNumber, totalBatches) => {
-        console.log(`Processing track search batch ${batchNumber}/${totalBatches}`);
-      },
+      onBatchStart: () => {},
       onError: (error, batch) => {
         console.error("Error searching tracks batch:", {
           error: error.message,
@@ -510,7 +426,6 @@ export async function createPlaylistWithTracks(
   description?: string
 ): Promise<TransferResult> {
   try {
-    console.log("createPlaylistWithTracks - starting:", { name, trackCount: tracks.length });
     const authData = await getSpotifyAuthData("target");
     if (!authData) throw new Error("Not authenticated with Spotify");
 
@@ -537,8 +452,6 @@ export async function createPlaylistWithTracks(
       console.error("No playlist ID in response:", playlistData);
       throw new Error("Failed to create playlist - no ID returned");
     }
-
-    console.log("createPlaylistWithTracks - playlist created:", { playlistId });
 
     // Filter tracks with valid targetIds
     const tracksWithIds = tracks.filter(
@@ -574,9 +487,7 @@ export async function createPlaylistWithTracks(
       {
         items: tracksWithIds,
         batchSize: 100,
-        onBatchStart: (batchNumber, totalBatches) => {
-          console.log(`Processing batch ${batchNumber}/${totalBatches}`);
-        },
+        onBatchStart: () => {},
         onError: (error, batch) => {
           console.error("Error adding tracks to playlist:", {
             error: error.message,
@@ -598,7 +509,6 @@ export async function createPlaylistWithTracks(
 
 export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<TransferResult> {
   try {
-    console.log("addTracksToLibrary - starting:", { trackCount: tracks.length });
     const authData = await getSpotifyAuthData("target");
     if (!authData) throw new Error("Not authenticated with Spotify");
 
@@ -636,9 +546,7 @@ export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<Transfe
       {
         items: tracksWithIds,
         batchSize: 50,
-        onBatchStart: (batchNumber, totalBatches) => {
-          console.log(`Processing batch ${batchNumber}/${totalBatches}`);
-        },
+        onBatchStart: () => {},
         onError: (error, batch) => {
           console.error("Error adding tracks to library:", {
             error: error.message,
@@ -660,9 +568,6 @@ export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<Transfe
 
 export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferResult> {
   try {
-    console.log("addAlbumsToLibrary - starting:", {
-      albumCount: Array.isArray(albums) ? albums.length : albums.size,
-    });
     const authData = await getSpotifyAuthData("target");
     if (!authData) throw new Error("Not authenticated with Spotify");
 
@@ -680,15 +585,6 @@ export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferR
         playlistId: null,
       };
     }
-
-    console.log(
-      "Adding albums to library:",
-      albumsWithIds.map(album => ({
-        name: album.name,
-        artist: album.artist,
-        targetId: album.targetId,
-      }))
-    );
 
     // Add albums to library in batches using retryWithExponentialBackoff
     const result = await processInBatches(
@@ -710,9 +606,7 @@ export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferR
       {
         items: albumsWithIds,
         batchSize: 20,
-        onBatchStart: (batchNumber, totalBatches) => {
-          console.log(`Processing batch ${batchNumber}/${totalBatches}`);
-        },
+        onBatchStart: () => {},
         onError: (error, batch) => {
           console.error("Error adding albums to library:", {
             error: error.message,
@@ -726,11 +620,6 @@ export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferR
         },
       }
     );
-
-    console.log("Album import completed:", {
-      ...result,
-      total: Array.isArray(albums) ? albums.length : albums.size,
-    });
 
     return {
       ...result,
@@ -825,9 +714,7 @@ export async function searchAlbums(
         items: albums,
         batchSize: 4,
         delayBetweenBatches: 200,
-        onBatchStart: (batchNumber, totalBatches) => {
-          console.log(`Processing album search batch ${batchNumber}/${totalBatches}`);
-        },
+        onBatchStart: () => {},
         onError: (error, batch) => {
           console.error("Error searching albums batch:", {
             error: error.message,

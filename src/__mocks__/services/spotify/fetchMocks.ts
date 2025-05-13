@@ -81,7 +81,6 @@ export function setupSpotifyFetchMock(): void {
       typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
     // Playlist creation (POST /me/playlists) must come before the general /me/playlists handler
     if (url.endsWith("/me/playlists") && options?.method === "POST") {
-      console.log("creating playlist", url);
       return new Response(JSON.stringify({ id: "new_playlist_id" }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
@@ -149,8 +148,6 @@ export function setupSpotifyFetchMock(): void {
     }
     // Match Spotify playlist tracks endpoint: /playlists/{playlistId}/tracks
     if (/\/playlists\/[^/]+\/tracks/.test(url)) {
-      // This block mocks fetching tracks for a specific playlist
-      console.log("fetching playlist tracks", url);
       // Extract playlistId from URL
       const match = url.match(/\/playlists\/([^/]+)\/tracks/);
       const playlistId = match ? match[1] : undefined;
@@ -159,14 +156,12 @@ export function setupSpotifyFetchMock(): void {
       if (url.includes("/tracks?limit=1")) {
         // Initial count
         const total = playlist ? playlist.tracks.length : 0;
-        console.log("fetchMocks total", total);
         return new Response(JSON.stringify({ total }), {
           status: 200,
           headers: { "Content-Type": "application/json" },
         });
       }
       // Return only the tracks for the requested playlist, mapped to Spotify API format
-      console.log("tracks", playlist?.tracks);
       const items = playlist
         ? playlist.tracks.map(t => ({
             track: {
@@ -199,7 +194,6 @@ export function setupSpotifyFetchMock(): void {
     }
     // Add tracks to playlist
     if (url.includes("/playlists/") && options?.method === "POST") {
-      console.log("adding tracks to playlist", url);
       return new Response(JSON.stringify({}), {
         status: 200,
         headers: { "Content-Type": "application/json" },

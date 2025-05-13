@@ -85,6 +85,9 @@ interface AppleMusicSong {
     name: string;
     artistName: string;
     albumName: string;
+    artwork?: {
+      url: string;
+    };
   };
   relationships?: {
     album?: {
@@ -122,6 +125,25 @@ const APPLE_RETRY_OPTIONS: RetryOptions = {
   maxRetryDelay: 32000,
   jitterFactor: 0.1,
 };
+
+// Helper function to fetch Apple Music API with authentication
+async function fetchAppleMusic(
+  url: string | URL,
+  options: RequestInit = {},
+  authData: AuthData
+): Promise<Response> {
+  const finalUrl = url instanceof URL ? url.toString() : url;
+  const headers = {
+    ...options.headers,
+    Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
+    "Music-User-Token": authData.accessToken,
+  };
+
+  return fetch(finalUrl, {
+    ...options,
+    headers,
+  });
+}
 
 export async function initializeAppleMusic(
   injectedMusicKit?: MusicKitGlobal
@@ -199,7 +221,7 @@ export async function authorizeAppleMusic(
 
 async function findBestMatch(
   track: ITrack & { id: string },
-  music: MusicKitInstance
+  authData: AuthData
 ): Promise<{ songId: string | null; albumId: string | null }> {
   try {
     const isYouTubeSource = !!getYouTubeAuthData("source");
@@ -212,7 +234,6 @@ async function findBestMatch(
     const searchTerm = `${searchName} ${searchArtist}`;
 
     const result = await retryWithExponentialBackoff<AppleMusicSearchResponse>(async () => {
-      const userToken = await music.authorize();
       const url = new URL("https://api.music.apple.com/v1/catalog/fr/search");
       url.searchParams.set("term", searchTerm);
       url.searchParams.set("types", "songs");
@@ -220,12 +241,7 @@ async function findBestMatch(
       url.searchParams.set("fields[songs]", "name,artistName,albumName");
       url.searchParams.set("include", "albums");
 
-      return fetch(url.toString(), {
-        headers: {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-          "Music-User-Token": userToken,
-        },
-      });
+      return fetchAppleMusic(url, {}, authData);
     }, APPLE_RETRY_OPTIONS);
 
     if (!result.results?.songs?.data?.length) {
@@ -292,11 +308,14 @@ async function findBestMatch(
 
 export async function search(
   tracks: Array<ITrack>,
-  onProgress: ((progress: number) => void) | undefined,
-  injectedMusicKit?: MusicKitGlobal
+  onProgress: ((progress: number) => void) | undefined
 ): Promise<SearchResult> {
   try {
-    const music = await initializeAppleMusic(injectedMusicKit);
+    const authData = await getAppleAuthData("target");
+    if (!authData) {
+      throw new Error("Not authenticated with Apple Music");
+    }
+
     const results: Array<ITrack> = [];
     let matched = 0;
     let unmatched = 0;
@@ -306,7 +325,7 @@ export async function search(
       async batch => {
         const trackResults = await Promise.all(
           batch.map(async track => {
-            const { songId, albumId } = await findBestMatch(track, music);
+            const { songId, albumId } = await findBestMatch(track, authData);
             processedCount++;
             if (onProgress) {
               onProgress(processedCount / tracks.length);
@@ -358,31 +377,34 @@ export async function search(
 export async function createPlaylistWithTracks(
   name: string,
   tracks: Array<ITrack>,
-  description?: string,
-  injectedMusicKit?: MusicKitGlobal
+  description?: string
 ): Promise<TransferResult> {
   try {
     console.log("createPlaylistWithTracks - starting:", { name, trackCount: tracks.length });
-    const music = await initializeAppleMusic(injectedMusicKit);
-    const userToken = await music.authorize();
+    const authData = await getAppleAuthData("target");
+    if (!authData) {
+      throw new Error("Not authenticated with Apple Music");
+    }
 
     // Create the playlist with retry
     const playlistData = await retryWithExponentialBackoff<{ data: Array<{ id: string }> }>(
       () =>
-        fetch("https://api.music.apple.com/v1/me/library/playlists", {
-          method: "POST",
-          headers: {
-            "Music-User-Token": userToken,
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            attributes: {
-              name,
-              description: description || `Imported on ${new Date().toLocaleDateString()}`,
+        fetchAppleMusic(
+          "https://api.music.apple.com/v1/me/library/playlists",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
             },
-          }),
-        }),
+            body: JSON.stringify({
+              attributes: {
+                name,
+                description: description || `Imported on ${new Date().toLocaleDateString()}`,
+              },
+            }),
+          },
+          authData
+        ),
       APPLE_RETRY_OPTIONS
     );
 
@@ -412,20 +434,22 @@ export async function createPlaylistWithTracks(
     // Add tracks to playlist
     await retryWithExponentialBackoff(
       () =>
-        fetch(`https://api.music.apple.com/v1/me/library/playlists/${playlistId}/tracks`, {
-          method: "POST",
-          headers: {
-            "Music-User-Token": userToken,
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-            "Content-Type": "application/json",
+        fetchAppleMusic(
+          `https://api.music.apple.com/v1/me/library/playlists/${playlistId}/tracks`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              data: tracksWithIds.map(track => ({
+                id: track.targetId,
+                type: "songs",
+              })),
+            }),
           },
-          body: JSON.stringify({
-            data: tracksWithIds.map(track => ({
-              id: track.targetId,
-              type: "songs",
-            })),
-          }),
-        }),
+          authData
+        ),
       APPLE_RETRY_OPTIONS
     );
 
@@ -441,14 +465,13 @@ export async function createPlaylistWithTracks(
   }
 }
 
-export async function addTracksToLibrary(
-  tracks: Array<ITrack>,
-  injectedMusicKit?: MusicKitGlobal
-): Promise<TransferResult> {
+export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<TransferResult> {
   try {
     console.log("addTracksToLibrary - starting:", { trackCount: tracks.length });
-    const music = await initializeAppleMusic(injectedMusicKit);
-    const userToken = await music.authorize();
+    const authData = await getAppleAuthData("target");
+    if (!authData) {
+      throw new Error("Not authenticated with Apple Music");
+    }
 
     // Filter tracks with valid targetIds
     const tracksWithIds = tracks.filter(
@@ -467,20 +490,22 @@ export async function addTracksToLibrary(
     // Add tracks to library with retry
     await retryWithExponentialBackoff(
       () =>
-        fetch("https://api.music.apple.com/v1/me/library", {
-          method: "POST",
-          headers: {
-            "Music-User-Token": userToken,
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-            "Content-Type": "application/json",
+        fetchAppleMusic(
+          "https://api.music.apple.com/v1/me/library",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              data: tracksWithIds.map(track => ({
+                id: track.targetId,
+                type: "songs",
+              })),
+            }),
           },
-          body: JSON.stringify({
-            data: tracksWithIds.map(track => ({
-              id: track.targetId,
-              type: "songs",
-            })),
-          }),
-        }),
+          authData
+        ),
       APPLE_RETRY_OPTIONS
     );
 
@@ -496,14 +521,13 @@ export async function addTracksToLibrary(
   }
 }
 
-export async function addAlbumsToLibrary(
-  albums: Set<IAlbum>,
-  injectedMusicKit?: MusicKitGlobal
-): Promise<TransferResult> {
+export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferResult> {
   try {
     console.log("addAlbumsToLibrary - starting:", { albumCount: albums.size });
-    const music = await initializeAppleMusic(injectedMusicKit);
-    const userToken = await music.authorize();
+    const authData = await getAppleAuthData("target");
+    if (!authData) {
+      throw new Error("Not authenticated with Apple Music");
+    }
 
     if (albums.size === 0) {
       return {
@@ -523,14 +547,16 @@ export async function addAlbumsToLibrary(
     // Add albums to library with retry
     await retryWithExponentialBackoff(
       () =>
-        fetch(url, {
-          method: "POST",
-          headers: {
-            "Music-User-Token": userToken,
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-            "Content-Type": "application/json",
+        fetchAppleMusic(
+          url,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
           },
-        }),
+          authData
+        ),
       APPLE_RETRY_OPTIONS
     );
 
@@ -548,7 +574,7 @@ export async function addAlbumsToLibrary(
 
 async function findBestAlbumMatch(
   album: IAlbum,
-  music: MusicKitInstance
+  authData: AuthData
 ): Promise<{ albumId: string | null }> {
   try {
     // Clean search terms
@@ -560,19 +586,13 @@ async function findBestAlbumMatch(
     const result = await retryWithExponentialBackoff<{
       results?: { albums?: { data: AppleAlbum[] } };
     }>(async () => {
-      const userToken = await music.authorize();
       const url = new URL("https://api.music.apple.com/v1/catalog/fr/search");
       url.searchParams.set("term", searchTerm);
       url.searchParams.set("types", "albums");
       url.searchParams.set("limit", "3");
       url.searchParams.set("fields[albums]", "name,artistName");
 
-      return fetch(url.toString(), {
-        headers: {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-          "Music-User-Token": userToken,
-        },
-      });
+      return fetchAppleMusic(url, {}, authData);
     }, APPLE_RETRY_OPTIONS);
 
     // Process initial search results
@@ -622,11 +642,14 @@ async function findBestAlbumMatch(
 
 export async function searchAlbums(
   albums: Array<IAlbum>,
-  onProgress: ((progress: number) => void) | undefined,
-  injectedMusicKit?: MusicKitGlobal
+  onProgress: ((progress: number) => void) | undefined
 ): Promise<SearchResult> {
   try {
-    const music = await initializeAppleMusic(injectedMusicKit);
+    const authData = await getAppleAuthData("target");
+    if (!authData) {
+      throw new Error("Not authenticated with Apple Music");
+    }
+
     const results: Array<IAlbum> = [];
     let matched = 0;
     let unmatched = 0;
@@ -636,7 +659,7 @@ export async function searchAlbums(
       async batch => {
         const albumResults = await Promise.all(
           batch.map(async album => {
-            const { albumId } = await findBestAlbumMatch(album, music);
+            const { albumId } = await findBestAlbumMatch(album, authData);
             processedCount++;
             if (onProgress) {
               onProgress(processedCount / albums.length);
@@ -732,13 +755,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
 
   do {
     const data = await retryWithExponentialBackoff<AppleResponse<ApplePlaylist>>(
-      () =>
-        fetch(nextUrl, {
-          headers: {
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-            "Music-User-Token": authData.accessToken,
-          },
-        }),
+      () => fetchAppleMusic(nextUrl, {}, authData),
       APPLE_RETRY_OPTIONS
     );
 
@@ -768,13 +785,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
 
   do {
     const data = await retryWithExponentialBackoff<AppleResponse<AppleSong>>(
-      () =>
-        fetch(nextUrl, {
-          headers: {
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-            "Music-User-Token": authData.accessToken,
-          },
-        }),
+      () => fetchAppleMusic(nextUrl, {}, authData),
       APPLE_RETRY_OPTIONS
     );
 
@@ -803,13 +814,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
 
   do {
     const data = await retryWithExponentialBackoff<AppleResponse<AppleAlbum>>(
-      () =>
-        fetch(nextUrl, {
-          headers: {
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-            "Music-User-Token": authData.accessToken,
-          },
-        }),
+      () => fetchAppleMusic(nextUrl, {}, authData),
       APPLE_RETRY_OPTIONS
     );
 
@@ -857,13 +862,7 @@ export async function fetchPlaylistTracks(
 
   while (nextUrl) {
     const data = await retryWithExponentialBackoff<AppleResponse<AppleSong>>(
-      () =>
-        fetch(nextUrl, {
-          headers: {
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-            "Music-User-Token": authData.accessToken,
-          },
-        }),
+      () => fetchAppleMusic(nextUrl, {}, authData),
       {
         ...APPLE_RETRY_OPTIONS,
         treat404AsEmpty: true,

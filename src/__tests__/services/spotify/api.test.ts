@@ -21,21 +21,37 @@ describe("Spotify API Service", () => {
   });
 
   it("fetchPlaylistTracks returns correct tracks", async () => {
-    const tracks = await api.fetchPlaylistTracks(mockPlaylists[0].id);
+    const onProgress = vi.fn();
+    const tracks = await api.fetchPlaylistTracks(mockPlaylists[0].id, onProgress);
     expect(tracks.length).toBe(mockPlaylists[0].tracks.length);
     expect(tracks[0].name).toBe(mockPlaylists[0].tracks[0].name);
+    expect(onProgress).toHaveBeenCalled();
+    for (const call of onProgress.mock.calls) {
+      expect(typeof call[1]).toBe("number");
+      expect(call[1]).toBeGreaterThanOrEqual(0);
+      expect(call[1]).toBeLessThanOrEqual(1);
+    }
   });
 
   it("search matches tracks and returns SearchResult", async () => {
-    const result = await api.search(mockTracks, undefined);
+    const onProgress = vi.fn();
+    const result = await api.search(mockTracks, onProgress);
     expect(result.matched).toBeGreaterThan(0);
     expect(result.tracks?.[0].status).toBe("matched");
+    expect(onProgress).toHaveBeenCalled();
+    for (const call of onProgress.mock.calls) {
+      expect(typeof call[0]).toBe("number");
+      expect(call[0]).toBeGreaterThanOrEqual(0);
+      expect(call[0]).toBeLessThanOrEqual(1);
+    }
   });
 
   it("createPlaylistWithTracks returns playlistId and counts", async () => {
-    const result = await api.createPlaylistWithTracks("Test Playlist", mockTracks);
+    // Provide tracks with targetId so the function can add them
+    const tracksWithTargetId = mockTracks.map(t => ({ ...t, targetId: t.id }));
+    const result = await api.createPlaylistWithTracks("Test Playlist", tracksWithTargetId);
     expect(result.playlistId).toBe("new_playlist_id");
-    expect(result.total).toBe(mockTracks.length);
+    expect(result.added).toBe(mockTracks.length);
   });
 
   it("addTracksToLibrary returns correct counts", async () => {
@@ -49,9 +65,16 @@ describe("Spotify API Service", () => {
   });
 
   it("searchAlbums matches albums and returns SearchResult", async () => {
-    const result = await api.searchAlbums(mockAlbums, undefined);
+    const onProgress = vi.fn();
+    const result = await api.searchAlbums(mockAlbums, onProgress);
     expect(result.matched).toBeGreaterThan(0);
     expect(result.albums?.[0].status).toBe("matched");
+    expect(onProgress).toHaveBeenCalled();
+    for (const call of onProgress.mock.calls) {
+      expect(typeof call[0]).toBe("number");
+      expect(call[0]).toBeGreaterThanOrEqual(0);
+      expect(call[0]).toBeLessThanOrEqual(1);
+    }
   });
 
   it("handles empty playlists/tracks/albums gracefully", async () => {
@@ -69,6 +92,9 @@ describe("Spotify API Service", () => {
   });
 
   it("handles fetch errors gracefully", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
     // Attach a temporary unhandledRejection handler to suppress expected errors for this test
     const unhandledRejectionHandler = (err: unknown): void => {
       // Prevent Vitest from failing the test due to this expected error
@@ -103,6 +129,8 @@ describe("Spotify API Service", () => {
     } finally {
       // Always remove the handler after the test to avoid side effects
       process.off("unhandledRejection", unhandledRejectionHandler);
+      errorSpy.mockRestore();
+      warnSpy.mockRestore();
     }
   });
 });
