@@ -13,6 +13,12 @@ export const envSchema = z.object({
   NEXT_PUBLIC_YOUTUBE_CLIENT_ID: z.string().min(1),
   YOUTUBE_CLIENT_SECRET: z.string().min(1),
 
+  // Sentry Configuration
+  SENTRY_AUTH_TOKEN: z.string().min(1),
+  SENTRY_ORG: z.string().min(1),
+  SENTRY_PROJECT: z.string().min(1),
+  NEXT_PUBLIC_SENTRY_DSN: z.string().url(),
+
   // Basic Auth Configuration
   BASIC_AUTH_USER: z.string().min(1),
   BASIC_AUTH_PASSWORD: z.string().min(1),
@@ -30,6 +36,12 @@ export const env = envSchema.parse({
   // YouTube Music OAuth Configuration
   NEXT_PUBLIC_YOUTUBE_CLIENT_ID: process.env.NEXT_PUBLIC_YOUTUBE_CLIENT_ID,
   YOUTUBE_CLIENT_SECRET: process.env.YOUTUBE_CLIENT_SECRET,
+
+  // Sentry Configuration
+  SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
+  SENTRY_ORG: process.env.SENTRY_ORG,
+  SENTRY_PROJECT: process.env.SENTRY_PROJECT,
+  NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
   // Basic Auth Configuration
   BASIC_AUTH_USER: process.env.BASIC_AUTH_USER,

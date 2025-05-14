@@ -30,15 +30,9 @@ export function middleware(request: NextRequest): NextResponse {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - manifest.json (PWA manifest file)
-     * - favicons folder
-     * - public folder
+     * Exclude the Sentry tunnel route from middleware to avoid conflicts.
+     * This must come before other exclusions to ensure Sentry requests are not blocked.
      */
-    "/((?!api|_next/static|_next/image|favicon\.ico|manifest\.json|favicons\/).*)",
+    "/((?!monitoring|api|_next/static|_next/image|favicon\\.ico|manifest\\.json|favicons/).*)",
   ],
 };
