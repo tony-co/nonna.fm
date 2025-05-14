@@ -5,7 +5,10 @@
 import * as Sentry from "@sentry/nextjs";
 
 Sentry.init({
-  dsn: "https://73554041aef742260939cc53dd2fbf6e@o4509320664186880.ingest.de.sentry.io/4509320666677328",
+  // Read DSN from environment variable for security and flexibility
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  // Enable debug mode if DSN is missing to help with debugging
+  ...(process.env.NEXT_PUBLIC_SENTRY_DSN ? {} : { debug: true }),
 
   // Add optional integrations for additional features
   integrations: [Sentry.replayIntegration()],
@@ -20,9 +23,13 @@ Sentry.init({
 
   // Define how likely Replay events are sampled when an error occurs.
   replaysOnErrorSampleRate: 1.0,
-
-  // Setting this option to true will print useful information to the console while you're setting up Sentry.
-  debug: false,
 });
+
+// Warn at runtime if DSN is missing (helps developers catch misconfigurations)
+if (!process.env.NEXT_PUBLIC_SENTRY_DSN) {
+  console.warn(
+    "[Sentry] NEXT_PUBLIC_SENTRY_DSN environment variable is not set. Sentry will not report errors."
+  );
+}
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

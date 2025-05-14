@@ -451,7 +451,6 @@ export async function createPlaylistWithTracks(
     // The util parses JSON if available, so we can safely cast
     const playlistId = (playlistData as { id?: string }).id;
     if (!playlistId) {
-      console.error("No playlist ID in response:", playlistData);
       throwWithSentry("Failed to create playlist - no ID returned");
     }
 
@@ -644,7 +643,9 @@ async function findBestAlbumMatch(album: IAlbum, authData: AuthData): Promise<st
     );
 
     if (!response.albums?.items?.length) {
-      console.error(`[MATCHING] No results found for album "${album.name}" by ${album.artist}`);
+      sentryLogger.error(
+        `[MATCHING] No results found for album "${album.name}" by ${album.artist}`
+      );
       return null;
     }
 

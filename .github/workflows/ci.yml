@@ -35,6 +35,10 @@ jobs:
       - name: Run unit tests with coverage
         run: npm run test:coverage
 
+      - name: Build
+        # Build the Next.js app to generate the .next directory and sourcemaps for Sentry
+        run: npm run build
+
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
         env:
