@@ -3,13 +3,14 @@
 // Note that this config is unrelated to the Vercel Edge Runtime and is also required when running locally.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
+import { env } from "@/env.mjs";
 import * as Sentry from "@sentry/nextjs";
 
 Sentry.init({
   // Read DSN from environment variable for security and flexibility
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  dsn: env.NEXT_PUBLIC_SENTRY_DSN,
   // Enable debug mode if DSN is missing to help with debugging
-  ...(process.env.NEXT_PUBLIC_SENTRY_DSN ? {} : { debug: true }),
+  ...(env.NEXT_PUBLIC_SENTRY_DSN ? {} : { debug: true }),
 
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
   tracesSampleRate: 1,
@@ -19,7 +20,7 @@ Sentry.init({
 });
 
 // Warn at runtime if DSN is missing (helps developers catch misconfigurations)
-if (!process.env.NEXT_PUBLIC_SENTRY_DSN) {
+if (!env.NEXT_PUBLIC_SENTRY_DSN) {
   console.warn(
     "[Sentry] NEXT_PUBLIC_SENTRY_DSN environment variable is not set. Sentry will not report errors."
   );

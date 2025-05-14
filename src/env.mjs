@@ -37,6 +37,12 @@ export const env = envSchema.parse({
   NEXT_PUBLIC_YOUTUBE_CLIENT_ID: process.env.NEXT_PUBLIC_YOUTUBE_CLIENT_ID,
   YOUTUBE_CLIENT_SECRET: process.env.YOUTUBE_CLIENT_SECRET,
 
+  // Sentry Configuration
+  SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
+  SENTRY_ORG: process.env.SENTRY_ORG,
+  SENTRY_PROJECT: process.env.SENTRY_PROJECT,
+  NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+
   // Basic Auth Configuration
   BASIC_AUTH_USER: process.env.BASIC_AUTH_USER,
   BASIC_AUTH_PASSWORD: process.env.BASIC_AUTH_PASSWORD,
