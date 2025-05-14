@@ -3,6 +3,7 @@ import type { ITrack, ILibraryData, IAlbum, IPlaylist } from "@/types/library";
 import type { SearchResult, TransferResult } from "@/types/services";
 import type { AuthData } from "@/lib/auth/constants";
 import { retryWithExponentialBackoff, type RetryOptions } from "@/lib/utils/retry";
+import { sentryLogger, throwWithSentry } from "@/lib/utils/sentry-logger";
 import {
   SpotifyTrackItem,
   SpotifyTrack,
@@ -27,6 +28,7 @@ const SPOTIFY_RETRY_OPTIONS: RetryOptions = {
   initialRetryDelay: 500, // Start with a moderate delay
   maxRetryDelay: 32000, // Cap the delay to avoid excessive waits
   jitterFactor: 0.1, // Add jitter to avoid thundering herd
+  logger: sentryLogger,
 };
 
 // Type definition for Spotify Search API response
@@ -83,7 +85,7 @@ async function performSearch(
 
 export async function fetchUserLibrary(): Promise<ILibraryData> {
   const authData = await getSpotifyAuthData("source");
-  if (!authData) throw new Error("Not authenticated with Spotify");
+  if (!authData) throwWithSentry("Not authenticated with Spotify");
 
   // Fetch playlists with batching and retry
   const initialPlaylistResponse = await retryWithExponentialBackoff<{ total: number }>(
@@ -97,7 +99,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
   );
 
   if (!initialPlaylistResponse.total) {
-    throw new Error("Failed to fetch playlists count");
+    throwWithSentry("Failed to fetch playlists count");
   }
 
   const totalPlaylists = initialPlaylistResponse.total;
@@ -128,7 +130,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
       batchSize: playlistBatchSize,
       onBatchStart: () => {},
       onError: (error, batch) => {
-        console.error("[SPOTIFY] Error fetching playlist batch:", {
+        sentryLogger.error("[SPOTIFY] Error fetching playlist batch:", {
           error: error.message,
           batchNumber: batch[0],
           totalBatches: playlistBatchCount,
@@ -150,7 +152,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
   );
 
   if (!initialResponse.total) {
-    throw new Error("Failed to fetch saved tracks count");
+    throwWithSentry("Failed to fetch saved tracks count");
   }
 
   const { total: totalTracks } = initialResponse;
@@ -184,7 +186,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
       batchSize: 3, // Process 5 API requests in parallel at a time
       onBatchStart: () => {},
       onError: (error, batch) => {
-        console.error("[SPOTIFY] Error fetching liked songs batch:", {
+        sentryLogger.error("[SPOTIFY] Error fetching liked songs batch:", {
           error: error.message,
           batchNumbers: batch,
           totalBatches: batchCount,
@@ -205,7 +207,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
   );
 
   if (!initialAlbumsResponse.total) {
-    throw new Error("Failed to fetch saved albums count");
+    throwWithSentry("Failed to fetch saved albums count");
   }
 
   const { total: totalAlbums } = initialAlbumsResponse;
@@ -240,7 +242,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
       batchSize: 3, // Process 3 API requests in parallel at a time
       onBatchStart: () => {},
       onError: (error, batch) => {
-        console.error("[SPOTIFY] Error fetching albums batch:", {
+        sentryLogger.error("[SPOTIFY] Error fetching albums batch:", {
           error: error.message,
           batchNumbers: batch,
           totalBatches: albumBatchCount,
@@ -261,7 +263,7 @@ export async function fetchPlaylistTracks(
   onProgress?: (tracks: ITrack[], progress: number) => void
 ): Promise<ITrack[]> {
   const authData = await getSpotifyAuthData("source");
-  if (!authData) throw new Error("Not authenticated with Spotify");
+  if (!authData) throwWithSentry("Not authenticated with Spotify");
 
   // Fetch initial playlist info with retry
   const initialResponse = await retryWithExponentialBackoff<{ total: number }>(
@@ -275,7 +277,7 @@ export async function fetchPlaylistTracks(
   );
 
   if (!initialResponse.total) {
-    throw new Error("Failed to fetch playlist tracks count");
+    throwWithSentry("Failed to fetch playlist tracks count");
   }
 
   const { total } = initialResponse;
@@ -319,7 +321,7 @@ export async function fetchPlaylistTracks(
       batchSize: 1, // Process 3 API requests in parallel at a time
       onBatchStart: () => {},
       onError: (error, batch) => {
-        console.error("[SPOTIFY] Error fetching playlist tracks batch:", {
+        sentryLogger.error("[SPOTIFY] Error fetching playlist tracks batch:", {
           error: error.message,
           batchNumbers: batch,
           totalBatches: batchCount,
@@ -345,7 +347,7 @@ async function findBestMatch(track: ITrack, authData: AuthData): Promise<string 
 
     return bestMatch;
   } catch (error) {
-    console.error("[MATCHING] Error finding best match:", error);
+    sentryLogger.error("[MATCHING] Error finding best match:", error);
     return null;
   }
 }
@@ -400,7 +402,7 @@ export async function search(
       delayBetweenBatches: 200,
       onBatchStart: () => {},
       onError: (error, batch) => {
-        console.error("Error searching tracks batch:", {
+        sentryLogger.error("Error searching tracks batch:", {
           error: error.message,
           batchSize: batch.length,
           tracks: batch.map(track => ({
@@ -427,7 +429,7 @@ export async function createPlaylistWithTracks(
 ): Promise<TransferResult> {
   try {
     const authData = await getSpotifyAuthData("target");
-    if (!authData) throw new Error("Not authenticated with Spotify");
+    if (!authData) throwWithSentry("Not authenticated with Spotify");
 
     // Create the playlist using retryWithExponentialBackoff
     const playlistData = await retryWithExponentialBackoff<unknown>(
@@ -450,7 +452,7 @@ export async function createPlaylistWithTracks(
     const playlistId = (playlistData as { id?: string }).id;
     if (!playlistId) {
       console.error("No playlist ID in response:", playlistData);
-      throw new Error("Failed to create playlist - no ID returned");
+      throwWithSentry("Failed to create playlist - no ID returned");
     }
 
     // Filter tracks with valid targetIds
@@ -489,7 +491,7 @@ export async function createPlaylistWithTracks(
         batchSize: 100,
         onBatchStart: () => {},
         onError: (error, batch) => {
-          console.error("Error adding tracks to playlist:", {
+          sentryLogger.error("Error adding tracks to playlist:", {
             error: error.message,
             batchSize: batch.length,
           });
@@ -502,7 +504,7 @@ export async function createPlaylistWithTracks(
       playlistId,
     };
   } catch (error) {
-    console.error("Error in createPlaylistWithTracks:", error);
+    sentryLogger.error("Error in createPlaylistWithTracks:", error);
     throw error;
   }
 }
@@ -510,7 +512,7 @@ export async function createPlaylistWithTracks(
 export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<TransferResult> {
   try {
     const authData = await getSpotifyAuthData("target");
-    if (!authData) throw new Error("Not authenticated with Spotify");
+    if (!authData) throwWithSentry("Not authenticated with Spotify");
 
     // Filter tracks with valid targetIds
     const tracksWithIds = tracks.filter(
@@ -548,7 +550,7 @@ export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<Transfe
         batchSize: 50,
         onBatchStart: () => {},
         onError: (error, batch) => {
-          console.error("Error adding tracks to library:", {
+          sentryLogger.error("Error adding tracks to library:", {
             error: error.message,
             batchSize: batch.length,
           });
@@ -561,7 +563,7 @@ export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<Transfe
       playlistId: null,
     };
   } catch (error) {
-    console.error("Error in addTracksToLibrary:", error);
+    sentryLogger.error("Error in addTracksToLibrary:", error);
     throw error;
   }
 }
@@ -569,7 +571,7 @@ export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<Transfe
 export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferResult> {
   try {
     const authData = await getSpotifyAuthData("target");
-    if (!authData) throw new Error("Not authenticated with Spotify");
+    if (!authData) throwWithSentry("Not authenticated with Spotify");
 
     // Convert Set/Array to Array and filter albums with valid targetIds
     const albumsWithIds = (Array.isArray(albums) ? albums : Array.from(albums)).filter(
@@ -577,13 +579,7 @@ export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferR
     );
 
     if (albumsWithIds.length === 0) {
-      console.warn("No albums with valid targetIds found");
-      return {
-        added: 0,
-        failed: Array.isArray(albums) ? albums.length : albums.size,
-        total: Array.isArray(albums) ? albums.length : albums.size,
-        playlistId: null,
-      };
+      throwWithSentry("No albums with valid targetIds found");
     }
 
     // Add albums to library in batches using retryWithExponentialBackoff
@@ -608,7 +604,7 @@ export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferR
         batchSize: 20,
         onBatchStart: () => {},
         onError: (error, batch) => {
-          console.error("Error adding albums to library:", {
+          sentryLogger.error("Error adding albums to library:", {
             error: error.message,
             batchSize: batch.length,
             albums: batch.map(album => ({
@@ -626,7 +622,7 @@ export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferR
       playlistId: null,
     };
   } catch (error) {
-    console.error("Error in addAlbumsToLibrary:", error);
+    sentryLogger.error("Error in addAlbumsToLibrary:", error);
     throw error;
   }
 }
@@ -670,7 +666,7 @@ async function findBestAlbumMatch(album: IAlbum, authData: AuthData): Promise<st
     // Return the ID if we have a good match (score >= minimum threshold)
     return matches[0].score >= DEFAULT_ALBUM_CONFIG.thresholds.minimum ? matches[0].album.id : null;
   } catch (error) {
-    console.error("[MATCHING] Error finding best album match:", error);
+    sentryLogger.error("[MATCHING] Error finding best album match:", error);
     return null;
   }
 }
@@ -681,7 +677,7 @@ export async function searchAlbums(
 ): Promise<SearchResult> {
   try {
     const authData = await getSpotifyAuthData("target");
-    if (!authData) throw new Error("Not authenticated with Spotify");
+    if (!authData) throwWithSentry("Not authenticated with Spotify");
 
     const results: Array<IAlbum> = [];
     let matched = 0;
@@ -716,7 +712,7 @@ export async function searchAlbums(
         delayBetweenBatches: 200,
         onBatchStart: () => {},
         onError: (error, batch) => {
-          console.error("Error searching albums batch:", {
+          sentryLogger.error("Error searching albums batch:", {
             error: error.message,
             batchSize: batch.length,
             albums: batch.map(album => ({
@@ -735,7 +731,7 @@ export async function searchAlbums(
       albums: results,
     };
   } catch (error) {
-    console.error("Error in searchAlbums:", error);
+    sentryLogger.error("Error in searchAlbums:", error);
     throw error;
   }
 }
