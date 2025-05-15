@@ -1,7 +1,6 @@
-import { SearchResult, TransferResult } from "@/types/services";
+import { SearchResult, TransferResult, ITrack, ILibraryData, IAlbum, IPlaylist } from "@/types";
 import { getYouTubeAuthData } from "../youtube/auth";
 import { getAppleAuthData } from "./auth";
-import type { ITrack, ILibraryData, IAlbum, IPlaylist } from "@/types/library";
 import { processInBatches } from "@/lib/utils/batch-processor";
 import {
   calculateTrackMatchScore,

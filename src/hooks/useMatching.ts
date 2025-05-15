@@ -1,13 +1,13 @@
 import { useCallback, useRef } from "react";
 import {
+  UseMatchingReturn,
   ITrack,
   IAlbum,
   IPlaylist,
   QueueTask,
   MATCHING_STATUS,
-  UseMatchingReturn,
-} from "@/types/library";
-import { MusicService } from "@/types/services";
+  MusicService,
+} from "@/types";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { musicServiceFactory } from "@/lib/services/factory";
 import {

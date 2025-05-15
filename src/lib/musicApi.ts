@@ -1,10 +1,16 @@
-import { MusicService, TransferResult, IMusicServiceProvider } from "@/types/services";
+import {
+  MusicService,
+  TransferResult,
+  IMusicServiceProvider,
+  ILibraryData,
+  ITrack,
+  IAlbum,
+} from "@/types";
 import { musicServiceFactory } from "./services/factory";
 import { isDeezerSource } from "./services/deezer/auth";
 import { getYouTubeAuthData } from "./services/youtube/auth";
 import { getSpotifyAuthData } from "./services/spotify/auth";
 import { getAppleMusicAuthData } from "./services/apple/auth";
-import type { ILibraryData, ITrack, IAlbum } from "@/types/library";
 
 async function getCurrentService(
   role: "source" | "target" = "source"

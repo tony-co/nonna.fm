@@ -1,4 +1,4 @@
-import type { MatchingState } from "@/types/library";
+import type { MatchingState } from "@/types";
 
 export const initialMatchingState: MatchingState = {
   isLoading: false,

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { IPlaylist, ITrack } from "@/types/library";
+import { IPlaylist, ITrack } from "@/types";
 import { fetchPlaylistTracks } from "@/lib/musicApi";
 import { useLibrary } from "@/contexts/LibraryContext";
 

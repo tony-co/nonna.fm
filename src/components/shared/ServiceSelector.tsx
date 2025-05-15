@@ -1,6 +1,6 @@
 import { FC, useState, useEffect } from "react";
 import { SERVICES, ServiceConfig } from "@/config/services";
-import { MusicService } from "@/types/services";
+import { MusicService } from "@/types";
 
 interface ServiceSelectorProps {
   onTargetSelect: (serviceId: string) => void;

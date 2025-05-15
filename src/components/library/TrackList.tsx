@@ -2,7 +2,7 @@
 
 import { FC, useRef } from "react";
 import { useIsVisible } from "@/hooks/useIsVisible";
-import type { ITrack, IPlaylist } from "@/types/library";
+import type { ITrack, IPlaylist } from "@/types";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import { StatusIcon } from "@/components/shared/StatusIcon";
 

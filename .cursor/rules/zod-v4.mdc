@@ -1,0 +1,142 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Zod v4 Project Rules & Migration Guide
+
+## Overview
+- Zod v4 is a major update with significant performance, API, and type system improvements.
+- It is published as a subpath import: `import { z } from "zod/v4";`
+- Zod v4 is production-ready and recommended for new projects.
+
+---
+
+## Essential New Features
+
+### 1. Performance
+- **2.6x faster string parsing**
+- **3x faster array parsing**
+- **7x faster object parsing**
+- **20x reduction in TypeScript type instantiations**
+- **2x smaller core bundle size**
+
+### 2. API Improvements
+- **Unified error customization**: Use `error` instead of `message`, `invalid_type_error`, `required_error`, or `errorMap`.
+  ```ts
+  z.string().min(5, { error: "Too short." });
+  z.string({ error: (issue) => issue.input === undefined ? "Required" : "Invalid" });
+  ```
+- **Refinements live inside schemas**: `.refine()` can be chained with other methods.
+  ```ts
+  z.string().refine(val => val.includes("@")).min(5);
+  ```
+- **Multiple values in `z.literal()`**:
+  ```ts
+  z.literal([200, 201, 202]);
+  ```
+- **Upgraded `z.discriminatedUnion()`**: No need to specify the discriminator key; Zod infers it.
+  ```ts
+  z.discriminatedUnion([
+    z.object({ type: z.literal("a"), a: z.string() }),
+    z.object({ type: z.literal("b"), b: z.number() }),
+  ]);
+  ```
+- **`.overwrite()` method**: For transforms that do not change the inferred type.
+  ```ts
+  z.number().overwrite(val => val ** 2).max(100);
+  ```
+- **Stringbool schema**: Parse string representations of booleans.
+  ```ts
+  z.stringbool().parse("true"); // => true
+  z.stringbool().parse("no");   // => false
+  ```
+- **Extensible foundation**: New `zod/v4/core` for advanced use cases.
+
+---
+
+## Breaking Changes
+
+### 1. Import Path
+- Must import from `zod/v4`:
+  ```ts
+  import { z } from "zod/v4";
+  ```
+
+### 2. Error Customization
+- Replace all `message`, `invalid_type_error`, `required_error`, and `errorMap` with `error`.
+  ```ts
+  // Old
+  z.string({ required_error: "Required" });
+  // New
+  z.string({ error: (issue) => issue.input === undefined ? "Required" : "Invalid" });
+  ```
+
+### 3. Discriminated Unions
+- No need to specify the discriminator key; Zod will infer it or throw at schema creation if ambiguous.
+
+### 4. Refinements
+- `.refine()` is now chainable with other schema methods.
+
+### 5. `.literal()`
+- Accepts arrays for multiple values.
+
+### 6. `.transform()` vs `.overwrite()`
+- Use `.overwrite()` for transforms that do not change the output type.
+- `.transform()` still exists for type-changing transforms.
+
+### 7. Internal Architecture
+- Many internal changes for performance and extensibility. Most users are unaffected, but custom extensions may need review.
+
+---
+
+## Migration Tips
+- **Update all imports** to use `zod/v4`.
+- **Replace error customization** with the new `error` API.
+- **Review discriminated unions** for automatic key inference.
+- **Chain refinements** as needed.
+- **Test thoroughly**: Zod v4 is faster and more type-safe, but subtle behavior may differ.
+
+---
+
+## Example Migration
+
+**Zod 3:**
+```ts
+import { z } from "zod";
+const schema = z.string({
+  required_error: "Required",
+  invalid_type_error: "Not a string",
+});
+```
+
+**Zod 4:**
+```ts
+import { z } from "zod/v4";
+const schema = z.string({
+  error: (issue) => issue.input === undefined ? "Required" : "Not a string",
+});
+```
+
+---
+
+## References
+- [Zod v4 Docs](mdc:https:/v4.zod.dev/v4)
+- [Migration Guide](mdc:https:/v4.zod.dev/v4/migration-guide)
+
+---
+
+## Summary Table
+| Feature                        | Zod 3                | Zod 4                |
+|------------------------------- |----------------------|----------------------|
+| Import path                    | `zod`                | `zod/v4`             |
+| Error customization            | `message`, etc.      | `error`              |
+| Discriminated union key        | Manual               | Inferred             |
+| Multiple literals              | No                   | Yes                  |
+| Refinements chainable          | No                   | Yes                  |
+| `.overwrite()`                 | No                   | Yes                  |
+| Performance                    | Slower               | Much faster          |
+
+---
+
+# End of Zod v4 Project Rules

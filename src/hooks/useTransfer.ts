@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { ISelectionState, IAlbum, IPlaylist } from "@/types/library";
-import { MusicService, TransferResult } from "@/types/services";
+import { ISelectionState, IAlbum, IPlaylist, MusicService, TransferResult } from "@/types";
 import { useMatching } from "@/hooks/useMatching";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { addTracksToLibrary, addAlbumsToLibrary, createPlaylistWithTracks } from "@/lib/musicApi";

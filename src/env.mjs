@@ -1,49 +1,12 @@
-import { z } from "zod";
+// Minimal Edge-safe env for use in Edge Runtime (middleware)
+// Do NOT use Zod or any dynamic code evaluation here, as Edge Runtime forbids it.
+// For full validation, see src/env.server.mjs (Node.js/server only).
 
-export const envSchema = z.object({
-  // App Configuration
-  NEXT_PUBLIC_APP_URL: z.string().url(),
+export const env = {
+  BASIC_AUTH_USER: process.env.BASIC_AUTH_USER || "",
+  BASIC_AUTH_PASSWORD: process.env.BASIC_AUTH_PASSWORD || "",
+  NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN || "",
+  // Add other public/edge-safe env vars as needed
+};
 
-  // Spotify OAuth Configuration
-  NEXT_PUBLIC_SPOTIFY_CLIENT_ID: z.string().min(1),
-  SPOTIFY_CLIENT_SECRET: z.string().min(1),
-  NEXT_PUBLIC_SPOTIFY_REDIRECT_URI: z.string().url(),
-
-  // YouTube Music OAuth Configuration
-  NEXT_PUBLIC_YOUTUBE_CLIENT_ID: z.string().min(1),
-  YOUTUBE_CLIENT_SECRET: z.string().min(1),
-
-  // Sentry Configuration
-  SENTRY_AUTH_TOKEN: z.string().min(1),
-  SENTRY_ORG: z.string().min(1),
-  SENTRY_PROJECT: z.string().min(1),
-  NEXT_PUBLIC_SENTRY_DSN: z.string().url(),
-
-  // Basic Auth Configuration
-  BASIC_AUTH_USER: z.string().min(1),
-  BASIC_AUTH_PASSWORD: z.string().min(1),
-});
-
-export const env = envSchema.parse({
-  // App Configuration
-  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-
-  // Spotify OAuth Configuration
-  NEXT_PUBLIC_SPOTIFY_CLIENT_ID: process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID,
-  SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
-  NEXT_PUBLIC_SPOTIFY_REDIRECT_URI: process.env.NEXT_PUBLIC_SPOTIFY_REDIRECT_URI,
-
-  // YouTube Music OAuth Configuration
-  NEXT_PUBLIC_YOUTUBE_CLIENT_ID: process.env.NEXT_PUBLIC_YOUTUBE_CLIENT_ID,
-  YOUTUBE_CLIENT_SECRET: process.env.YOUTUBE_CLIENT_SECRET,
-
-  // Sentry Configuration
-  SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
-  SENTRY_ORG: process.env.SENTRY_ORG,
-  SENTRY_PROJECT: process.env.SENTRY_PROJECT,
-  NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
-
-  // Basic Auth Configuration
-  BASIC_AUTH_USER: process.env.BASIC_AUTH_USER,
-  BASIC_AUTH_PASSWORD: process.env.BASIC_AUTH_PASSWORD,
-});
+// Note: This file must remain Edge-compatible. Do not import Zod or any code that uses eval/new Function.

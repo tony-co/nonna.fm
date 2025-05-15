@@ -1,49 +1,46 @@
-import { ITrack, IAlbum, ILibraryData } from "./library";
+import { z } from "zod/v4";
+import { TrackSchema, ITrack } from "./track";
+import { AlbumSchema, IAlbum } from "./album";
+import { ILibraryData } from "./library";
+import { MusicService } from "./music-service";
 
-export type MusicService = "spotify" | "apple" | "youtube" | "deezer";
+export const SearchResultSchema = z.object({
+  matched: z.number(),
+  unmatched: z.number(),
+  total: z.number(),
+  tracks: z.array(TrackSchema).optional(),
+  albums: z.array(AlbumSchema).optional(),
+});
+export type SearchResult = z.infer<typeof SearchResultSchema>;
 
-export interface SearchResult {
-  matched: number;
-  unmatched: number;
-  total: number;
-  tracks?: Array<ITrack>;
-  albums?: Array<IAlbum>;
-}
-
-export interface TransferResult {
-  added: number;
-  failed: number;
-  total: number;
-  playlistId: string | null;
-}
+export const TransferResultSchema = z.object({
+  added: z.number(),
+  failed: z.number(),
+  total: z.number(),
+  playlistId: z.string().nullable(),
+});
+export type TransferResult = z.infer<typeof TransferResultSchema>;
 
 export interface IMusicServiceProvider {
-  // Search for tracks and albums - not all services might support batch requests
   search: (tracks: Array<ITrack>, onProgress?: (progress: number) => void) => Promise<SearchResult>;
 
-  // Search for albums
   searchAlbums: (
     albums: Array<IAlbum>,
     onProgress?: (progress: number) => void
   ) => Promise<SearchResult>;
 
-  // Transfer liked songs
   addTracksToLibrary: (tracks: Array<ITrack>) => Promise<TransferResult>;
 
-  // Transfer albums
   addAlbumsToLibrary: (albums: Set<IAlbum>) => Promise<TransferResult>;
 
-  // Transfer playlists
   createPlaylistWithTracks: (
     name: string,
     tracks: Array<ITrack>,
     description?: string
   ) => Promise<TransferResult>;
 
-  // Fetch methods
   fetchUserLibrary: () => Promise<ILibraryData>;
 
-  // Fetch playlist tracks
   fetchPlaylistTracks: (
     playlistId: string,
     onProgress?: (tracks: ITrack[], progress: number) => void

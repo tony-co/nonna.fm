@@ -7,7 +7,7 @@ import { useTransfer as useTransferHook } from "@/hooks/useTransfer";
 import { useTransfer } from "@/contexts/TransferContext";
 import { useState } from "react";
 import { TransferSuccessModal } from "./TransferSuccessModal";
-import { MusicService } from "@/types/services";
+import { MusicService } from "@/types";
 
 // Track playlists that are currently being fetched
 export const fetchingPlaylists = new Set<string>();

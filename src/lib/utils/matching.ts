@@ -1,4 +1,4 @@
-import { ITrack, IAlbum } from "@/types/library";
+import { ITrack, IAlbum } from "@/types";
 
 // Types for matching configuration
 export interface MatchWeights {

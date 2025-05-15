@@ -3,6 +3,7 @@
 // Note that this config is unrelated to the Vercel Edge Runtime and is also required when running locally.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
+// Edge Runtime: must use Edge-safe env (no Zod)
 import { env } from "@/env.mjs";
 import * as Sentry from "@sentry/nextjs";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useReducer, useContext, useMemo } from "react";
-import type { LibraryState, LibraryAction, ITrack, IAlbum, IPlaylist } from "@/types/library";
+import type { LibraryState, LibraryAction, ITrack, IAlbum, IPlaylist } from "@/types";
 import { initialMatchingState } from "./LibraryContext.matchingState";
 import { matchingReducer } from "./LibraryContext.matchingReducer";
 

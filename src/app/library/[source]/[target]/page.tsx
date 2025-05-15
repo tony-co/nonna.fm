@@ -1,4 +1,4 @@
-import { MusicService } from "@/types/services";
+import { MusicService } from "@/types";
 import { getServiceById } from "@/config/services";
 
 interface LibraryHomePageProps {
