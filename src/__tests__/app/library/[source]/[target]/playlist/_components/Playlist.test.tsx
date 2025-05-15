@@ -28,7 +28,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { Playlist } from "@/app/library/[source]/[target]/playlist/[id]/_components/Playlist";
 import { TestWrapper } from "@/__tests__/testUtils";
 import { mockPlaylists } from "@/__mocks__/data/libraryData";
-import { MusicService } from "@/types/services";
+import { MusicService } from "@/types";
 
 // Mock useParams for route parameter extraction
 const mockParams = {

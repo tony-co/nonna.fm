@@ -1,6 +1,6 @@
 import { Header } from "@/components/layout/Header";
 import { LibraryClientContent } from "./_components/LibraryClientContent";
-import { MusicService } from "@/types/services";
+import { MusicService } from "@/types";
 import { Footer } from "@/components/layout/Footer";
 import { TransferButton } from "@/components/shared/TransferButton";
 import { LibraryProvider } from "@/contexts/LibraryContext";

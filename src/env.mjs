@@ -1,6 +1,10 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 
+// Full server-side schema (includes secrets)
 export const envSchema = z.object({
+  // Node Environment
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+
   // App Configuration
   NEXT_PUBLIC_APP_URL: z.string().url(),
 
@@ -24,26 +28,5 @@ export const envSchema = z.object({
   BASIC_AUTH_PASSWORD: z.string().min(1),
 });
 
-export const env = envSchema.parse({
-  // App Configuration
-  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-
-  // Spotify OAuth Configuration
-  NEXT_PUBLIC_SPOTIFY_CLIENT_ID: process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID,
-  SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
-  NEXT_PUBLIC_SPOTIFY_REDIRECT_URI: process.env.NEXT_PUBLIC_SPOTIFY_REDIRECT_URI,
-
-  // YouTube Music OAuth Configuration
-  NEXT_PUBLIC_YOUTUBE_CLIENT_ID: process.env.NEXT_PUBLIC_YOUTUBE_CLIENT_ID,
-  YOUTUBE_CLIENT_SECRET: process.env.YOUTUBE_CLIENT_SECRET,
-
-  // Sentry Configuration
-  SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
-  SENTRY_ORG: process.env.SENTRY_ORG,
-  SENTRY_PROJECT: process.env.SENTRY_PROJECT,
-  NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
-
-  // Basic Auth Configuration
-  BASIC_AUTH_USER: process.env.BASIC_AUTH_USER,
-  BASIC_AUTH_PASSWORD: process.env.BASIC_AUTH_PASSWORD,
-});
+// Server-side env: use only on the server!
+export const env = envSchema.parse(process.env);

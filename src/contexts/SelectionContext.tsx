@@ -1,5 +1,5 @@
 import { createContext, useContext, ReactNode, FC, useState, useCallback } from "react";
-import { IAlbum, IPlaylist, ITrack, ISelectionState } from "@/types/library";
+import { IAlbum, IPlaylist, ITrack, ISelectionState } from "@/types";
 import { fetchPlaylistTracks } from "@/lib/musicApi";
 
 interface SelectionContextType {

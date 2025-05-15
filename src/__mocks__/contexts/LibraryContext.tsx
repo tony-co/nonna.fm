@@ -1,6 +1,6 @@
 import React, { useState, createContext, useContext } from "react";
 import { vi } from "vitest";
-import type { LibraryState } from "@/types/library";
+import type { LibraryState } from "@/types";
 import { mockLibraryData } from "@/__mocks__/data/libraryData";
 
 // Mock library state

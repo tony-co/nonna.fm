@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { ISelectionState } from "@/types/library";
+import { ISelectionState } from "@/types";
 
 // Mock state
 export const mockSelectionState: ISelectionState = {

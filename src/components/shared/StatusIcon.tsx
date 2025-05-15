@@ -1,6 +1,7 @@
 import { FC } from "react";
-import type { IAlbum, ITrack, IPlaylist } from "@/types/library";
-import { MatchingStatus } from "@/types/library";
+import type { IAlbum, ITrack, IPlaylist } from "@/types";
+import { MatchingStatus } from "@/types";
+
 interface StatusIconProps {
   album?: IAlbum;
   track?: ITrack;

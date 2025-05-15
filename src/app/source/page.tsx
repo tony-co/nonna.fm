@@ -7,7 +7,7 @@ import { ServiceSelector } from "@/components/shared/ServiceSelector";
 import { useAppleMusic } from "@/hooks/useAppleMusic";
 import { initiateSpotifyAuth } from "@/lib/services/spotify/auth";
 import { useState, Suspense } from "react";
-import { MusicService } from "@/types/services";
+import { MusicService } from "@/types";
 import { initiateYouTubeAuth } from "@/lib/services/youtube/auth";
 import { SpotifyConsentModal } from "@/components/modals/SpotifyConsentModal";
 import { useRouter } from "next/navigation";

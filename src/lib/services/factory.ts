@@ -1,4 +1,4 @@
-import { IMusicServiceProvider, MusicService, IServiceFactory } from "@/types/services";
+import { IMusicServiceProvider, MusicService, IServiceFactory } from "@/types";
 import * as appleService from "./apple/api";
 import * as spotifyService from "./spotify/api";
 import * as youtubeService from "./youtube/api";

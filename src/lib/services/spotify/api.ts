@@ -1,6 +1,12 @@
 import { getSpotifyAuthData } from "./auth";
-import type { ITrack, ILibraryData, IAlbum, IPlaylist } from "@/types/library";
-import type { SearchResult, TransferResult } from "@/types/services";
+import type {
+  ITrack,
+  ILibraryData,
+  IAlbum,
+  IPlaylist,
+  SearchResult,
+  TransferResult,
+} from "@/types";
 import type { AuthData } from "@/lib/auth/constants";
 import { retryWithExponentialBackoff, type RetryOptions } from "@/lib/utils/retry";
 import { sentryLogger, throwWithSentry } from "@/lib/utils/sentry-logger";

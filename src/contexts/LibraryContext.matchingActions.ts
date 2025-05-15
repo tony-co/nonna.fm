@@ -1,5 +1,4 @@
-import { QueueTask } from "@/types/library";
-import type { LibraryAction } from "@/types/library";
+import { QueueTask, LibraryAction } from "@/types";
 
 // Action creator for starting a matching task
 export const matchingStart = (task: QueueTask): LibraryAction => ({

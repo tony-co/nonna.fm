@@ -1,5 +1,5 @@
-import type { IAlbum, ITrack } from "@/types/library";
-import { MATCHING_STATUS } from "@/types/library";
+import type { IAlbum, ITrack } from "@/types";
+import { MATCHING_STATUS } from "@/types";
 import { getYouTubeAuthData } from "./auth";
 
 // Define types for the search result items from ytmusic-api

@@ -3,9 +3,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { LibrarySidebar } from "@/components/layout/Sidebar";
 import { useLibrary } from "@/contexts/LibraryContext";
-import type { IPlaylist } from "@/types/library";
+import type { IPlaylist } from "@/types";
 import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
-import { MusicService } from "@/types/services";
+import { MusicService } from "@/types";
 import { authorizeAppleMusic } from "@/lib/services/apple/api";
 import { fetchInitialLibraryData } from "@/lib/server/library";
 import { usePathname } from "next/navigation";

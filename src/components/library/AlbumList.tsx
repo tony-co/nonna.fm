@@ -4,7 +4,7 @@ import { useLibrary } from "@/contexts/LibraryContext";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import { useIsVisible } from "@/hooks/useIsVisible";
 import { StatusIcon } from "@/components/shared/StatusIcon";
-import type { IAlbum } from "@/types/library";
+import type { IAlbum } from "@/types";
 import { useItemTitle } from "@/contexts/ItemTitleContext";
 
 interface AlbumItemProps {

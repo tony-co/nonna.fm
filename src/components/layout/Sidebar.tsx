@@ -7,8 +7,7 @@ import { IndeterminateCheckbox } from "@/components/shared/IndeterminateCheckbox
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import { CircularProgress } from "@/components/shared/CircularProgress";
 import { useRouter, useParams } from "next/navigation";
-import { MusicService } from "@/types/services";
-import { IPlaylist } from "@/types/library";
+import { MusicService, IPlaylist } from "@/types";
 import { fetchPlaylistTracks } from "@/lib/musicApi";
 import React from "react";
 import { fetchingPlaylists } from "@/components/shared/TransferButton";

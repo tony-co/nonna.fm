@@ -1,5 +1,4 @@
-import { ITrack, ILibraryData, IAlbum } from "@/types/library";
-import { SearchResult, TransferResult } from "@/types/services";
+import { ITrack, ILibraryData, IAlbum, SearchResult, TransferResult } from "@/types";
 import { getDeezerUserId } from "./auth";
 import { retryWithExponentialBackoff, type RetryOptions } from "@/lib/utils/retry";
 

@@ -1,5 +1,5 @@
 import { setServiceType, clearAuthData } from "@/lib/auth/constants";
-import type { IPlaylist } from "@/types/library";
+import type { IPlaylist } from "@/types";
 
 interface DeezerUser {
   id: number;

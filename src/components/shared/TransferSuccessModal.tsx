@@ -2,9 +2,9 @@ import { FC, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Dialog from "./Dialog";
 import { getServiceById } from "@/config/services";
-import { TransferResult } from "@/types/services";
+import { TransferResult } from "@/types";
 import { ArtworkImage } from "./ArtworkImage";
-import { ITrack, IAlbum, IPlaylist } from "@/types/library";
+import { ITrack, IAlbum, IPlaylist } from "@/types";
 
 interface TransferSuccessModalProps {
   isOpen: boolean;

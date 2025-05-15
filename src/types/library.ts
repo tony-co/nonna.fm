@@ -1,63 +1,22 @@
-import { MusicService } from "@/types/services";
+import { z } from "zod/v4";
+import { TrackSchema, ITrack } from "./track";
+import { AlbumSchema, IAlbum } from "./album";
+import { PlaylistSchema, IPlaylist } from "./playlist";
+import { MatchingState, QueueTask } from "./matching";
+import { MusicService } from "./music-service";
 
-export interface ILibraryData {
-  likedSongs: Array<ITrack>;
-  albums: Array<IAlbum>;
-  playlists: Array<IPlaylist>;
-}
+export const LibraryDataSchema = z.object({
+  likedSongs: z.array(TrackSchema),
+  albums: z.array(AlbumSchema),
+  playlists: z.array(PlaylistSchema),
+});
+export type ILibraryData = z.infer<typeof LibraryDataSchema>;
 
 export interface ISelectionState {
   playlists: Map<string, Set<ITrack>>;
   likedSongs: Set<ITrack>;
-
   albums: Set<IAlbum>;
 }
-
-export interface IAlbum {
-  id: string;
-  name: string;
-  artist: string;
-  targetId?: string;
-  status?: MatchingStatus;
-  selected?: boolean;
-  artwork?: string; // URL to album artwork
-}
-
-export interface IPlaylist {
-  id: string;
-  name: string;
-  description?: string;
-  trackCount: number | null;
-  ownerId: string;
-  tracks: ITrack[];
-  selected?: boolean;
-  artwork?: string; // URL to playlist artwork
-  targetId?: string;
-}
-
-export interface ITrack {
-  id: string;
-  name: string;
-  artist: string;
-  album?: string;
-  artwork?: string; // URL to track artwork
-  targetId?: string;
-  videoId?: string;
-  status?: MatchingStatus;
-  selected?: boolean;
-}
-
-export interface MatchingState {
-  isLoading: boolean;
-  error: string | null;
-  progress: Record<string, number>;
-  currentTask: QueueTask | null;
-}
-
-export type QueueTask =
-  | { type: "likedSongs"; tracks: ITrack[]; targetService: string }
-  | { type: "albums"; albums: IAlbum[]; targetService: string }
-  | { type: "playlist"; playlist: IPlaylist; targetService: string };
 
 export interface LibraryState {
   // Library Data
@@ -118,27 +77,6 @@ export type LibraryAction =
   | { type: "MATCHING_COMPLETE"; payload: string }
   | { type: "MATCHING_CANCEL"; payload: { type: string; id?: string } };
 
-// --- Matching status constants ---
-/**
- * Status values for track/album/playlist matching operations.
- * Used to indicate whether an item is pending, matched, or unmatched.
- */
-export const MATCHING_STATUS = {
-  PENDING: "pending",
-  MATCHED: "matched",
-  UNMATCHED: "unmatched",
-} as const;
-
-/**
- * Type for status fields that use MATCHING_STATUS values.
- * Ensures all status fields are consistent and type-safe.
- */
-export type MatchingStatus = (typeof MATCHING_STATUS)[keyof typeof MATCHING_STATUS];
-
-// --- useMatching hook return type ---
-/**
- * Return type for the useMatching hook, describing the API for matching operations.
- */
 export interface UseMatchingReturn {
   isLoading: boolean;
   error: string | null;

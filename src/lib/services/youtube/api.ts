@@ -1,7 +1,6 @@
 import { getYouTubeAuthData } from "./auth";
 import { YTMusicAdapter } from "./ytmusic-adapter";
-import type { ITrack, ILibraryData, IAlbum } from "@/types/library";
-import type { SearchResult, TransferResult } from "@/types/services";
+import type { ITrack, ILibraryData, IAlbum, SearchResult, TransferResult } from "@/types";
 import { retryWithExponentialBackoff } from "@/lib/utils/retry";
 import { processInBatches } from "@/lib/utils/batch-processor";
 

@@ -1,4 +1,4 @@
-import { ITrack, IAlbum, IPlaylist, ILibraryData } from "@/types/library";
+import { ITrack, IAlbum, IPlaylist, ILibraryData } from "@/types";
 
 export const mockTracks: ITrack[] = [
   {
