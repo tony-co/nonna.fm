@@ -1,32 +1,12 @@
-import { z } from "zod/v4";
+// Minimal Edge-safe env for use in Edge Runtime (middleware)
+// Do NOT use Zod or any dynamic code evaluation here, as Edge Runtime forbids it.
+// For full validation, see src/env.server.mjs (Node.js/server only).
 
-// Full server-side schema (includes secrets)
-export const envSchema = z.object({
-  // Node Environment
-  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+export const env = {
+  BASIC_AUTH_USER: process.env.BASIC_AUTH_USER || "",
+  BASIC_AUTH_PASSWORD: process.env.BASIC_AUTH_PASSWORD || "",
+  NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN || "",
+  // Add other public/edge-safe env vars as needed
+};
 
-  // App Configuration
-  NEXT_PUBLIC_APP_URL: z.string().url(),
-
-  // Spotify OAuth Configuration
-  NEXT_PUBLIC_SPOTIFY_CLIENT_ID: z.string().min(1),
-  SPOTIFY_CLIENT_SECRET: z.string().min(1),
-  NEXT_PUBLIC_SPOTIFY_REDIRECT_URI: z.string().url(),
-
-  // YouTube Music OAuth Configuration
-  NEXT_PUBLIC_YOUTUBE_CLIENT_ID: z.string().min(1),
-  YOUTUBE_CLIENT_SECRET: z.string().min(1),
-
-  // Sentry Configuration
-  SENTRY_AUTH_TOKEN: z.string().min(1),
-  SENTRY_ORG: z.string().min(1),
-  SENTRY_PROJECT: z.string().min(1),
-  NEXT_PUBLIC_SENTRY_DSN: z.string().url(),
-
-  // Basic Auth Configuration
-  BASIC_AUTH_USER: z.string().min(1),
-  BASIC_AUTH_PASSWORD: z.string().min(1),
-});
-
-// Server-side env: use only on the server!
-export const env = envSchema.parse(process.env);
+// Note: This file must remain Edge-compatible. Do not import Zod or any code that uses eval/new Function.
