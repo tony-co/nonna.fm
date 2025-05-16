@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
     branches: ["**"]
 
@@ -37,9 +37,13 @@ jobs:
       - name: Run unit tests with coverage
         run: npm run test:coverage
 
-      - name: Build
-        # Build the Next.js app to generate the .next directory and sourcemaps for Sentry
-        run: npm run build
+      - name: Cache Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
@@ -47,7 +51,14 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           fail_ci_if_error: true
+
+      - name: Build
+        if: github.ref == 'refs/heads/main'
+        # Build the Next.js app to generate the .next directory and sourcemaps for Sentry
+        run: npm run build
+
       - name: Upload sourcemaps to Sentry
+        if: github.ref == 'refs/heads/main'
         uses: getsentry/action-release@v3
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -55,5 +66,12 @@ jobs:
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
         with:
           environment: production
-          sourcemaps: .next
+          sourcemaps: |
+            .next/static/chunks
+            .next/server/**/*.js.map
+            .next/server/app/**/*.js.map
+            .next/server/middleware.js.map
+          url_prefix: "~/"
           release: ${{ github.sha }}
+          ignore_missing: true
+          disable_telemetry: true

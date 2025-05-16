@@ -33,6 +33,6 @@ export const config = {
      * Exclude the Sentry tunnel route from middleware to avoid conflicts.
      * This must come before other exclusions to ensure Sentry requests are not blocked.
      */
-    "/((?!monitoring|api|_next/static|_next/image|favicon\\.ico|manifest\\.json|favicons/).*)",
+    "/((?!sentry-tunnel|api|_next/static|_next/image|favicon\\.ico|manifest\\.json|favicons/).*)",
   ],
 };
