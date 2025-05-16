@@ -48,8 +48,6 @@ jobs:
       - name: Build
         # Build the Next.js app to generate the .next directory and sourcemaps for Sentry
         run: npm run build
-        env:
-          SENTRY_TELEMETRY_DISABLED: 1
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
@@ -74,3 +72,4 @@ jobs:
           url_prefix: "~/"
           release: ${{ github.sha }}
           ignore_missing: true
+          disable_telemetry: true
