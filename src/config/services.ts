@@ -14,6 +14,8 @@ export interface ServiceConfig {
   color: string;
   status: "Available" | "Coming Soon" | "Beta" | "Maintenance";
   getPlaylistUrl: (id: string) => string;
+  getLikedSongsUrl: () => string | null;
+  getAlbumsUrl: () => string | null;
 }
 
 export const SERVICES: Record<string, ServiceConfig> = {
@@ -24,6 +26,8 @@ export const SERVICES: Record<string, ServiceConfig> = {
     color: "#1ed760",
     status: "Available",
     getPlaylistUrl: (id: string) => `https://open.spotify.com/playlist/${id}`,
+    getLikedSongsUrl: () => "https://open.spotify.com/collection/tracks",
+    getAlbumsUrl: () => "https://open.spotify.com/",
   },
   youtube: {
     id: "youtube",
@@ -32,6 +36,8 @@ export const SERVICES: Record<string, ServiceConfig> = {
     color: "#FF0000",
     status: "Available",
     getPlaylistUrl: (id: string) => `https://music.youtube.com/playlist?list=${id}`,
+    getLikedSongsUrl: () => "https://music.youtube.com/playlist?list=LM",
+    getAlbumsUrl: () => null,
   },
   deezer: {
     id: "deezer",
@@ -40,6 +46,16 @@ export const SERVICES: Record<string, ServiceConfig> = {
     color: "#A238FF",
     status: "Available",
     getPlaylistUrl: (id: string) => `https://www.deezer.com/playlist/${id}`,
+    getLikedSongsUrl: () => {
+      if (typeof window === "undefined") return null;
+      const userId = localStorage.getItem("deezer_user_id");
+      return userId ? `https://www.deezer.com/fr/profile/${userId}/loved` : null;
+    },
+    getAlbumsUrl: () => {
+      if (typeof window === "undefined") return null;
+      const userId = localStorage.getItem("deezer_user_id");
+      return userId ? `https://www.deezer.com/fr/profile/${userId}/albums` : null;
+    },
   },
   apple: {
     id: "apple",
@@ -61,6 +77,8 @@ export const SERVICES: Record<string, ServiceConfig> = {
       }
       return `https://music.apple.com/library/playlist/${id}`;
     },
+    getLikedSongsUrl: () => "https://music.apple.com/fr/library/songs",
+    getAlbumsUrl: () => "https://music.apple.com/fr/library/albums",
   },
   amazonMusic: {
     id: "amazonMusic",
@@ -69,6 +87,8 @@ export const SERVICES: Record<string, ServiceConfig> = {
     color: "#00A8E1",
     status: "Coming Soon",
     getPlaylistUrl: (id: string) => `https://music.amazon.com/playlists/${id}`,
+    getLikedSongsUrl: () => null,
+    getAlbumsUrl: () => null,
   },
   tidal: {
     id: "tidal",
@@ -77,6 +97,8 @@ export const SERVICES: Record<string, ServiceConfig> = {
     color: "#000000",
     status: "Coming Soon",
     getPlaylistUrl: (id: string) => `https://tidal.com/playlist/${id}`,
+    getLikedSongsUrl: () => null,
+    getAlbumsUrl: () => null,
   },
   pandora: {
     id: "pandora",
@@ -85,6 +107,8 @@ export const SERVICES: Record<string, ServiceConfig> = {
     color: "#3668FF",
     status: "Coming Soon",
     getPlaylistUrl: (id: string) => `https://www.pandora.com/playlist/${id}`,
+    getLikedSongsUrl: () => null,
+    getAlbumsUrl: () => null,
   },
 } as const;
 

@@ -12,6 +12,10 @@ interface ArtworkImageProps {
   type?: ArtworkType;
   className?: string;
   objectFit?: "cover" | "contain";
+  /**
+   * For albums grid: up to 4 artwork URLs to display as a grid.
+   */
+  multiSrc?: string[];
 }
 
 const FALLBACK_CONFIGS = {
@@ -55,11 +59,48 @@ export const ArtworkImage: React.FC<ArtworkImageProps> = ({
   type = "playlist",
   className = "",
   objectFit = "cover",
+  multiSrc,
 }) => {
   const baseClassName =
     "relative overflow-hidden rounded-md shadow-sm transition-transform duration-200";
   const finalClassName = `${baseClassName} ${className}`;
 
+  // Special grid for albums: up to 4 images
+  if (type === "album" && Array.isArray(multiSrc) && multiSrc.length > 1) {
+    // Only use up to 4 images
+    const images = multiSrc.slice(0, 4);
+    // Grid layout: 2x2 for 4, 1x2 for 2, 1x3 for 3
+    // Fallback to placeholder for missing images
+    return (
+      <div
+        style={{ width: size, height: size }}
+        className={`grid ${images.length > 2 ? "grid-cols-2 grid-rows-2" : "grid-cols-2 grid-rows-1"} gap-0.5 rounded-md bg-purple-100 dark:bg-purple-900/30 ${finalClassName}`}
+      >
+        {Array.from({ length: images.length < 4 ? images.length : 4 }).map((_, i) =>
+          images[i] ? (
+            <div key={i} className="relative h-full w-full">
+              <Image
+                src={images[i]}
+                alt={alt + ` ${i + 1}`}
+                fill
+                className={`object-${objectFit} rounded-[2px]`}
+                sizes={`${Math.floor(size / 2)}px`}
+              />
+            </div>
+          ) : (
+            <div
+              key={i}
+              className="flex h-full w-full items-center justify-center rounded-[2px] bg-purple-100 dark:bg-purple-900/30"
+            >
+              <span className="text-purple-300">?</span>
+            </div>
+          )
+        )}
+      </div>
+    );
+  }
+
+  // Fallback to single image or icon
   if (!src) {
     const fallback = FALLBACK_CONFIGS[type];
     return (
