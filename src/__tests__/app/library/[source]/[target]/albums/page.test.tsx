@@ -10,6 +10,16 @@ mockReactSuspense();
 import { useMatching, resetMocks as resetMatchingMocks } from "@/__mocks__/hooks/useMatching";
 vi.mock("@/hooks/useMatching", () => ({ useMatching }));
 
+// Mock PlayOnButton component to avoid dependency issues in tests
+vi.mock("@/components/shared/PlayOnButton", () => ({
+  PlayOnButton: () => null,
+}));
+
+// Mock getServiceType to return a default value (e.g., 'spotify')
+vi.mock("@/lib/auth/constants", () => ({
+  getServiceType: () => "spotify",
+}));
+
 // Regular imports
 import React from "react";
 import { render, screen, within } from "@testing-library/react";
@@ -53,7 +63,8 @@ describe("AlbumsPage", () => {
       </TestWrapper>
     );
 
-    expect(screen.getByText("3 albums • 1 unmatched")).toBeInTheDocument();
+    expect(screen.getByText("3 albums")).toBeInTheDocument();
+    expect(screen.getByText(/1 unmatched/i)).toBeInTheDocument();
   });
 
   it("renders album details correctly", () => {

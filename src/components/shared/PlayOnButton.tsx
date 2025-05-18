@@ -2,19 +2,34 @@ import { FC } from "react";
 import { getServiceType } from "@/lib/auth/constants";
 import { SERVICES } from "@/config/services";
 
+// Supported types for PlayOnButton
 interface PlayOnButtonProps {
-  playlistId: string;
+  type: "playlist" | "liked" | "albums";
+  playlistId?: string; // Only required for playlist type
 }
 
-export const PlayOnButton: FC<PlayOnButtonProps> = ({ playlistId }) => {
+export const PlayOnButton: FC<PlayOnButtonProps> = ({ type, playlistId }) => {
   const serviceType = getServiceType("source");
   const service = SERVICES[serviceType as keyof typeof SERVICES];
 
   if (!service) return null;
 
+  // Determine the correct URL based on type
+  let url: string | null = null;
+  if (type === "playlist" && playlistId) {
+    url = service.getPlaylistUrl(playlistId);
+  } else if (type === "liked") {
+    url = service.getLikedSongsUrl();
+  } else if (type === "albums") {
+    url = service.getAlbumsUrl();
+  }
+
+  // Hide button if URL is not available
+  if (!url) return null;
+
   return (
     <a
-      href={service.getPlaylistUrl(playlistId)}
+      href={url}
       target="_blank"
       rel="noopener noreferrer"
       style={

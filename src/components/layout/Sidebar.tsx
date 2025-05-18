@@ -11,6 +11,7 @@ import { MusicService, IPlaylist } from "@/types";
 import { fetchPlaylistTracks } from "@/lib/musicApi";
 import React from "react";
 import { fetchingPlaylists } from "@/components/shared/TransferButton";
+import { LikedSongsIcon } from "@/components/icons/LikedSongsIcon";
 
 // Main component
 export const LibrarySidebar: FC = () => {
@@ -198,9 +199,7 @@ export const LibrarySidebar: FC = () => {
           />
         </div>
         <div className="relative flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-300">
-          <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-          </svg>
+          <LikedSongsIcon className="h-5 w-5 text-white" />
           {/* Show progress if matching liked songs */}
           {currentTask && currentTask.type === "likedSongs" && isMatching && (
             <CircularProgress
@@ -258,7 +257,11 @@ export const LibrarySidebar: FC = () => {
           <div className="relative overflow-hidden rounded-lg">
             <ArtworkImage
               src={Array.from(state.albums ?? [])[0]?.artwork}
-              alt="First Album"
+              multiSrc={Array.from(state.albums ?? [])
+                .slice(0, 4)
+                .map(a => a.artwork)
+                .filter((a): a is string => Boolean(a))}
+              alt="Albums artwork"
               type="album"
               className="rounded-lg"
             />
