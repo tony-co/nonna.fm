@@ -1,18 +1,18 @@
-import * as api from "@/lib/services/spotify/api";
+import * as api from "@/lib/services/apple/api";
 import { mockTracks, mockAlbums, mockPlaylists } from "@/__mocks__/data/libraryData";
 import { describe, it, beforeEach, afterEach, expect, vi } from "vitest";
-import { setupSpotifyFetchMock, mockSpotifyAuth } from "@/__mocks__/services/spotify/fetchMocks";
+import { setupAppleFetchMock, mockAppleAuth } from "@/__mocks__/services/apple/fetchMocks";
 
 beforeEach(() => {
-  setupSpotifyFetchMock();
-  mockSpotifyAuth();
+  setupAppleFetchMock();
+  mockAppleAuth();
 });
 
 afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe("Spotify API Service", () => {
+describe("Apple Music API Service", () => {
   it("fetchUserLibrary returns correct library data", async () => {
     const data = await api.fetchUserLibrary();
     expect(data.playlists.length).toBe(mockPlaylists.length);
@@ -47,10 +47,9 @@ describe("Spotify API Service", () => {
   });
 
   it("createPlaylistWithTracks returns playlistId and counts", async () => {
-    // Provide tracks with targetId so the function can add them
     const tracksWithTargetId = mockTracks.map(t => ({ ...t, targetId: t.id }));
     const result = await api.createPlaylistWithTracks("Test Playlist", tracksWithTargetId);
-    expect(result.playlistId).toBe("new_playlist_id");
+    expect(result.playlistId).toBe("new_apple_playlist_id");
     expect(result.added).toBe(mockTracks.length);
   });
 
@@ -83,8 +82,8 @@ describe("Spotify API Service", () => {
       async (input: string | URL | Request) => {
         const url =
           typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-        if (url.includes("/me/playlists?limit=1")) {
-          return new Response(JSON.stringify({ total: 0 }), { status: 200 });
+        if (url.includes("/v1/me/library/playlists")) {
+          return new Response(JSON.stringify({ data: [] }), { status: 200 });
         }
         return new Response(JSON.stringify({}), { status: 404 });
       }
@@ -96,39 +95,27 @@ describe("Spotify API Service", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    // Attach a temporary unhandledRejection handler to suppress expected errors for this test
     const unhandledRejectionHandler = (err: unknown): void => {
-      // Prevent Vitest from failing the test due to this expected error
-      // Only suppress the specific error we expect
       if (err instanceof Error && err.message === "Network error") {
-        // Do nothing, this is expected
         return;
       }
-      // For any other error, rethrow so the test fails as normal
       throw err;
     };
     process.on("unhandledRejection", unhandledRejectionHandler);
 
     try {
       vi.useFakeTimers();
-      // The retry logic in fetchUserLibrary will retry 5 times before throwing.
-      // We mock fetch to throw an error for each attempt.
       const fetchMock = vi.fn().mockImplementation(() => {
         throw new Error("Network error");
       });
       global.fetch = fetchMock;
 
       const promise = api.fetchUserLibrary();
-
-      // Fast-forward all timers (simulate all retries instantly)
       await vi.runAllTimersAsync();
-
       await expect(promise).rejects.toThrow("Network error");
       expect(fetchMock).toHaveBeenCalledTimes(5);
-
       vi.useRealTimers();
     } finally {
-      // Always remove the handler after the test to avoid side effects
       process.off("unhandledRejection", unhandledRejectionHandler);
       errorSpy.mockRestore();
       warnSpy.mockRestore();

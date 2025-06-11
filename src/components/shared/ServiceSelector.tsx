@@ -1,5 +1,5 @@
 import { FC, useState, useEffect } from "react";
-import { SERVICES, ServiceConfig } from "@/config/services";
+import { SERVICES, ServiceConfig, SERVICE_STATUS } from "@/config/services";
 import { MusicService } from "@/types";
 
 interface ServiceSelectorProps {
@@ -29,7 +29,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
     if (service.id === "deezer") {
       return;
     }
-    if (service.status === "Available" && !isProcessing) {
+    if (service.status === SERVICE_STATUS.AVAILABLE && !isProcessing) {
       setSelectedService(service);
       setIsOpen(false);
       onTargetSelect(service.id);
@@ -55,7 +55,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
           <div className="relative">
             <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-lg lg:gap-4 lg:p-4 dark:border-indigo-900 dark:bg-indigo-950/50">
               <div className="flex h-8 w-8 items-center justify-center lg:h-10 lg:w-10">
-                <sourceService.image size={24} />
+                <sourceService.image className="h-6 w-6" size={24} />
               </div>
               <div>
                 <span className="font-medium text-gray-900 dark:text-white">
@@ -88,7 +88,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
               {selectedService ? (
                 <>
                   <div className="flex h-8 w-8 items-center justify-center lg:h-10 lg:w-10">
-                    <selectedService.image size={24} />
+                    <selectedService.image className="h-6 w-6" size={24} />
                   </div>
                   <div className="flex-1 text-left">
                     <span className="block font-medium text-gray-900 dark:text-white">
@@ -140,18 +140,29 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
             {isOpen && (
               <div className="dark:bg-indigo-990 absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-800">
                 {Object.values(SERVICES)
-                  // Hide source service and any service marked as 'Coming Soon'
+                  // Hide source service and any service marked as 'OFF' (previously 'Coming Soon')
                   .filter(
-                    service => service.id !== sourceService?.id && service.status !== "Coming Soon"
+                    service =>
+                      service.id !== sourceService?.id && service.status !== SERVICE_STATUS.OFF
                   )
                   .map(service => {
                     // Determine if service should be disabled - Deezer special case for target
                     const isDisabled =
-                      service.status !== "Available" || isProcessing || service.id === "deezer";
+                      service.status !== SERVICE_STATUS.AVAILABLE ||
+                      isProcessing ||
+                      service.id === "deezer";
 
                     const getStatusText = (): string => {
                       if (service.id === "deezer") return "Not available as target yet";
-                      return service.status;
+                      return service.status === SERVICE_STATUS.AVAILABLE
+                        ? "Available"
+                        : service.status === SERVICE_STATUS.OFF
+                          ? "Coming Soon"
+                          : service.status === SERVICE_STATUS.DEV
+                            ? "In Development"
+                            : service.status === SERVICE_STATUS.MAINTENANCE
+                              ? "Maintenance"
+                              : service.status;
                     };
 
                     const getStatusColor = (): string => {
@@ -172,7 +183,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
                         `}
                       >
                         <div className="flex h-8 w-8 items-center justify-center lg:h-10 lg:w-10">
-                          <service.image size={24} />
+                          <service.image className="h-6 w-6" size={24} />
                         </div>
                         <div className="flex w-full flex-col items-start">
                           <span className="font-medium text-gray-900 dark:text-white">

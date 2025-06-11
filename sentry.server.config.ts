@@ -5,21 +5,18 @@
 import { env } from "./src/env.server.mjs";
 import * as Sentry from "@sentry/nextjs";
 
-Sentry.init({
-  // Read DSN from environment variable for security and flexibility
-  dsn: env.NEXT_PUBLIC_SENTRY_DSN,
-  // Enable debug mode if DSN is missing to help with debugging
-  ...(env.NEXT_PUBLIC_SENTRY_DSN ? {} : { debug: true }),
+// Only initialize Sentry if DSN is provided
+if (env.NEXT_PUBLIC_SENTRY_DSN) {
+  Sentry.init({
+    dsn: env.NEXT_PUBLIC_SENTRY_DSN,
 
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
+    // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
+    tracesSampleRate: 1,
 
-  // Setting this option to true will print useful information to the console while you're setting up Sentry.
-  _experiments: { enableLogs: true },
-});
-
-// Warn at runtime if DSN is missing (helps developers catch misconfigurations)
-if (!env.NEXT_PUBLIC_SENTRY_DSN) {
+    // Setting this option to true will print useful information to the console while you're setting up Sentry.
+    _experiments: { enableLogs: true },
+  });
+} else {
   console.warn(
     "[Sentry] NEXT_PUBLIC_SENTRY_DSN environment variable is not set. Sentry will not report errors."
   );

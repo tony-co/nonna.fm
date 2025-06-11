@@ -43,11 +43,11 @@ export const DEFAULT_TRACK_CONFIG: MatchConfig = {
 
 export const DEFAULT_ALBUM_CONFIG: MatchConfig = {
   weights: {
-    name: 0.45,
-    artist: 0.55,
+    name: 0.65,
+    artist: 0.35,
   },
   thresholds: {
-    minimum: 0.7,
+    minimum: 0.6,
     boost: 0.85,
   },
 };
@@ -60,13 +60,6 @@ export function normalizeString(str: string): string {
     .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
     .replace(/\s*-\s*/g, " ") // Convert all hyphens to spaces
     .replace(/[.,\/#!$%\^&\*;:{}=_`~()[\]'"']/g, "") // Remove punctuation
-    /*.replace(/\b(?:part|pt)\b\.?\s*(\d+)/gi, 'part $1') // Normalize "Part" and "Pt" variations
-        .replace(/\b(?:number|no|nr)\b\.?\s*(\d+)/gi, 'no $1') // Normalize "Number", "No", "Nr" variations
-        .replace(/\b(?:volume|vol)\b\.?\s*(\d+)/gi, 'vol $1') // Normalize "Volume", "Vol" variations
-        .replace(/\b(?:remix|rmx)\b/gi, 'remix') // Normalize "Remix", "Rmx" variations
-        .replace(/\b(?:original|orig)\b/gi, 'original') // Normalize "Original", "Orig" variations
-        .replace(/\b(?:version|ver)\b/gi, 'version') // Normalize "Version", "Ver" variations
-        .replace(/\b(?:extended|ext)\b/gi, 'extended') // Normalize "Extended", "Ext" variations*/
     .replace(/\s+/g, " ") // Normalize spaces
     .trim();
 
@@ -94,6 +87,34 @@ export function calculateStringSimilarity(str1: string, str2: string): number {
   const words2 = norm2.split(" ");
   const commonWords = words1.filter(word => words2.includes(word));
   return (2 * commonWords.length) / (words1.length + words2.length);
+}
+
+// Helper to compare artist arrays for better matching
+/**
+ * Calculates similarity between two artist strings by splitting them into arrays and checking for overlap.
+ * - Returns 1 if any artist in target is present in source (or vice versa).
+ * - Otherwise, returns the best string similarity between any pair.
+ */
+function calculateArtistArraySimilarity(sourceArtist: string, targetArtist: string): number {
+  const sourceArtists = splitArtists(sourceArtist).map(normalizeString);
+  const targetArtists = splitArtists(targetArtist).map(normalizeString);
+
+  // If any target artist is in source artists, consider it a strong match
+  for (const t of targetArtists) {
+    if (sourceArtists.includes(t)) return 1;
+  }
+  // If any source artist is in target artists, also strong match
+  for (const s of sourceArtists) {
+    if (targetArtists.includes(s)) return 1;
+  }
+  // Otherwise, return the best string similarity between any pair
+  let best = 0;
+  for (const s of sourceArtists) {
+    for (const t of targetArtists) {
+      best = Math.max(best, calculateStringSimilarity(s, t));
+    }
+  }
+  return best;
 }
 
 // Calculate match score for a track
@@ -163,7 +184,8 @@ export function calculateAlbumMatchScore(
   const { weights } = config;
 
   const nameScore = calculateStringSimilarity(sourceAlbum.name, targetAlbum.name);
-  let artistScore = calculateStringSimilarity(sourceAlbum.artist, targetAlbum.artist);
+  // Use improved artist similarity
+  let artistScore = calculateArtistArraySimilarity(sourceAlbum.artist, targetAlbum.artist);
 
   // Special handling for OSTs with Multi-artists
   const isOst =
@@ -198,10 +220,37 @@ export function calculateAlbumMatchScore(
 // Helper function to clean search terms for better music service search results
 export function cleanSearchTerm(str: string): string {
   return str
-    .replace(/\s*-?\s*EP\b/gi, "") // Remove EP markers more flexibly
-    .replace(/\s*-?\s*Single\b/gi, "") // Remove Single markers more flexibly
-    .replace(/\b(deluxe|special|expanded|collectors|bonus)( edition| version)?\b/gi, "") // Remove edition markers
-    .replace(/[\(\[\{].*?[\)\]\}]/g, "") // Remove any remaining parenthetical content
-    .trim()
-    .replace(/\s+/g, " "); // Normalize spaces
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+    .replace(/\s*-\s*/g, " ") // Convert all hyphens to spaces
+    .replace(/[.,\/#!$%\^&\*;:{}=_`~()[\]'"']/g, "") // Remove punctuation
+    .replace(/\s+/g, " ") // Normalize spaces
+    .trim();
+}
+
+// Clean up a track title for better cross-service matching.
+export function cleanTrackTitle(title: string): string {
+  return (
+    title
+      // Remove all content in square brackets, parentheses, or curly braces
+      .replace(/[\[\(\{][^\]\)\}]*[\]\)\}]/g, "")
+      // Remove featuring artist indicators
+      .replace(/\s*\(feat\..*?\)/gi, "")
+      .replace(/\s*\(ft\..*?\)/gi, "")
+      .replace(/\s+ft\..*$/gi, "")
+      .replace(/\s+feat\..*$/gi, "")
+      .replace(/\s+ft\s+.*$/gi, "")
+      .replace(/\s+feat\s+.*$/gi, "")
+      // Remove (Single)
+      .replace(/\s*\(single\)\s*/gi, " ")
+      // Remove remix, edit, version, acoustic, instrumental, bonus, cover tags
+      .replace(/\s*\((remix|edit|version|acoustic|instrumental|bonus track|cover)\)/gi, "")
+      .replace(/\s*-?\s*(remix|edit|version|acoustic|instrumental|bonus track|cover)\b/gi, "")
+      // Remove trailing/leading dashes
+      .replace(/\s*-\s*$/, "")
+      .replace(/^\s*-\s*/, "")
+      // Normalize spaces
+      .replace(/\s+/g, " ")
+      .trim()
+  );
 }

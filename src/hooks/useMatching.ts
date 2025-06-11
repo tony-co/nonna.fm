@@ -17,6 +17,7 @@ import {
   matchingComplete,
   matchingCancel,
 } from "@/contexts/LibraryContext.matchingActions";
+import { sentryLogger } from "@/lib/utils/sentry-logger";
 
 // This hook now uses global matching state from LibraryContext
 export const useMatching = (): UseMatchingReturn => {
@@ -186,11 +187,28 @@ export const useMatching = (): UseMatchingReturn => {
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === "AbortError") {
         // Do nothing, user cancelled
-      } else if (err instanceof Error) {
-        // Use action creator for error
-        dispatch(matchingError(err.message || "Unknown error"));
       } else {
-        dispatch(matchingError("Unknown error"));
+        // Capture the error to Sentry with context
+        sentryLogger.captureException(err, {
+          tags: {
+            category: "matching",
+            taskType: task.type,
+            targetService: task.targetService,
+          },
+          extra: {
+            taskType: task.type,
+            targetService: task.targetService,
+            itemCount:
+              task.type === "playlist"
+                ? task.playlist.tracks.length
+                : task.type === "albums"
+                  ? task.albums.length
+                  : task.tracks.length,
+          },
+        });
+
+        const errorMessage = err instanceof Error ? err.message : "Unknown error";
+        dispatch(matchingError(errorMessage));
       }
     } finally {
       queueRef.current.shift();

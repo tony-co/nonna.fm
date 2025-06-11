@@ -1,9 +1,13 @@
 import { ITrack, ILibraryData, IAlbum, SearchResult, TransferResult } from "@/types";
 import { getDeezerUserId } from "./auth";
 import { retryWithExponentialBackoff, type RetryOptions } from "@/lib/utils/retry";
+import { SERVICES } from "@/config/services";
 
-// Keep this for the handlers to use
-export const DEEZER_API_BASE = "https://api.deezer.com";
+// Base URL for Deezer API from services configuration
+const BASE_URL = SERVICES.deezer.apiBaseUrl;
+
+// Keep this for the handlers to use (legacy support)
+export const DEEZER_API_BASE = BASE_URL;
 
 // Types shared between client and API routes
 export interface DeezerAlbum {
@@ -90,9 +94,7 @@ const DEEZER_RETRY_OPTIONS: RetryOptions = {
  */
 export async function fetchUserLibrary(): Promise<ILibraryData> {
   const userId = getDeezerUserId();
-  if (!userId) {
-    throw new Error("No Deezer user ID found");
-  }
+  if (!userId) throw new Error("No Deezer user ID found");
 
   // Fetch playlists and albums in parallel
   const [allPlaylists, albums] = await Promise.all([
@@ -174,10 +176,6 @@ export async function fetchPlaylistTracks(
     >(() => fetch(url), DEEZER_RETRY_OPTIONS);
 
     if (data.error) {
-      console.error("Deezer API error:", {
-        url: nextUrl,
-        error: data.error,
-      });
       throw new Error(data.error?.message || "Failed to fetch Deezer playlist tracks");
     }
 
@@ -228,9 +226,7 @@ export async function fetchPlaylistTracks(
  */
 export async function fetchDeezerAlbums(): Promise<IAlbum[]> {
   const userId = getDeezerUserId();
-  if (!userId) {
-    throw new Error("No Deezer user ID found");
-  }
+  if (!userId) throw new Error("No Deezer user ID found");
 
   let allAlbums: DeezerAlbum[] = [];
   let nextUrl: string | undefined = `/api/deezer/albums/${userId}`;
@@ -244,10 +240,6 @@ export async function fetchDeezerAlbums(): Promise<IAlbum[]> {
     >(() => fetch(url), DEEZER_RETRY_OPTIONS);
 
     if (data.error) {
-      console.error("Deezer API error:", {
-        url: nextUrl,
-        error: data.error,
-      });
       throw new Error(data.error?.message || "Failed to fetch Deezer albums");
     }
 

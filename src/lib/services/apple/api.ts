@@ -1,5 +1,4 @@
 import { SearchResult, TransferResult, ITrack, ILibraryData, IAlbum, IPlaylist } from "@/types";
-import { getYouTubeAuthData } from "../youtube/auth";
 import { getAppleAuthData } from "./auth";
 import { processInBatches } from "@/lib/utils/batch-processor";
 import {
@@ -7,11 +6,16 @@ import {
   calculateAlbumMatchScore,
   DEFAULT_TRACK_CONFIG,
   DEFAULT_ALBUM_CONFIG,
-  type MatchScoreDetails,
   cleanSearchTerm,
+  cleanTrackTitle,
 } from "@/lib/utils/matching";
 import { retryWithExponentialBackoff, type RetryOptions } from "@/lib/utils/retry";
 import { AUTH_STORAGE_KEYS, type AuthData, setServiceType } from "@/lib/auth/constants";
+import { sentryLogger } from "@/lib/utils/sentry-logger";
+import { MATCHING_STATUS } from "@/types/matching-status";
+import { SERVICES } from "@/config/services";
+
+const BASE_URL = SERVICES.apple.apiBaseUrl!;
 
 interface MusicKitInstance {
   authorize: () => Promise<string>;
@@ -179,7 +183,6 @@ export async function initializeAppleMusic(
 
     return musicKit.getInstance();
   } catch (error) {
-    console.error("Error initializing Apple Music:", error);
     throw error;
   }
 }
@@ -213,94 +216,87 @@ export async function authorizeAppleMusic(
 
     return musicUserToken;
   } catch (error) {
-    console.error("authorizeAppleMusic - error:", error);
     throw error;
   }
 }
 
+// Helper function to perform the actual search and matching for Apple Music
+async function performSearch(
+  track: ITrack,
+  searchTerm: string,
+  authData: AuthData
+): Promise<{ songId: string | null; albumId: string | null }> {
+  const result = await retryWithExponentialBackoff<AppleMusicSearchResponse>(async () => {
+    const url = new URL(`${BASE_URL}/v1/catalog/fr/search`);
+    url.searchParams.set("term", searchTerm);
+    url.searchParams.set("types", "songs");
+    url.searchParams.set("limit", "3");
+    url.searchParams.set("fields[songs]", "name,artistName,albumName");
+    url.searchParams.set("include", "albums");
+    return fetchAppleMusic(url, { method: "GET" }, authData);
+  }, APPLE_RETRY_OPTIONS);
+
+  if (!result.results?.songs?.data?.length) {
+    return { songId: null, albumId: null };
+  }
+
+  const matches = await Promise.all(
+    result.results.songs.data.map(async song => ({
+      song,
+      ...(await calculateTrackMatchScore(
+        track,
+        {
+          name: song.attributes.name,
+          artist: song.attributes.artistName,
+          album: song.attributes.albumName,
+        },
+        DEFAULT_TRACK_CONFIG
+      )),
+    }))
+  );
+
+  matches.sort((a: { score: number }, b: { score: number }) => b.score - a.score);
+
+  const filteredMatches = matches.filter(
+    (match: { score: number }) => match.score >= DEFAULT_TRACK_CONFIG.thresholds.minimum
+  );
+
+  if (filteredMatches.length > 0) {
+    const bestMatch = filteredMatches[0].song;
+    const albumId = bestMatch.relationships?.album?.data?.[0]?.id || null;
+    return {
+      songId: bestMatch.id,
+      albumId,
+    };
+  }
+
+  return { songId: null, albumId: null };
+}
+
+// Refactored findBestMatch to use performSearch and retry logic like Spotify
 async function findBestMatch(
   track: ITrack & { id: string },
   authData: AuthData
 ): Promise<{ songId: string | null; albumId: string | null }> {
   try {
-    const isYouTubeSource = !!getYouTubeAuthData("source");
+    // Clean the track name for better matching
+    const cleanedTrack = { ...track, name: cleanTrackTitle(track.name) };
+    // First attempt with full search query
+    const searchQuery = `${cleanedTrack.name} ${track.artist}`;
+    let bestMatch = await performSearch(cleanedTrack, searchQuery, authData);
 
-    // For YouTube sources, the data is already cleaned by the YouTube API
-    // For other sources, clean the search terms
-    const searchName = isYouTubeSource ? track.name : cleanSearchTerm(track.name);
-    const searchArtist = isYouTubeSource ? track.artist : cleanSearchTerm(track.artist);
-
-    const searchTerm = `${searchName} ${searchArtist}`;
-
-    const result = await retryWithExponentialBackoff<AppleMusicSearchResponse>(async () => {
-      const url = new URL("https://api.music.apple.com/v1/catalog/fr/search");
-      url.searchParams.set("term", searchTerm);
-      url.searchParams.set("types", "songs");
-      url.searchParams.set("limit", "3");
-      url.searchParams.set("fields[songs]", "name,artistName,albumName");
-      url.searchParams.set("include", "albums");
-
-      return fetchAppleMusic(url, {}, authData);
-    }, APPLE_RETRY_OPTIONS);
-
-    if (!result.results?.songs?.data?.length) {
-      console.log(`[MATCHING] No results found for "${track.name}" by ${track.artist}`);
-      return { songId: null, albumId: null };
+    // If no good match found and track is from YouTube, retry with just the cleaned track name
+    if (!bestMatch.songId && track.videoId) {
+      const retrySearchQuery = cleanedTrack.name;
+      bestMatch = await performSearch(cleanedTrack, retrySearchQuery, authData);
     }
 
-    const matches = await Promise.all(
-      result.results.songs.data.map(async song => ({
-        song,
-        ...(await calculateTrackMatchScore(
-          track,
-          {
-            name: song.attributes.name,
-            artist: song.attributes.artistName,
-            album: song.attributes.albumName,
-          },
-          DEFAULT_TRACK_CONFIG
-        )),
-      }))
-    );
-
-    matches.sort((a: { score: number }, b: { score: number }) => b.score - a.score);
-
-    // Log all scores if no matches meet the threshold
-    if (
-      !matches.some(
-        (match: { score: number }) => match.score >= DEFAULT_TRACK_CONFIG.thresholds.minimum
-      )
-    ) {
-      console.log(
-        `[MATCHING] No matches met threshold for "${track.name}" by ${track.artist}. Best matches:`,
-        matches
-          .slice(0, 3)
-          .map((match: { score: number; details: MatchScoreDetails; song: AppleMusicSong }) => ({
-            score: match.score,
-            details: match.details,
-            matchedName: match.song.attributes.name,
-            matchedArtist: match.song.attributes.artistName,
-            matchedAlbum: match.song.attributes.albumName,
-          }))
-      );
-    }
-
-    const filteredMatches = matches.filter(
-      (match: { score: number }) => match.score >= DEFAULT_TRACK_CONFIG.thresholds.minimum
-    );
-
-    if (filteredMatches.length > 0) {
-      const bestMatch = filteredMatches[0].song;
-      const albumId = bestMatch.relationships?.album?.data?.[0]?.id || null;
-      return {
-        songId: bestMatch.id,
-        albumId,
-      };
-    }
-
-    return { songId: null, albumId: null };
+    return bestMatch;
   } catch (error) {
-    console.error("[MATCHING] Error finding best match:", error);
+    sentryLogger.captureMatchingError("track_search", "apple", error, {
+      trackName: track.name,
+      trackArtist: track.artist,
+    });
     return { songId: null, albumId: null };
   }
 }
@@ -333,7 +329,7 @@ export async function search(
               ...track,
               targetId: songId || undefined,
               albumId: albumId || undefined,
-              status: songId ? ("matched" as const) : ("unmatched" as const),
+              status: songId ? MATCHING_STATUS.MATCHED : MATCHING_STATUS.UNMATCHED,
             };
           })
         );
@@ -345,19 +341,7 @@ export async function search(
       {
         items: tracks,
         batchSize: 10,
-        onBatchStart: (batchNumber, totalBatches) => {
-          console.log(`Processing track search batch ${batchNumber}/${totalBatches}`);
-        },
-        onError: (error, batch) => {
-          console.error("Error searching tracks batch:", {
-            error: error.message,
-            batchSize: batch.length,
-            tracks: batch.map(track => ({
-              name: track.name,
-              artist: track.artist,
-            })),
-          });
-        },
+        onBatchStart: () => {},
       }
     );
 
@@ -368,7 +352,6 @@ export async function search(
       tracks: results,
     };
   } catch (error) {
-    console.error("Error in search:", error);
     throw error;
   }
 }
@@ -379,7 +362,6 @@ export async function createPlaylistWithTracks(
   description?: string
 ): Promise<TransferResult> {
   try {
-    console.log("createPlaylistWithTracks - starting:", { name, trackCount: tracks.length });
     const authData = await getAppleAuthData("target");
     if (!authData) {
       throw new Error("Not authenticated with Apple Music");
@@ -389,7 +371,7 @@ export async function createPlaylistWithTracks(
     const playlistData = await retryWithExponentialBackoff<{ data: Array<{ id: string }> }>(
       () =>
         fetchAppleMusic(
-          "https://api.music.apple.com/v1/me/library/playlists",
+          `${BASE_URL}/v1/me/library/playlists`,
           {
             method: "POST",
             headers: {
@@ -410,11 +392,8 @@ export async function createPlaylistWithTracks(
     const playlistId = playlistData.data?.[0]?.id;
 
     if (!playlistId) {
-      console.error("No playlist ID in response:", playlistData);
       throw new Error("Failed to create playlist - no ID returned");
     }
-
-    console.log("createPlaylistWithTracks - playlist created:", { playlistId });
 
     // Filter tracks with IDs
     const tracksWithIds = tracks.filter(
@@ -434,7 +413,7 @@ export async function createPlaylistWithTracks(
     await retryWithExponentialBackoff(
       () =>
         fetchAppleMusic(
-          `https://api.music.apple.com/v1/me/library/playlists/${playlistId}/tracks`,
+          `${BASE_URL}/v1/me/library/playlists/${playlistId}/tracks`,
           {
             method: "POST",
             headers: {
@@ -459,14 +438,12 @@ export async function createPlaylistWithTracks(
       playlistId,
     };
   } catch (error) {
-    console.error("Error in createPlaylistWithTracks:", error);
     throw error;
   }
 }
 
 export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<TransferResult> {
   try {
-    console.log("addTracksToLibrary - starting:", { trackCount: tracks.length });
     const authData = await getAppleAuthData("target");
     if (!authData) {
       throw new Error("Not authenticated with Apple Music");
@@ -490,7 +467,7 @@ export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<Transfe
     await retryWithExponentialBackoff(
       () =>
         fetchAppleMusic(
-          "https://api.music.apple.com/v1/me/library",
+          `${BASE_URL}/v1/me/library`,
           {
             method: "POST",
             headers: {
@@ -515,14 +492,12 @@ export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<Transfe
       playlistId: null,
     };
   } catch (error) {
-    console.error("Error in addTracksToLibrary:", error);
     throw error;
   }
 }
 
 export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferResult> {
   try {
-    console.log("addAlbumsToLibrary - starting:", { albumCount: albums.size });
     const authData = await getAppleAuthData("target");
     if (!authData) {
       throw new Error("Not authenticated with Apple Music");
@@ -541,7 +516,7 @@ export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferR
     const albumIds = Array.from(albums)
       .map(album => album.targetId)
       .join(",");
-    const url = `https://api.music.apple.com/v1/me/library?ids[albums]=${albumIds}`;
+    const url = `${BASE_URL}/v1/me/library?ids[albums]=${albumIds}`;
 
     // Add albums to library with retry
     await retryWithExponentialBackoff(
@@ -566,7 +541,6 @@ export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferR
       playlistId: null,
     };
   } catch (error) {
-    console.error("Error in addAlbumsToLibrary:", error);
     throw error;
   }
 }
@@ -578,25 +552,30 @@ async function findBestAlbumMatch(
   try {
     // Clean search terms
     const searchTerm = `${cleanSearchTerm(album.name)} ${cleanSearchTerm(album.artist)}`;
-    console.log(
-      `[MATCHING] Searching with cleaned term: "${searchTerm}" (original: "${album.name} ${album.artist}")`
-    );
 
     const result = await retryWithExponentialBackoff<{
       results?: { albums?: { data: AppleAlbum[] } };
     }>(async () => {
-      const url = new URL("https://api.music.apple.com/v1/catalog/fr/search");
+      const url = new URL(`${BASE_URL}/v1/catalog/fr/search`);
       url.searchParams.set("term", searchTerm);
       url.searchParams.set("types", "albums");
       url.searchParams.set("limit", "3");
       url.searchParams.set("fields[albums]", "name,artistName");
 
-      return fetchAppleMusic(url, {}, authData);
+      return fetchAppleMusic(url, { method: "GET" }, authData);
     }, APPLE_RETRY_OPTIONS);
 
     // Process initial search results
     if (!result.results?.albums?.data?.length) {
-      console.log(`[MATCHING] No results found for album "${album.name}" by ${album.artist}`);
+      sentryLogger.captureMatchingError(
+        "album_search",
+        "apple",
+        new Error(`No search results found for album "${album.name}" by ${album.artist}`),
+        {
+          albumName: album.name,
+          albumArtist: album.artist,
+        }
+      );
       return { albumId: null };
     }
 
@@ -614,19 +593,6 @@ async function findBestAlbumMatch(
       }))
       .sort((a: { score: number }, b: { score: number }) => b.score - a.score);
 
-    // Log match details
-    console.log(
-      `[MATCHING] Results for album "${album.name}" by ${album.artist}:`,
-      matches
-        .slice(0, 3)
-        .map((match: { score: number; details: MatchScoreDetails; album: AppleAlbum }) => ({
-          score: match.score,
-          details: match.details,
-          matchedName: match.album.attributes.name,
-          matchedArtist: match.album.attributes.artistName,
-        }))
-    );
-
     // Return best match if it meets the threshold
     if (matches[0].score >= DEFAULT_ALBUM_CONFIG.thresholds.minimum) {
       return { albumId: matches[0].album.id };
@@ -634,7 +600,10 @@ async function findBestAlbumMatch(
 
     return { albumId: null };
   } catch (error) {
-    console.error("[MATCHING] Error finding best album match:", error);
+    sentryLogger.captureMatchingError("album_search", "apple", error, {
+      albumName: album.name,
+      albumArtist: album.artist,
+    });
     return { albumId: null };
   }
 }
@@ -666,7 +635,7 @@ export async function searchAlbums(
             return {
               ...album,
               targetId: albumId || undefined,
-              status: albumId ? ("matched" as const) : ("unmatched" as const),
+              status: albumId ? MATCHING_STATUS.MATCHED : MATCHING_STATUS.UNMATCHED,
             };
           })
         );
@@ -678,19 +647,7 @@ export async function searchAlbums(
       {
         items: albums,
         batchSize: 10,
-        onBatchStart: (batchNumber, totalBatches) => {
-          console.log(`Processing album search batch ${batchNumber}/${totalBatches}`);
-        },
-        onError: (error, batch) => {
-          console.error("Error searching albums batch:", {
-            error: error.message,
-            batchSize: batch.length,
-            albums: batch.map(album => ({
-              name: album.name,
-              artist: album.artist,
-            })),
-          });
-        },
+        onBatchStart: () => {},
       }
     );
 
@@ -701,7 +658,6 @@ export async function searchAlbums(
       albums: results,
     };
   } catch (error) {
-    console.error("Error in searchAlbums:", error);
     throw error;
   }
 }
@@ -739,13 +695,13 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
   if (!authData) throw new Error("Not authenticated with Apple Music");
 
   // Base URL for Apple Music API
-  const baseUrl = "https://api.music.apple.com/v1/me/library";
+  const baseUrl = `${BASE_URL}/v1/me/library`;
 
   // Helper function to format artwork URL
   const formatArtworkUrl = (url: string | undefined): string | undefined => {
     if (!url) return undefined;
     // Replace {w} and {h} with actual dimensions
-    return url.replace("{w}", "300").replace("{h}", "300");
+    return url.replace("{w}", "192").replace("{h}", "192");
   };
 
   // Fetch playlists
@@ -754,7 +710,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
 
   do {
     const data = await retryWithExponentialBackoff<AppleResponse<ApplePlaylist>>(
-      () => fetchAppleMusic(nextUrl, {}, authData),
+      () => fetchAppleMusic(nextUrl, { method: "GET" }, authData),
       APPLE_RETRY_OPTIONS
     );
 
@@ -768,12 +724,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
     }));
 
     playlists.push(...playlistItems);
-    // Handle relative next URL
-    nextUrl = data.next
-      ? data.next.startsWith("http")
-        ? data.next
-        : `https://api.music.apple.com${data.next}&limit=50`
-      : "";
+    nextUrl = data.next ? `${BASE_URL}${data.next}` : "";
 
     if (!nextUrl) break;
   } while (nextUrl);
@@ -784,7 +735,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
 
   do {
     const data = await retryWithExponentialBackoff<AppleResponse<AppleSong>>(
-      () => fetchAppleMusic(nextUrl, {}, authData),
+      () => fetchAppleMusic(nextUrl, { method: "GET" }, authData),
       APPLE_RETRY_OPTIONS
     );
 
@@ -797,12 +748,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
     }));
 
     songs.push(...songItems);
-    // Handle relative next URL
-    nextUrl = data.next
-      ? data.next.startsWith("http")
-        ? data.next
-        : `https://api.music.apple.com${data.next}&limit=50`
-      : "";
+    nextUrl = data.next ? `${BASE_URL}${data.next}` : "";
 
     if (!nextUrl) break;
   } while (nextUrl);
@@ -813,7 +759,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
 
   do {
     const data = await retryWithExponentialBackoff<AppleResponse<AppleAlbum>>(
-      () => fetchAppleMusic(nextUrl, {}, authData),
+      () => fetchAppleMusic(nextUrl, { method: "GET" }, authData),
       APPLE_RETRY_OPTIONS
     );
 
@@ -825,12 +771,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
     }));
 
     albums.push(...albumItems);
-    // Handle relative next URL
-    nextUrl = data.next
-      ? data.next.startsWith("http")
-        ? data.next
-        : `https://api.music.apple.com${data.next}&limit=50`
-      : "";
+    nextUrl = data.next ? `${BASE_URL}${data.next}` : "";
 
     if (!nextUrl) break;
   } while (nextUrl);
@@ -850,18 +791,18 @@ export async function fetchPlaylistTracks(
   const formatArtworkUrl = (url: string | undefined): string | undefined => {
     if (!url) return undefined;
     // Replace {w} and {h} with actual dimensions
-    return url.replace("{w}", "300").replace("{h}", "300");
+    return url.replace("{w}", "48").replace("{h}", "48");
   };
 
   const authData = await getAppleAuthData("source");
   if (!authData) throw new Error("Not authenticated with Apple Music");
 
   const tracks: ITrack[] = [];
-  let nextUrl = `https://api.music.apple.com/v1/me/library/playlists/${playlistId}/tracks`;
+  let nextUrl = `${BASE_URL}/v1/me/library/playlists/${playlistId}/tracks?limit=50`;
 
   while (nextUrl) {
     const data = await retryWithExponentialBackoff<AppleResponse<AppleSong>>(
-      () => fetchAppleMusic(nextUrl, {}, authData),
+      () => fetchAppleMusic(nextUrl, { method: "GET" }, authData),
       {
         ...APPLE_RETRY_OPTIONS,
         treat404AsEmpty: true,
@@ -886,7 +827,7 @@ export async function fetchPlaylistTracks(
       onProgress([...tracks], progress);
     }
 
-    nextUrl = data.next || "";
+    nextUrl = data.next ? `${BASE_URL}${data.next}` : "";
   }
 
   return tracks;

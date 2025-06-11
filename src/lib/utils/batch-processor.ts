@@ -35,7 +35,9 @@ export async function processInBatches<T, R>(
     delayBetweenBatches = 100,
     onBatchStart,
     onBatchComplete,
-    onError,
+    onError = (error, batch) => {
+      throw new Error(`Batch processing error: ${error.message}`, { cause: { error, batch } });
+    },
   } = options;
 
   let added = 0;
