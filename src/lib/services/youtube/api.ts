@@ -3,6 +3,10 @@ import { YTMusicAdapter } from "./ytmusic-adapter";
 import type { ITrack, ILibraryData, IAlbum, SearchResult, TransferResult } from "@/types";
 import { retryWithExponentialBackoff } from "@/lib/utils/retry";
 import { processInBatches } from "@/lib/utils/batch-processor";
+import { sentryLogger } from "@/lib/utils/sentry-logger";
+
+// Note: YouTube API uses internal API routes (/api/youtube/*) rather than direct API calls
+// The base URL from services configuration is available as SERVICES.youtube.apiBaseUrl if needed
 
 interface YouTubePlaylistItem {
   id?: string;
@@ -116,23 +120,20 @@ async function findBestAlbumMatch(album: Pick<ITrack, "name" | "artist">): Promi
     );
 
     if (!data.matches?.length) {
+      sentryLogger.captureMatchingError(
+        "album_search",
+        "youtube",
+        new Error(`No search results found for album "${album.name}" by ${album.artist}`),
+        {
+          albumName: album.name,
+          albumArtist: album.artist,
+        }
+      );
       return null;
     }
 
     // Sort matches by score
     const matches = data.matches.sort((a, b) => b.score - a.score);
-
-    // Map matches to a more readable format for logging
-    console.log(
-      "Matches:",
-      matches.map(match => ({
-        score: match.score,
-        nameScore: match.nameScore,
-        artistScore: match.artistScore,
-        title: cleanYouTubeTitle(match.item.snippet.title),
-        channel: cleanYouTubeTitle(match.item.snippet.channelTitle || ""),
-      }))
-    );
 
     // Return the ID if we have a good match (score >= 0.7)
     const bestMatch = matches[0];
@@ -141,7 +142,10 @@ async function findBestAlbumMatch(album: Pick<ITrack, "name" | "artist">): Promi
     }
     return null;
   } catch (error) {
-    console.error("[MATCHING] Error finding best album match:", error);
+    sentryLogger.captureMatchingError("album_search", "youtube", error, {
+      albumName: album.name,
+      albumArtist: album.artist,
+    });
     return null;
   }
 }
@@ -164,7 +168,7 @@ export async function findMatchingAlbums(
     );
     return results;
   } catch (error) {
-    console.error("[MATCHING] Error finding matching albums:", error);
+    sentryLogger.captureMatchingError("album_search", "youtube", error, {});
     return albums.map(album => ({ ...album }));
   }
 }
@@ -207,14 +211,7 @@ export async function search(
         items: tracks,
         batchSize: 5,
         delayBetweenBatches: 200,
-        onBatchStart: (batchNumber, totalBatches) => {
-          console.log(`[YOUTUBE] Processing search batch ${batchNumber}/${totalBatches}`);
-        },
-        onError: (error, batch) => {
-          console.error("[YOUTUBE] Error searching tracks batch:", error);
-          unmatched += batch.length;
-          results.push(...batch.map(track => ({ ...track })));
-        },
+        onBatchStart: () => {},
       }
     );
 
@@ -225,7 +222,7 @@ export async function search(
       tracks: results,
     };
   } catch (error) {
-    console.error("[SEARCH] Error searching tracks:", error);
+    sentryLogger.captureMatchingError("track_search", "youtube", error, {});
     return {
       matched: 0,
       unmatched: tracks.length,
@@ -317,12 +314,7 @@ export async function createPlaylistWithTracks(
         items: validTracks,
         batchSize: 1,
         delayBetweenBatches: 200,
-        onBatchStart: (batchNumber, totalBatches) => {
-          console.log(`[YOUTUBE] Processing playlist tracks batch ${batchNumber}/${totalBatches}`);
-        },
-        onError: error => {
-          console.error("[YOUTUBE] Error adding tracks to playlist:", error);
-        },
+        onBatchStart: () => {},
       }
     );
 
@@ -331,13 +323,7 @@ export async function createPlaylistWithTracks(
       playlistId,
     };
   } catch (error) {
-    console.error("[PLAYLIST] Error creating playlist:", error);
-    return {
-      added: 0,
-      failed: tracks.length,
-      total: tracks.length,
-      playlistId: null,
-    };
+    throw error;
   }
 }
 
@@ -348,7 +334,6 @@ export async function fetchPlaylistTracks(
   playlistId: string,
   onProgress?: (tracks: ITrack[], progress: number) => void
 ): Promise<ITrack[]> {
-  console.log("[YOUTUBE] Fetching playlist tracks:", playlistId);
   try {
     const authData = await getYouTubeAuthData("source");
     if (!authData) throw new Error("Not authenticated with YouTube");
@@ -421,8 +406,7 @@ export async function fetchPlaylistTracks(
 
     return tracks;
   } catch (error) {
-    console.error("[PLAYLIST] Error getting playlist:", error);
-    return [];
+    throw error;
   }
 }
 
@@ -773,14 +757,7 @@ export async function searchAlbums(
         items: albums,
         batchSize: 3,
         delayBetweenBatches: 300,
-        onBatchStart: (batchNumber, totalBatches) => {
-          console.log(`[YOUTUBE] Processing album search batch ${batchNumber}/${totalBatches}`);
-        },
-        onError: (error, batch) => {
-          console.error("[YOUTUBE] Error searching albums batch:", error);
-          unmatched += batch.length;
-          results.push(...batch.map(album => ({ ...album, tracks: [], targetId: undefined })));
-        },
+        onBatchStart: () => {},
       }
     );
 
@@ -791,7 +768,7 @@ export async function searchAlbums(
       albums: results,
     };
   } catch (error) {
-    console.error("[SEARCH] Error searching albums:", error);
+    sentryLogger.captureMatchingError("album_search", "youtube", error, {});
     return {
       matched: 0,
       unmatched: albums.length,
@@ -832,13 +809,7 @@ export async function addTracksToLibrary(tracks: ITrack[]): Promise<TransferResu
       playlistId: playlistId.playlistId,
     };
   } catch (error) {
-    console.error("[LIBRARY] Error adding tracks to library:", error);
-    return {
-      added: 0,
-      failed: tracks.length,
-      total: tracks.length,
-      playlistId: null,
-    };
+    throw error;
   }
 }
 

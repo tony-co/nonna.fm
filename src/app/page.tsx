@@ -11,8 +11,7 @@ import { clearAllServiceData } from "@/lib/auth/utils";
 import { initiateSpotifyAuth } from "@/lib/services/spotify/auth";
 import { initiateYouTubeAuth } from "@/lib/services/youtube/auth";
 import { authorizeAppleMusic } from "@/lib/services/apple/api";
-import { SERVICES, getAvailableServices } from "@/config/services";
-import { createPortal } from "react-dom";
+import { SERVICES, getAvailableServices, SERVICE_STATUS } from "@/config/services";
 import { DeezerConnectModal } from "@/components/modals/DeezerConnectModal";
 import { SpotifyConsentModal } from "@/components/modals/SpotifyConsentModal";
 
@@ -22,7 +21,6 @@ function HomePageContent() {
   const error = searchParams.get("error");
   const [isDeezerModalOpen, setIsDeezerModalOpen] = useState(false);
   const [isSpotifyConsentModalOpen, setIsSpotifyConsentModalOpen] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     // Clear all service data if there was an error
@@ -69,18 +67,6 @@ function HomePageContent() {
   const openDeezerModal = (): void => {
     clearAllServiceData();
     setIsDeezerModalOpen(true);
-  };
-
-  const handleMouseEnter = (event: React.MouseEvent<HTMLSpanElement>): void => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    setTooltipPosition({
-      x: rect.left + rect.width / 2,
-      y: rect.top - 8,
-    });
-  };
-
-  const handleMouseLeave = (): void => {
-    setTooltipPosition(null);
   };
 
   return (
@@ -158,7 +144,7 @@ function HomePageContent() {
                     }
                     className="group flex h-[180px] w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-3xl bg-indigo-100 px-5 py-5 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-indigo-200 dark:bg-indigo-950 dark:hover:bg-indigo-900/70"
                   >
-                    <service.image className="h-12 w-12" />
+                    <service.image className="h-12 w-12" size={48} />
                     <span className="text-text text-center text-base font-semibold">
                       Connect with
                       <br />
@@ -225,64 +211,45 @@ function HomePageContent() {
                   We support major music streaming platforms, with more to come.
                 </p>
                 <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
-                  {Object.values(SERVICES).map(service => (
-                    <div
-                      key={service.id}
-                      className="group relative overflow-hidden rounded-2xl border border-indigo-200/30 bg-gradient-to-br from-indigo-100/80 via-white to-indigo-50/80 p-6 shadow-sm transition-all duration-200 hover:shadow-md dark:border-white/5 dark:from-indigo-950/50 dark:via-indigo-950/50 dark:to-indigo-950/50"
-                    >
-                      <div className="relative flex flex-col items-center gap-4">
-                        <div className="h-16 w-16 p-2">
-                          <service.image className="h-full w-full" />
+                  {Object.values(SERVICES)
+                    .filter(service => service.status !== SERVICE_STATUS.OFF)
+                    .map(service => (
+                      <div
+                        key={service.id}
+                        className="group relative overflow-hidden rounded-2xl border border-indigo-200/30 bg-gradient-to-br from-indigo-100/80 via-white to-indigo-50/80 p-6 shadow-sm transition-all duration-200 hover:shadow-md dark:border-white/5 dark:from-indigo-950/50 dark:via-indigo-950/50 dark:to-indigo-950/50"
+                      >
+                        <div className="relative flex flex-col items-center gap-4">
+                          <div className="h-16 w-16 p-2">
+                            <service.image className="h-full w-full" size={64} />
+                          </div>
+                          <h3 className="text-xl font-semibold text-indigo-950 dark:text-white">
+                            {service.name}
+                          </h3>
+                          <span
+                            className={`relative rounded-full border px-3 py-1 text-sm font-medium ${
+                              service.status === SERVICE_STATUS.AVAILABLE
+                                ? "border-green-300 bg-green-100 text-green-700 dark:border-green-600 dark:bg-green-900/30 dark:text-green-400"
+                                : service.status === SERVICE_STATUS.DEV
+                                  ? "border-amber-300 bg-amber-100 text-amber-700 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+                                  : service.status === SERVICE_STATUS.MAINTENANCE
+                                    ? "border-red-300 bg-red-100 text-red-700 dark:border-red-600 dark:bg-red-900/30 dark:text-red-400"
+                                    : "border-gray-300 bg-gray-100 text-gray-700 dark:border-gray-600 dark:bg-gray-900/30 dark:text-gray-400"
+                            }`}
+                          >
+                            {service.status === SERVICE_STATUS.AVAILABLE
+                              ? "Available"
+                              : service.status === SERVICE_STATUS.DEV
+                                ? "Coming Soon"
+                                : service.status === SERVICE_STATUS.MAINTENANCE
+                                  ? "Maintenance"
+                                  : service.status}
+                            {service.id === "deezer" &&
+                              service.status === SERVICE_STATUS.AVAILABLE &&
+                              "*"}
+                          </span>
                         </div>
-                        <h3 className="text-xl font-semibold text-indigo-950 dark:text-white">
-                          {service.name}
-                        </h3>
-                        <span
-                          className="relative rounded-full px-3 py-1 text-sm shadow-lg"
-                          style={{
-                            backgroundColor:
-                              service.status === "Available"
-                                ? "rgba(99, 102, 241, 0.1)"
-                                : service.status === "Coming Soon"
-                                  ? "rgba(99, 102, 241, 0.05)"
-                                  : "rgba(99, 102, 241, 0.05)",
-                            border:
-                              service.status === "Available"
-                                ? "1px solid rgba(99, 102, 241, 0.3)"
-                                : service.status === "Coming Soon"
-                                  ? "1px solid rgba(99, 102, 241, 0.2)"
-                                  : "1px solid rgba(99, 102, 241, 0.2)",
-                            color:
-                              service.status === "Available"
-                                ? "rgb(67, 56, 202)"
-                                : service.status === "Coming Soon"
-                                  ? "rgb(99, 102, 241)"
-                                  : "rgb(99, 102, 241)",
-                            ...(!service.status.startsWith("Available") && {
-                              dark: {
-                                backgroundColor: "rgba(8, 145, 178, 0.2)",
-                                borderColor: "rgba(8, 145, 178, 0.4)",
-                                color: "rgba(236, 254, 255, 0.9)",
-                              },
-                            }),
-                          }}
-                          onMouseEnter={
-                            service.id === "deezer" && service.status === "Available"
-                              ? handleMouseEnter
-                              : undefined
-                          }
-                          onMouseLeave={
-                            service.id === "deezer" && service.status === "Available"
-                              ? handleMouseLeave
-                              : undefined
-                          }
-                        >
-                          {service.status}
-                          {service.id === "deezer" && service.status === "Available" && "*"}
-                        </span>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             </div>
@@ -304,21 +271,6 @@ function HomePageContent() {
           />
         </main>
       </div>
-
-      {tooltipPosition &&
-        createPortal(
-          <div
-            className="pointer-events-none fixed z-[9999] -translate-x-1/2 -translate-y-full transform whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-xs text-white"
-            style={{
-              left: tooltipPosition.x,
-              top: tooltipPosition.y,
-            }}
-          >
-            Export only: We can export your Deezer tracks, but cannot import into Deezer
-            <div className="absolute left-1/2 top-full -translate-x-1/2 transform border-4 border-transparent border-t-gray-900"></div>
-          </div>,
-          document.body
-        )}
     </div>
   );
 }

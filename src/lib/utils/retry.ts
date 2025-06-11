@@ -1,3 +1,5 @@
+import { sentryLogger } from "./sentry-logger";
+
 /**
  * Configuration options for retry behavior
  */
@@ -14,26 +16,18 @@ export interface RetryOptions {
   additionalRetryStatusCodes?: number[];
   /** Allow handling of 404s as empty content for specific paths */
   treat404AsEmpty?: boolean;
-  /** Optional logger for warnings/errors (for Sentry later) */
-  logger?: {
-    warn: (...args: unknown[]) => void;
-    error?: (...args: unknown[]) => void;
-  };
 }
 
 /**
  * Default retry configuration values
  */
-const DEFAULT_RETRY_OPTIONS: Required<Omit<RetryOptions, "logger">> & {
-  logger: RetryOptions["logger"];
-} = {
+const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
   maxRetries: 5,
   initialRetryDelay: 1000, // 1 second
   maxRetryDelay: 64000, // 64 seconds
   jitterFactor: 0.1, // 10% jitter
   additionalRetryStatusCodes: [],
   treat404AsEmpty: false,
-  logger: undefined, // logger is optional, default to undefined here
 };
 
 /**
@@ -56,6 +50,7 @@ interface YouTubeErrorObject {
 /**
  * Utility function to retry a fetch request with exponential backoff
  * Handles rate limiting (429) and other retryable errors
+ * Uses Sentry logger for all logging operations
  *
  * @param fetchFn - Function that returns a Promise<Response>
  * @param options - Retry configuration options
@@ -72,10 +67,7 @@ export async function retryWithExponentialBackoff<T>(
     jitterFactor = DEFAULT_RETRY_OPTIONS.jitterFactor,
     additionalRetryStatusCodes = DEFAULT_RETRY_OPTIONS.additionalRetryStatusCodes,
     treat404AsEmpty = DEFAULT_RETRY_OPTIONS.treat404AsEmpty,
-    logger,
   } = options;
-  // Use console as default logger if none provided
-  const log = logger ?? console;
 
   let attempt = 0;
   let delay = initialRetryDelay;
@@ -135,10 +127,10 @@ export async function retryWithExponentialBackoff<T>(
             );
 
             if (isYouTubeServiceUnavailable) {
-              log.warn("YouTube SERVICE_UNAVAILABLE detected, retrying...");
+              sentryLogger.warn("YouTube SERVICE_UNAVAILABLE detected, retrying...");
 
               // Log the retry attempt
-              log.warn(`API request failed (attempt ${attempt + 1}/${maxRetries}):`, {
+              sentryLogger.warn(`API request failed (attempt ${attempt + 1}/${maxRetries})`, {
                 status: response.status,
                 statusText: response.statusText,
                 reason: "SERVICE_UNAVAILABLE",
@@ -156,7 +148,7 @@ export async function retryWithExponentialBackoff<T>(
           }
         } catch (e) {
           // If we couldn't parse the error JSON, just continue with normal error handling
-          log.warn("Could not parse response JSON for 409 error:", e);
+          sentryLogger.warn("Could not parse response JSON for 409 error", { error: e });
         }
       }
 
@@ -164,20 +156,29 @@ export async function retryWithExponentialBackoff<T>(
       if (nonRetryableStatusCodes.has(response.status)) {
         // Special handling for 404 responses that should be treated as empty
         if (response.status === 404 && treat404AsEmpty) {
-          log.warn("Resource not found but treating as empty result per configuration");
           return { data: [] } as T;
         }
-        if (log.error)
-          log.error(
-            new Error(`Request failed with status ${response.status}: ${response.statusText}`)
-          );
-        throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
+        const error = new Error(
+          `Request failed with status ${response.status}: ${response.statusText}`
+        );
+        sentryLogger.captureException(error, {
+          tags: {
+            category: "api",
+            statusCode: response.status.toString(),
+            retryable: "false",
+          },
+          extra: {
+            status: response.status,
+            statusText: response.statusText,
+          },
+        });
+        throw error;
       }
 
       // For errors with status codes that should be retried
       if (retryableStatusCodes.has(response.status)) {
         // Log the retry attempt
-        log.warn(`API request failed (attempt ${attempt + 1}/${maxRetries}):`, {
+        sentryLogger.warn(`API request failed (attempt ${attempt + 1}/${maxRetries})`, {
           status: response.status,
           statusText: response.statusText,
           retryIn: delay,
@@ -203,17 +204,30 @@ export async function retryWithExponentialBackoff<T>(
 
       // Don't retry if it's a non-retryable status code
       if (isNonRetryableStatusCode) {
-        if (log.error) log.error(error);
+        sentryLogger.captureException(error);
         throw error;
       }
 
       // If it's the last attempt, throw the error
       if (attempt === maxRetries - 1) {
-        if (log.error) log.error(error);
+        sentryLogger.captureException(error, {
+          tags: {
+            category: "api",
+            finalAttempt: "true",
+          },
+          extra: {
+            attempt: attempt + 1,
+            maxRetries,
+          },
+        });
         throw error;
       }
 
-      log.warn(`API request error (attempt ${attempt + 1}/${maxRetries}):`, error);
+      sentryLogger.warn(`API request error (attempt ${attempt + 1}/${maxRetries})`, {
+        error: error instanceof Error ? error.message : String(error),
+        attempt: attempt + 1,
+        maxRetries,
+      } as Record<string, unknown>);
       await new Promise(resolve => setTimeout(resolve, addJitter(delay, jitterFactor)));
       delay = Math.min(delay * 2, maxRetryDelay);
       attempt++;

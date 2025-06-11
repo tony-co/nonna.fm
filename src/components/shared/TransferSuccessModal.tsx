@@ -95,7 +95,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
             <div className="flex items-center gap-3">
               <span className="text-xl font-medium">Enjoy your {totalTransferred} tracks on</span>
               <div className="flex items-center gap-2">
-                <targetService.image size={28} />
+                <targetService.image className="h-8 w-8" size={28} />
                 <span className="text-xl font-medium" style={{ color: targetService.color }}>
                   {targetService.name}
                 </span>
