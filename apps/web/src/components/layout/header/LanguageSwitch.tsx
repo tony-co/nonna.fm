@@ -73,12 +73,11 @@ export const LanguageSwitch = () => {
             <button
               key={lang.code}
               onClick={() => handleLanguageSelect(lang.code)}
-              className={`w-full px-4 py-2 text-left text-sm transition-colors
-                ${
-                  lang.code === selectedLang
-                    ? "bg-indigo-50/50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
-                    : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5"
-                }`}
+              className={`w-full px-4 py-2 text-left text-sm transition-colors ${
+                lang.code === selectedLang
+                  ? "bg-indigo-50/50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
+                  : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5"
+              }`}
             >
               {lang.name}
             </button>

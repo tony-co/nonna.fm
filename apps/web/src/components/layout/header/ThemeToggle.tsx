@@ -21,26 +21,16 @@ export function ThemeToggle() {
     <button
       onClick={toggleTheme}
       data-testid="theme-toggle"
-      className={`
-        relative inline-flex h-[30px] w-[60px] items-center justify-between rounded-full p-0.5
-        ${
-          theme === "light"
-            ? "bg-gray-300/60 hover:bg-gray-300"
-            : "bg-indigo-950/60 hover:bg-indigo-950"
-        }
-        focus-visible:ring-primary-500/70 cursor-pointer
-        border-0 transition-colors duration-200
-        focus:outline-none focus-visible:ring-2
-      `}
+      className={`relative inline-flex h-[30px] w-[60px] items-center justify-between rounded-full p-0.5 ${
+        theme === "light"
+          ? "bg-gray-300/60 hover:bg-gray-300"
+          : "bg-indigo-950/60 hover:bg-indigo-950"
+      } focus-visible:ring-primary-500/70 cursor-pointer border-0 transition-colors duration-200 focus:outline-none focus-visible:ring-2`}
       aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
     >
       {/* Sliding background */}
       <span
-        className={`
-          absolute h-[26px] w-[26px] rounded-full
-          ${theme === "light" ? "translate-x-0 bg-gray-100" : "translate-x-[30px] bg-indigo-900"}
-          transform transition-all duration-200 ease-out
-        `}
+        className={`absolute h-[26px] w-[26px] rounded-full ${theme === "light" ? "translate-x-0 bg-gray-100" : "translate-x-[30px] bg-indigo-900"} transform transition-all duration-200 ease-out`}
       />
 
       {/* Sun icon - left side */}
@@ -54,11 +44,7 @@ export function ThemeToggle() {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className={`
-          relative z-10 ml-1.5
-          ${theme === "light" ? "text-gray-800" : "text-gray-500"}
-          transition-colors duration-200
-        `}
+        className={`relative z-10 ml-1.5 ${theme === "light" ? "text-gray-800" : "text-gray-500"} transition-colors duration-200`}
       >
         <circle cx="12" cy="12" r="5" />
         <line x1="12" y1="1" x2="12" y2="3" />
@@ -82,11 +68,7 @@ export function ThemeToggle() {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className={`
-          relative z-10 mr-1.5
-          ${theme === "light" ? "text-gray-400" : "text-indigo-200"}
-          transition-colors duration-200
-        `}
+        className={`relative z-10 mr-1.5 ${theme === "light" ? "text-gray-400" : "text-indigo-200"} transition-colors duration-200`}
       >
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
       </svg>

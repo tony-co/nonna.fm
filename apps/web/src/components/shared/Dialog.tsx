@@ -86,8 +86,7 @@ export default function Dialog({
         // Dialog box: fullscreen on mobile, modal on sm+
         // Use flex-col so header stays fixed and content scrolls if needed
         // Increased dark mode background opacity from 80% to 95% for better readability
-        className="dark:bg-[var(--color-indigo-990)]/95 lg:dark:bg-[var(--color-indigo-990)]/95 mx-0 flex h-full max-h-none w-full max-w-none flex-col rounded-none border-none
-          bg-white p-0 shadow-none lg:mx-4 lg:h-auto lg:max-h-[85vh] lg:max-w-2xl lg:rounded-xl lg:border lg:border-gray-200 lg:bg-white lg:p-0 lg:shadow"
+        className="dark:bg-[var(--color-indigo-990)]/95 lg:dark:bg-[var(--color-indigo-990)]/95 mx-0 flex h-full max-h-none w-full max-w-none flex-col rounded-none border-none bg-white p-0 shadow-none lg:mx-4 lg:h-auto lg:max-h-[85vh] lg:max-w-2xl lg:rounded-xl lg:border lg:border-gray-200 lg:bg-white lg:p-0 lg:shadow"
       >
         {/* Dialog header: matches Header height and close button on mobile */}
         <div className="flex h-14 items-center justify-between border-b border-gray-100 px-4 py-0 lg:h-16 lg:px-6 dark:border-gray-800">

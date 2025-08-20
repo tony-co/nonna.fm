@@ -25,10 +25,7 @@ export default async function LibraryHomePage({ params }: LibraryHomePageProps) 
         animation: "fadeIn 0.5s ease-out",
       }}
     >
-      <h1
-        className="mt-6
-      bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-2xl font-bold text-transparent dark:from-indigo-300 dark:to-purple-300"
-      >
+      <h1 className="mt-6 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-2xl font-bold text-transparent dark:from-indigo-300 dark:to-purple-300">
         How it works
       </h1>
 

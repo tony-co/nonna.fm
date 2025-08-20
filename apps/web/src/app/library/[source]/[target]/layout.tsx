@@ -18,7 +18,7 @@ interface LibraryLayoutProps {
 export default async function LibraryLayout({ children, params }: LibraryLayoutProps) {
   // Next.js 15 async params handling
   const { source, target } = await params;
-  
+
   // Type assertion for MusicService
   const sourceService = source as MusicService;
   const targetService = target as MusicService;

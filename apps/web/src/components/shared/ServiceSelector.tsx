@@ -1,5 +1,10 @@
 import { FC, useState, useEffect } from "react";
-import { getAvailableServices, getServiceById, ServiceConfig, SERVICE_STATUS } from "@/config/services";
+import {
+  getAvailableServices,
+  getServiceById,
+  ServiceConfig,
+  SERVICE_STATUS,
+} from "@/config/services";
 import { MusicService } from "@/types";
 
 interface ServiceSelectorProps {
@@ -77,12 +82,11 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
           <div className="relative">
             <button
               onClick={() => !isProcessing && setIsOpen(!isOpen)}
-              className={`dark:bg-indigo-990 flex w-full items-center gap-3 rounded-xl border bg-white p-3 transition-all duration-200 lg:gap-4 lg:p-4
-                ${
-                  !selectedService
-                    ? "animate-pulse border-indigo-500 ring-2 ring-indigo-500/20"
-                    : "border-gray-200 hover:border-indigo-500 hover:ring-2 hover:ring-indigo-500/10 dark:border-gray-800 dark:hover:border-indigo-500"
-                }`}
+              className={`dark:bg-indigo-990 flex w-full items-center gap-3 rounded-xl border bg-white p-3 transition-all duration-200 lg:gap-4 lg:p-4 ${
+                !selectedService
+                  ? "animate-pulse border-indigo-500 ring-2 ring-indigo-500/20"
+                  : "border-gray-200 hover:border-indigo-500 hover:ring-2 hover:ring-indigo-500/10 dark:border-gray-800 dark:hover:border-indigo-500"
+              }`}
               disabled={isProcessing}
             >
               {selectedService ? (
@@ -172,12 +176,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
                         key={service.id}
                         onClick={() => handleServiceSelect(service)}
                         disabled={isDisabled}
-                        className={`
-                          flex w-full items-center gap-3 p-3 transition-all duration-200 lg:gap-4 lg:p-4
-                          ${!isDisabled ? "dark:hover:bg-indigo-970 cursor-pointer hover:bg-gray-50" : "cursor-not-allowed opacity-50"}
-                          ${selectedService?.id === service.id ? "bg-gray-50 dark:bg-gray-800" : ""}
-                          group relative
-                        `}
+                        className={`flex w-full items-center gap-3 p-3 transition-all duration-200 lg:gap-4 lg:p-4 ${!isDisabled ? "dark:hover:bg-indigo-970 cursor-pointer hover:bg-gray-50" : "cursor-not-allowed opacity-50"} ${selectedService?.id === service.id ? "bg-gray-50 dark:bg-gray-800" : ""} group relative`}
                       >
                         <div className="flex h-8 w-8 items-center justify-center lg:h-10 lg:w-10">
                           <service.image className="h-6 w-6" size={24} />

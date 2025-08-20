@@ -177,12 +177,11 @@ export const LibrarySidebar: FC = () => {
       {/* Liked Songs Section */}
       <div
         // Add margin-bottom to separate from next item, and reduce vertical padding
-        className={`group mb-1 flex cursor-pointer items-center gap-4 rounded-lg px-2.5 py-2 transition-all duration-200
-            ${
-              selectedLikedSongsCount === likedSongsCount && likedSongsCount > 0
-                ? "bg-indigo-100/60 group-hover:bg-indigo-200/80 dark:bg-indigo-900/40 dark:group-hover:bg-indigo-800/60"
-                : "hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
-            }`}
+        className={`group mb-1 flex cursor-pointer items-center gap-4 rounded-lg px-2.5 py-2 transition-all duration-200 ${
+          selectedLikedSongsCount === likedSongsCount && likedSongsCount > 0
+            ? "bg-indigo-100/60 group-hover:bg-indigo-200/80 dark:bg-indigo-900/40 dark:group-hover:bg-indigo-800/60"
+            : "hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
+        }`}
         onClick={handleLikedSongsClick}
         role="button"
         aria-label="View Liked Songs"
@@ -233,12 +232,11 @@ export const LibrarySidebar: FC = () => {
       {!isYouTubeService(source) && !isYouTubeService(target) && (
         <div
           // Add margin-bottom to separate from next item, and reduce vertical padding
-          className={`group mb-1 flex cursor-pointer items-center gap-4 rounded-lg px-2.5 py-2 transition-all duration-200
-                ${
-                  selectedAlbumsCount === albumsCount && albumsCount > 0
-                    ? "bg-indigo-100/60 group-hover:bg-indigo-200/80 dark:bg-indigo-900/40 dark:group-hover:bg-indigo-800/60"
-                    : "hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
-                }`}
+          className={`group mb-1 flex cursor-pointer items-center gap-4 rounded-lg px-2.5 py-2 transition-all duration-200 ${
+            selectedAlbumsCount === albumsCount && albumsCount > 0
+              ? "bg-indigo-100/60 group-hover:bg-indigo-200/80 dark:bg-indigo-900/40 dark:group-hover:bg-indigo-800/60"
+              : "hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
+          }`}
           onClick={handleAlbumsClick}
           role="button"
           aria-label="View Albums"
@@ -296,12 +294,11 @@ export const LibrarySidebar: FC = () => {
         <div
           key={playlist.id}
           // Add margin-bottom to separate from next item, except last; reduce vertical padding
-          className={`group flex cursor-pointer items-center gap-4 rounded-lg ${idx !== arr.length - 1 ? "mb-1" : ""} px-2.5 py-2 transition-all duration-200
-                ${
-                  selectedItems.playlists.has(playlist.id)
-                    ? "bg-indigo-100/60 group-hover:bg-indigo-200/80 dark:bg-indigo-900/40 dark:group-hover:bg-indigo-800/60"
-                    : "hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
-                }`}
+          className={`group flex cursor-pointer items-center gap-4 rounded-lg ${idx !== arr.length - 1 ? "mb-1" : ""} px-2.5 py-2 transition-all duration-200 ${
+            selectedItems.playlists.has(playlist.id)
+              ? "bg-indigo-100/60 group-hover:bg-indigo-200/80 dark:bg-indigo-900/40 dark:group-hover:bg-indigo-800/60"
+              : "hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
+          }`}
           onClick={() => handlePlaylistClick(playlist.id)}
           data-testid={`playlist-item-${playlist.id}`}
         >
