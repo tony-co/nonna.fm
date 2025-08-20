@@ -27,7 +27,7 @@ const inter = Inter({
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
-  const isLibraryPage = pathname?.startsWith("/library");
+  const isLibraryPage = pathname?.includes("/library/");
   const { itemTitle, minimalMobileHeader, showTitle } = useItemTitle();
   const params = useParams();
   const source = params?.source as string;

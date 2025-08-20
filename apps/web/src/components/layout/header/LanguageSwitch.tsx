@@ -1,45 +1,87 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { useLocale } from 'next-intl';
+import { usePathname, useRouter } from '@/i18n/navigation';
 
 const languages = [
   { code: "en", name: "English" },
-  { code: "zh", name: "简体中文" },
-  { code: "pt", name: "Português" },
-  { code: "ru", name: "Русский" },
+  { code: "fr", name: "Français" },
   { code: "es", name: "Español" },
-  { code: "ko", name: "한국어" },
-  { code: "fa", name: "فارسی" },
+  { code: "pt", name: "Português" },
+  { code: "de", name: "Deutsch" },
+  { code: "ja", name: "日本語" },
+  { code: "it", name: "Italiano" },
 ];
 
 export const LanguageSwitch = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedLang, setSelectedLang] = useState("en");
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const currentLocale = useLocale();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // Calculate dropdown position when opening
+  const updateDropdownPosition = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + 8, // 8px gap (mt-2)
+        right: window.innerWidth - rect.right, // Right-aligned
+      });
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current && 
+        !dropdownRef.current.contains(event.target as Node) &&
+        buttonRef.current && 
+        !buttonRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
 
+    const handleResize = () => {
+      if (isOpen) {
+        updateDropdownPosition();
+      }
+    };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    window.addEventListener("resize", handleResize);
+    
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [isOpen]);
 
   const handleLanguageSelect = (langCode: string) => {
-    setSelectedLang(langCode);
     setIsOpen(false);
-    // todo: handle language change
+    // Navigate to the same page but with different locale
+    router.replace(pathname, { locale: langCode });
   };
 
-  const selectedLanguage = languages.find(lang => lang.code === selectedLang);
+  const handleButtonClick = () => {
+    if (!isOpen) {
+      updateDropdownPosition();
+    }
+    setIsOpen(!isOpen);
+  };
+
+  const selectedLanguage = languages.find(lang => lang.code === currentLocale);
 
   return (
-    <div className="relative" ref={dropdownRef} style={{ zIndex: 100 }}>
+    <>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        ref={buttonRef}
+        onClick={handleButtonClick}
         data-testid="language-switch"
         className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-gray-800 transition-colors hover:text-gray-950 dark:text-indigo-300 dark:hover:text-indigo-200"
       >
@@ -64,17 +106,22 @@ export const LanguageSwitch = () => {
         </svg>
       </button>
 
-      {isOpen && (
+      {isOpen && createPortal(
         <div
+          ref={dropdownRef}
           data-testid="language-dropdown"
-          className="absolute right-0 top-full mt-2 w-40 rounded-xl border border-gray-100 bg-white py-2 shadow-lg backdrop-blur-lg dark:border-gray-800/50 dark:bg-gray-900/95"
+          className="fixed z-[9999] w-40 rounded-xl border border-gray-100 bg-white py-2 shadow-lg backdrop-blur-lg dark:border-gray-800/50 dark:bg-gray-900/95"
+          style={{
+            top: `${dropdownPosition.top}px`,
+            right: `${dropdownPosition.right}px`,
+          }}
         >
           {languages.map(lang => (
             <button
               key={lang.code}
               onClick={() => handleLanguageSelect(lang.code)}
               className={`w-full px-4 py-2 text-left text-sm transition-colors ${
-                lang.code === selectedLang
+                lang.code === currentLocale
                   ? "bg-indigo-50/50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
                   : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5"
               }`}
@@ -82,8 +129,9 @@ export const LanguageSwitch = () => {
               {lang.name}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 };

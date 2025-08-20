@@ -3,6 +3,7 @@
 import React from "react";
 import { TransferLimits } from "@/hooks/useTransferLimits";
 import { FREE_TIER_LIMIT, PREMIUM_TIER_LIMIT } from "@/lib/constants";
+import { useTranslations } from "next-intl";
 
 interface TransferLimitModalProps {
   selectedCount: number;
@@ -13,6 +14,7 @@ export function TransferLimitModal({ selectedCount, userStatus }: TransferLimitM
   const { dailyLimit, availableToday, resetInSeconds } = userStatus;
   const hasAvailableTransfers = availableToday > 0;
   const isSelectionOverLimit = selectedCount > availableToday;
+  const t = useTranslations('Transfer.limitModal');
 
   // Format reset time if available
   const resetTimeText = resetInSeconds
@@ -156,7 +158,7 @@ export function TransferLimitModal({ selectedCount, userStatus }: TransferLimitM
               </svg>
             </div>
             <span className="flex items-center gap-1.5">
-              <span>{PREMIUM_TIER_LIMIT} daily transfers</span>
+              <span>{PREMIUM_TIER_LIMIT} {t('dailyTransfers')}</span>
             </span>
           </li>
         </ul>
@@ -164,7 +166,7 @@ export function TransferLimitModal({ selectedCount, userStatus }: TransferLimitM
           disabled
           className="w-full cursor-not-allowed rounded-lg bg-gray-100 px-6 py-2.5 text-center font-medium text-gray-400 dark:bg-gray-800 dark:text-gray-500"
         >
-          Coming Soon
+          {t('comingSoon')}
         </button>
       </div>
     </div>

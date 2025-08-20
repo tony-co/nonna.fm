@@ -12,6 +12,7 @@ import { fetchPlaylistTracks } from "@/lib/musicApi";
 import React from "react";
 import { fetchingPlaylists } from "@/components/shared/TransferButton";
 import { LikedSongsIcon } from "@/components/icons/LikedSongsIcon";
+import { useTranslations } from "next-intl";
 
 // Main component
 export const LibrarySidebar: FC = () => {
@@ -30,6 +31,10 @@ export const LibrarySidebar: FC = () => {
     selectPlaylist,
     deselectPlaylist,
   } = useLibrarySelection();
+  
+  // Translation hooks
+  const tLibrary = useTranslations('Library');
+  const tTransfer = useTranslations('Transfer');
 
   // Tracking map to handle async operations - this is no longer needed as a ref
   // since we're using the shared fetchingPlaylists Set
@@ -170,8 +175,8 @@ export const LibrarySidebar: FC = () => {
   return (
     <div className="min-w-0 p-4">
       <div className="mb-4 mt-2">
-        <h1 className="mb-1 text-xl font-bold text-zinc-800 dark:text-white">Your library</h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">Select items to transfer</p>
+        <h1 className="mb-1 text-xl font-bold text-zinc-800 dark:text-white">{tLibrary('title')}</h1>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">{tLibrary('subtitle')}</p>
       </div>
 
       {/* Liked Songs Section */}
@@ -193,7 +198,7 @@ export const LibrarySidebar: FC = () => {
             totalCount={likedSongsCount}
             onChange={handleLikedSongsToggle}
             className=""
-            label="Liked Songs"
+            label={tLibrary('likedSongs')}
             testId="liked-songs-checkbox"
           />
         </div>
@@ -213,14 +218,14 @@ export const LibrarySidebar: FC = () => {
               currentTask && currentTask.type === "likedSongs" && isMatching ? "animate-pulse" : ""
             }`}
           >
-            Liked Songs
+            {tLibrary('likedSongs')}
           </p>
           <p className="truncate text-sm text-zinc-600 dark:text-zinc-400">
-            {likedSongsCount} songs
+            {likedSongsCount} {tLibrary('songs')}
             {/* Show unmatched count if any */}
             {unmatchedLikedSongsCount > 0 && (
               <span className="ml-1 text-red-500 dark:text-red-400">
-                • {unmatchedLikedSongsCount} unmatched
+                {tLibrary('unmatchedCount', { count: unmatchedLikedSongsCount })}
               </span>
             )}
           </p>
@@ -248,7 +253,7 @@ export const LibrarySidebar: FC = () => {
               totalCount={albumsCount}
               onChange={handleAlbumsToggle}
               className=""
-              label="Albums"
+              label={tTransfer('albums')}
               testId="albums-checkbox"
             />
           </div>
@@ -274,14 +279,14 @@ export const LibrarySidebar: FC = () => {
                 currentTask && currentTask.type === "albums" && isMatching ? "animate-pulse" : ""
               }`}
             >
-              Albums
+              {tTransfer('albums')}
             </p>
             <p className="truncate text-sm text-zinc-600 dark:text-zinc-400">
-              {albumsCount} albums
+              {albumsCount} {tTransfer('button.albums')}
               {/* Show unmatched count if any */}
               {unmatchedAlbumsCount > 0 && (
                 <span className="ml-1 text-red-500 dark:text-red-400">
-                  • {unmatchedAlbumsCount} unmatched
+                  {tLibrary('unmatchedCount', { count: unmatchedAlbumsCount })}
                 </span>
               )}
             </p>
@@ -349,7 +354,7 @@ export const LibrarySidebar: FC = () => {
               className="truncate text-sm text-zinc-600 dark:text-zinc-400"
               data-testid={`playlist-track-count-${playlist.id}`}
             >
-              {playlist.tracks?.length || playlist.trackCount} tracks
+              {playlist.tracks?.length || playlist.trackCount} {tLibrary('tracks')}
               {/* Show unmatched count if any */}
               {playlist.tracks &&
                 playlist.tracks.length > 0 &&
@@ -361,7 +366,7 @@ export const LibrarySidebar: FC = () => {
                   );
                   return unmatchedCount > 0 ? (
                     <span className="ml-1 text-red-500 dark:text-red-400">
-                      • {unmatchedCount} unmatched
+                      {tLibrary('unmatchedCount', { count: unmatchedCount })}
                     </span>
                   ) : null;
                 })()}

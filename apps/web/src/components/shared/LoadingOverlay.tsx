@@ -1,6 +1,10 @@
 import { NonnaLogo } from "../icons/NonnaLogo";
+import { useTranslations } from "next-intl";
 
-export const LoadingOverlay: React.FC = () => (
+export const LoadingOverlay: React.FC = () => {
+  const t = useTranslations('HomePage');
+  
+  return (
   <div className="backdrop-blur-xs fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/60">
     {/*
       Centered container for logo and spinner.
@@ -23,8 +27,9 @@ export const LoadingOverlay: React.FC = () => (
     </div>
     {/* Loading text directly below the logo/spinner, centered */}
     <div className="mb-16 mt-2 text-center">
-      <h2 className="animate-pulse text-xl font-normal text-white">Loading your library</h2>
-      <p className="mt-2 text-sm text-indigo-200">Just a moment while we get everything ready</p>
+      <h2 className="animate-pulse text-xl font-normal text-white">{t('loadingLibrary')}</h2>
+      <p className="mt-2 text-sm text-indigo-200">{t('loadingSubtitle')}</p>
     </div>
   </div>
-);
+  );
+};

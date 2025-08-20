@@ -30,9 +30,10 @@ if (!window.matchMedia) {
 import { vi } from "vitest";
 
 // Import and setup navigation mock
-import { mockNextNavigation } from "@/__tests__/testUtils";
+import { mockNextNavigation, mockI18nNavigation } from "@/__tests__/testUtils";
 import { mockNavigationImplementation } from "@/__tests__/testUtils";
 mockNextNavigation();
+mockI18nNavigation();
 
 // Mock useMatching hook
 import { useMatching, resetMocks as resetMatchingMocks } from "@/__mocks__/hooks/useMatching";
@@ -47,14 +48,15 @@ vi.mock("next/font/google", () => ({
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, beforeEach } from "vitest";
-import { LibraryClientContent } from "@/app/library/[source]/[target]/_components/LibraryClientContent";
-import { TestWrapper } from "@/__tests__/testUtils";
+import { LibraryClientContent } from "@/app/[locale]/library/[source]/[target]/_components/LibraryClientContent";
+import { TestWrapper, mockMessages } from "@/__tests__/testUtils";
 import { mockLibraryState } from "@/__mocks__/contexts/LibraryContext";
 import { Header } from "@/components/layout/Header";
 import { ItemTitleProvider, useItemTitle } from "@/contexts/ItemTitleContext";
 import { LibraryProvider } from "@/contexts/LibraryContext";
 import { TransferProvider } from "@/contexts/TransferContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { NextIntlClientProvider } from 'next-intl';
 
 // Mock the children component
 const MockChildren = () => <div data-testid="mock-children">Child Content</div>;
@@ -140,20 +142,22 @@ describe("LibraryClientContent", () => {
     // Render Header and LibraryClientContent directly, with only minimal required providers
     // This avoids a heavy custom TestLayout and keeps the test focused
     render(
-      <ThemeProvider>
-        <LibraryProvider>
-          <TransferProvider>
-            <ItemTitleProvider>
-              {/* Set minimalMobileHeader so Header renders back button */}
-              <SetMinimalMobileHeader />
-              <Header />
-              <LibraryClientContent source="spotify" _target="apple">
-                <MockChildren />
-              </LibraryClientContent>
-            </ItemTitleProvider>
-          </TransferProvider>
-        </LibraryProvider>
-      </ThemeProvider>
+      <NextIntlClientProvider messages={mockMessages} locale="en">
+        <ThemeProvider>
+          <LibraryProvider>
+            <TransferProvider>
+              <ItemTitleProvider>
+                {/* Set minimalMobileHeader so Header renders back button */}
+                <SetMinimalMobileHeader />
+                <Header />
+                <LibraryClientContent source="spotify" _target="apple">
+                  <MockChildren />
+                </LibraryClientContent>
+              </ItemTitleProvider>
+            </TransferProvider>
+          </LibraryProvider>
+        </ThemeProvider>
+      </NextIntlClientProvider>
     );
 
     const backButton = screen.getByTestId("back-to-library");

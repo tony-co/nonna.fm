@@ -8,6 +8,7 @@ import { useTransfer } from "@/contexts/TransferContext";
 import { useState } from "react";
 import { TransferSuccessModal } from "./TransferSuccessModal";
 import { MusicService } from "@/types";
+import { useTranslations } from "next-intl";
 
 // Track playlists that are currently being fetched
 export const fetchingPlaylists = new Set<string>();
@@ -24,6 +25,7 @@ export function TransferButton() {
     error: transferError,
   } = useTransferHook();
   const [isTransferring, setIsTransferring] = useState(false);
+  const t = useTranslations('Transfer.button');
 
   // Dynamically check if any selected playlist is currently being fetched (no memo, always up-to-date)
   const isFetchingPlaylists = Array.from(state.selectedItems.playlists).some(playlistId =>
@@ -48,22 +50,22 @@ export function TransferButton() {
   // Determine button text based on state
   const buttonText =
     isMatching || isFetchingPlaylists
-      ? "Finding Matches..."
+      ? t('findingMatches')
       : isTransferring
-        ? "Transferring..."
-        : "Start Transfer";
+        ? t('transferring')
+        : t('startTransfer');
 
   // Format summary text of selected items
   const getSummaryText = () => {
     const parts = [];
     if (state.selectedItems.tracks.size > 0) {
-      parts.push(`${state.selectedItems.tracks.size} liked tracks`);
+      parts.push(`${state.selectedItems.tracks.size} ${t('likedTracks')}`);
     }
     if (state.selectedItems.albums.size > 0) {
-      parts.push(`${state.selectedItems.albums.size} albums`);
+      parts.push(`${state.selectedItems.albums.size} ${t('albums')}`);
     }
     if (state.selectedItems.playlists.size > 0) {
-      parts.push(`${state.selectedItems.playlists.size} playlists`);
+      parts.push(`${state.selectedItems.playlists.size} ${t('playlists')}`);
     }
     return parts.join(", ");
   };
@@ -137,7 +139,7 @@ export function TransferButton() {
       <div className="flex items-center gap-4">
         {status && (
           <span className="text-sm text-gray-600 dark:text-gray-400">
-            {status.availableToday} transfers left
+            {status.availableToday} {t('transfersLeft')}
           </span>
         )}
         <button

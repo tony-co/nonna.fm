@@ -39,13 +39,18 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
-}): React.ReactElement {
+  params?: Promise<{ locale?: string }>;
+}): Promise<React.ReactElement> {
+  // Get locale from params, fallback to 'en' for root routes
+  const locale = params ? (await params).locale || 'en' : 'en';
+  
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <Script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js" />
         <script

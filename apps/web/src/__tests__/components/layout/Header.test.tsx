@@ -2,7 +2,38 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Header } from "@/components/layout/Header";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { TransferProvider } from "@/contexts/TransferContext";
+import { TestWrapper, mockI18nNavigation } from "@/__tests__/testUtils";
+
+// Mock next-intl hooks but keep NextIntlClientProvider real
+vi.mock('next-intl', async () => {
+  const actual = await vi.importActual('next-intl');
+  return {
+    ...actual,
+    useLocale: () => 'en',
+    useTranslations: () => (key: string) => key,
+  };
+});
+
+// Mock next/navigation completely
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+  usePathname: () => '/library/spotify/apple',
+  useParams: () => ({ source: 'spotify', target: 'apple' }),
+  useSearchParams: () => new URLSearchParams(),
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
+  notFound: vi.fn(),
+}));
+
+// Mock i18n navigation
+mockI18nNavigation();
 
 // Mock next/font/google
 vi.mock("next/font/google", () => ({
@@ -59,11 +90,11 @@ describe("Header", () => {
 
   it("renders the header with logo and navigation", () => {
     render(
-      <ThemeProvider>
-        <TransferProvider>
+      <TestWrapper>
+        <ThemeProvider>
           <Header />
-        </TransferProvider>
-      </ThemeProvider>
+        </ThemeProvider>
+      </TestWrapper>
     );
 
     // Check if the logo text is present
@@ -86,11 +117,11 @@ describe("Header", () => {
 
   it("starts with light theme by default", () => {
     render(
-      <ThemeProvider>
-        <TransferProvider>
+      <TestWrapper>
+        <ThemeProvider>
           <Header />
-        </TransferProvider>
-      </ThemeProvider>
+        </ThemeProvider>
+      </TestWrapper>
     );
 
     // Verify that dark mode class is not present initially
@@ -99,11 +130,11 @@ describe("Header", () => {
 
   it("toggles between light and dark themes when clicking the theme button", () => {
     render(
-      <ThemeProvider>
-        <TransferProvider>
+      <TestWrapper>
+        <ThemeProvider>
           <Header />
-        </TransferProvider>
-      </ThemeProvider>
+        </ThemeProvider>
+      </TestWrapper>
     );
 
     const themeToggle = screen.getByTestId("theme-toggle");
@@ -137,11 +168,11 @@ describe("Header", () => {
     // This ensures ThemeProvider sees the correct system preference on mount
 
     render(
-      <ThemeProvider>
-        <TransferProvider>
+      <TestWrapper>
+        <ThemeProvider>
           <Header />
-        </TransferProvider>
-      </ThemeProvider>
+        </ThemeProvider>
+      </TestWrapper>
     );
 
     // Should start with dark theme when system prefers dark

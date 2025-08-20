@@ -5,6 +5,7 @@ import { getServiceById } from "@/config/services";
 import { TransferResult } from "@/types";
 import { ArtworkImage } from "./ArtworkImage";
 import { ITrack, IAlbum, IPlaylist } from "@/types";
+import { useTranslations } from "next-intl";
 
 interface TransferSuccessModalProps {
   isOpen: boolean;
@@ -29,6 +30,9 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
   results,
   selectedData,
 }) => {
+  const t = useTranslations('Transfer.success');
+  const tLibrary = useTranslations('Library');
+  
   // Log when the modal is rendered
   useEffect(() => {
     console.log("TransferSuccessModal rendered:", {
@@ -63,16 +67,12 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
     ([_, result]) => result.playlistId
   );
 
-  const totalTransferred =
-    (results.likedSongs?.added || 0) +
-    (results.albums?.added || 0) +
-    Array.from(results.playlists.values()).reduce((sum, result) => sum + result.added, 0);
 
   return createPortal(
     <Dialog
       isOpen={isOpen}
       onClose={onClose}
-      title="Transfer Complete!"
+      title={t('title')}
       closeOnBackdropClick={false}
     >
       <div className="flex flex-col gap-6">
@@ -93,7 +93,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
               />
             </svg>
             <div className="flex items-center gap-3">
-              <span className="text-xl font-medium">Enjoy your {totalTransferred} tracks on</span>
+              <span className="text-xl font-medium">{t('ready')}</span>
               <div className="flex items-center gap-2">
                 <targetService.image className="h-8 w-8" size={28} />
                 <span className="text-xl font-medium" style={{ color: targetService.color }}>
@@ -106,7 +106,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
 
         <div className="flex flex-col gap-4">
           <h3 className="text-lg font-semibold text-zinc-800 dark:text-stone-200">
-            Your transferred music is ready!
+            {t('ready')}
           </h3>
           <div className="flex flex-col gap-3">
             {hasLikedSongs && selectedData.likedSongs.length > 0 && (
@@ -123,9 +123,9 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
                     type="liked"
                   />
                   <div>
-                    <div className="font-medium text-gray-900 dark:text-white">Liked Songs</div>
+                    <div className="font-medium text-gray-900 dark:text-white">{tLibrary('likedSongs')}</div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                      {results.likedSongs?.added} songs transferred
+                      {results.likedSongs?.added} {t('songsTransferred')}
                     </div>
                   </div>
                 </div>
@@ -155,9 +155,9 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
                 <div className="flex items-center gap-4">
                   <ArtworkImage src={selectedData.albums[0]?.artwork} alt="Albums" type="album" />
                   <div>
-                    <div className="font-medium text-gray-900 dark:text-white">Albums</div>
+                    <div className="font-medium text-gray-900 dark:text-white">{tLibrary('albums')}</div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                      {results.albums?.added} albums transferred
+                      {results.albums?.added} {t('albumsTransferred')}
                     </div>
                   </div>
                 </div>
@@ -231,7 +231,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
             onClick={onClose}
             className="rounded-lg bg-indigo-600 px-6 py-2.5 text-white transition-all duration-200 hover:bg-indigo-700 hover:shadow-md dark:bg-indigo-500 dark:hover:bg-indigo-600"
           >
-            Close
+            {t('close')}
           </button>
         </div>
       </div>

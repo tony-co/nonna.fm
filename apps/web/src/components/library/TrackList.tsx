@@ -5,6 +5,7 @@ import { useIsVisible } from "@/hooks/useIsVisible";
 import type { ITrack, IPlaylist } from "@/types";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import { StatusIcon } from "@/components/shared/StatusIcon";
+import { useTranslations } from "next-intl";
 
 interface TrackListProps {
   tracks: Array<ITrack>;
@@ -79,32 +80,38 @@ const TrackRow: FC<{
 };
 
 // Empty state component for empty playlists
-const EmptyPlaylistState: FC = () => (
-  <div className="flex flex-col items-center justify-center py-16 text-center">
-    {/* Simple playlist SVG illustration */}
-    <svg
-      width="96"
-      height="96"
-      viewBox="0 0 96 96"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="mb-6 text-indigo-400 dark:text-indigo-500"
-      aria-hidden="true"
-      role="img"
-    >
-      <rect x="12" y="24" width="72" height="48" rx="8" fill="currentColor" fillOpacity="0.08" />
-      <rect x="24" y="36" width="48" height="8" rx="2" fill="currentColor" fillOpacity="0.18" />
-      <rect x="24" y="50" width="32" height="8" rx="2" fill="currentColor" fillOpacity="0.18" />
-      <circle cx="72" cy="54" r="8" fill="currentColor" fillOpacity="0.18" />
-      <circle cx="72" cy="54" r="4" fill="currentColor" fillOpacity="0.35" />
-    </svg>
-    <div className="text-lg font-semibold text-slate-700 dark:text-slate-200">
-      This playlist seems to be empty
+const EmptyPlaylistState: FC = () => {
+  const t = useTranslations('Library.trackList');
+  
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      {/* Simple playlist SVG illustration */}
+      <svg
+        width="96"
+        height="96"
+        viewBox="0 0 96 96"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="mb-6 text-indigo-400 dark:text-indigo-500"
+        aria-hidden="true"
+        role="img"
+      >
+        <rect x="12" y="24" width="72" height="48" rx="8" fill="currentColor" fillOpacity="0.08" />
+        <rect x="24" y="36" width="48" height="8" rx="2" fill="currentColor" fillOpacity="0.18" />
+        <rect x="24" y="50" width="32" height="8" rx="2" fill="currentColor" fillOpacity="0.18" />
+        <circle cx="72" cy="54" r="8" fill="currentColor" fillOpacity="0.18" />
+        <circle cx="72" cy="54" r="4" fill="currentColor" fillOpacity="0.35" />
+      </svg>
+      <div className="text-lg font-semibold text-slate-700 dark:text-slate-200">
+        {t('emptyPlaylist')}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const TrackList: FC<TrackListProps> = ({ tracks, selection = new Set(), playlist }) => {
+  const t = useTranslations('Library.trackList');
+  
   // Show empty state if no tracks
   if (!tracks || tracks.length === 0) {
     return <EmptyPlaylistState />;
@@ -118,17 +125,17 @@ export const TrackList: FC<TrackListProps> = ({ tracks, selection = new Set(), p
         role="row"
       >
         <div className="hidden items-center lg:flex" role="columnheader">
-          #
+          {t('number')}
         </div>
         <div className="flex items-center" role="columnheader">
-          Title
+          {t('title')}
         </div>
         <div className="flex items-center" role="columnheader"></div>
         <div className="hidden items-center lg:flex" role="columnheader">
-          Album
+          {t('album')}
         </div>
         <div className="flex items-center justify-end" role="columnheader">
-          Status
+          {t('status')}
         </div>
       </div>
 

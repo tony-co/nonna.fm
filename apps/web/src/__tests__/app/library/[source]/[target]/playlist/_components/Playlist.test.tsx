@@ -25,7 +25,7 @@ vi.mock("@/lib/auth/constants", () => ({
 import React from "react";
 import { render, screen, within } from "@testing-library/react";
 import { describe, it, expect, beforeEach } from "vitest";
-import { Playlist } from "@/app/library/[source]/[target]/playlist/[id]/_components/Playlist";
+import { Playlist } from "@/app/[locale]/library/[source]/[target]/playlist/[id]/_components/Playlist";
 import { TestWrapper } from "@/__tests__/testUtils";
 import { mockPlaylists } from "@/__mocks__/data/libraryData";
 import { MusicService } from "@/types";

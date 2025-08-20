@@ -1,19 +1,20 @@
-import { useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import Dialog from "@/components/shared/Dialog";
 import { createPortal } from "react-dom";
+import { useLocale } from 'next-intl';
+import { usePathname, useRouter } from '@/i18n/navigation';
 
 const GITHUB_BASE_URL = "https://github.com/tony-co/nonna.fm/blob/main";
 const GITHUB_REPO = "https://github.com/tony-co/nonna.fm";
 
 const languages = [
   { code: "en", name: "English" },
-  { code: "zh", name: "简体中文" },
-  { code: "pt", name: "Português" },
-  { code: "ru", name: "Русский" },
+  { code: "fr", name: "Français" },
   { code: "es", name: "Español" },
-  { code: "ko", name: "한국어" },
-  { code: "fa", name: "فارسی" },
+  { code: "pt", name: "Português" },
+  { code: "de", name: "Deutsch" },
+  { code: "ja", name: "日本語" },
+  { code: "it", name: "Italiano" },
 ];
 
 interface MobileMenuProps {
@@ -22,12 +23,14 @@ interface MobileMenuProps {
 }
 
 export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
-  const [selectedLang, setSelectedLang] = useState("en");
+  const currentLocale = useLocale();
+  const pathname = usePathname();
+  const router = useRouter();
   const { theme, toggleTheme } = useTheme();
 
   const handleLanguageSelect = (langCode: string) => {
-    setSelectedLang(langCode);
-    // todo: handle language change
+    // Navigate to the same page but with different locale
+    router.replace(pathname, { locale: langCode });
   };
 
   return (
@@ -71,7 +74,7 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
                   <span className="text-[17px]">Language</span>
                 </div>
                 <select
-                  value={selectedLang}
+                  value={currentLocale}
                   onChange={e => handleLanguageSelect(e.target.value)}
                   className="w-full rounded-lg bg-gray-100 px-3 py-2 text-[15px] text-gray-900 transition-colors hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
                   aria-label="Select language"
