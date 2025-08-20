@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 190, "column": 0}, "map": {"version":3,"sources":["file:///Users/tcosentino/projects/nonna.fm/apps/web/src/app/global-error.tsx"],"sourcesContent":["\"use client\";\n\nimport * as Sentry from \"@sentry/nextjs\";\nimport NextError from \"next/error\";\nimport { useEffect } from \"react\";\n\nexport default function GlobalError({ error }: { error: Error & { digest?: string } }) {\n  useEffect(() => {\n    Sentry.captureException(error);\n  }, [error]);\n\n  return (\n    <html>\n      <body>\n        {/* `NextError` is the default Next.js error page component. Its type\n        definition requires a `statusCode` prop. However, since the App Router\n        does not expose status codes for errors, we simply pass 0 to render a\n        generic error message. */}\n        <NextError statusCode={0} />\n      </body>\n    </html>\n  );\n}\n"],"names":[],"mappings":";;;;;AAEA;AACA;AACA;AAJA;;;;;AAMe,SAAS,YAAY,EAAE,KAAK,EAA0C;IACnF,IAAA,iaAAS,EAAC;QACR,gYAAuB,CAAC;IAC1B,GAAG;QAAC;KAAM;IAEV,qBACE,6bAAC;kBACC,cAAA,6bAAC;sBAKC,cAAA,6bAAC,uVAAS;gBAAC,YAAY;;;;;;;;;;;;;;;;AAI/B","debugId":null}}]
-}

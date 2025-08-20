@@ -1,8 +1,0 @@
-{
-  "/api/user/status/route": "app/api/user/status/route.js",
-  "/callback/spotify/page": "app/callback/spotify/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/library/[source]/[target]/page": "app/library/[source]/[target]/page.js",
-  "/page": "app/page.js",
-  "/source/page": "app/source/page.js"
-}

@@ -1,17 +1,17 @@
 # Dependencies
 node_modules
-/.pnp
+.pnp
 .pnp.js
 
 # Testing
-/coverage
+coverage/
 
 # Next.js
-/.next/
-/out/
+.next/
+out/
 
 # Production
-/build
+build/
 
 # Environment files
 .env*.local
@@ -20,7 +20,7 @@ node_modules
 keys/
 scripts/
 certificates/
-/tokens/
+tokens/
 
 # Debug logs
 npm-debug.log*
@@ -46,5 +46,6 @@ next-env.d.ts
 
 # Cache
 .cache/
-.turbo
-certificates
+.turbo/
+certificates/
+tokens/

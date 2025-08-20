@@ -1,9 +1,0 @@
-{
-  "[project]/apps/web/src/components/shared/Dialog.tsx [app-client] (ecmascript, next/dynamic entry)": {
-    "id": "[project]/apps/web/src/components/shared/Dialog.tsx [app-client] (ecmascript, next/dynamic entry)",
-    "files": [
-      "static/chunks/apps_web_src_components_shared_Dialog_tsx_ec14ab47._.js",
-      "static/chunks/apps_web_src_components_shared_Dialog_tsx_fbba1785._.js"
-    ]
-  }
-}

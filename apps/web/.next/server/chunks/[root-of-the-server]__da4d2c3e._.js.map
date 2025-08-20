@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 190, "column": 0}, "map": {"version":3,"sources":["file:///Users/tcosentino/projects/nonna.fm/apps/web/src/instrumentation.ts"],"sourcesContent":[";globalThis[\"_sentryNextJsVersion\"] = \"15.5.0\";import * as Sentry from \"@sentry/nextjs\";\n\nexport async function register(): Promise<void> {\n  if (process.env.NEXT_RUNTIME === \"nodejs\") {\n    await import(\"../sentry.server.config\");\n  }\n\n  if (process.env.NEXT_RUNTIME === \"edge\") {\n    await import(\"../sentry.edge.config\");\n  }\n}\n\nexport const onRequestError = Sentry.captureRequestError;\n"],"names":[],"mappings":";;;;;;AAA+C;AAA9C,UAAU,CAAC,uBAAuB,GAAG;;AAE/B,eAAe;IACpB,wCAA2C;QACzC;IACF;IAEA;;AAGF;AAEO,MAAM,iBAAiB,wYAA0B","debugId":null}}]
-}
