@@ -154,8 +154,6 @@ export const SERVICES: Record<string, ServiceConfig> = (() => {
 // In non-production environments, also includes DEV services for testing
 export const getAvailableServices = (): ServiceConfig[] => {
   try {
-    const isProduction = process.env.NODE_ENV === "production";
-
     const availableServices = Object.values(SERVICES).filter(service => {
       if (service.status === SERVICE_STATUS.AVAILABLE) {
         return true;

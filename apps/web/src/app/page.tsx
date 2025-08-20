@@ -11,7 +11,7 @@ import { clearAllServiceData } from "@/lib/auth/utils";
 import { initiateSpotifyAuth } from "@/lib/services/spotify/auth";
 import { initiateYouTubeAuth } from "@/lib/services/youtube/auth";
 import { authorizeAppleMusic } from "@/lib/services/apple/api";
-import { SERVICES, getAvailableServices, SERVICE_STATUS } from "@/config/services";
+import { getAvailableServices } from "@/config/services";
 import { DeezerConnectModal } from "@/components/modals/DeezerConnectModal";
 import { SpotifyConsentModal } from "@/components/modals/SpotifyConsentModal";
 
