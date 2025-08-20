@@ -79,32 +79,30 @@ function SourcePageContent() {
   };
 
   return (
-    <>
+    <div className="grid h-[100dvh] grid-rows-[auto_1fr_auto] overflow-hidden">
       <Header />
-      <div className="flex min-h-screen flex-col">
-        <main className="container mx-auto flex-grow px-4 py-6 sm:pt-8">
-          <div className="mx-auto max-w-2xl">
-            <h2 className="mb-6 flex items-center justify-center gap-2 text-xl font-semibold text-zinc-800 sm:mb-8 sm:gap-3 sm:text-3xl dark:text-stone-200">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-stone-100 text-base text-zinc-800 sm:h-8 sm:w-8 sm:text-lg dark:text-indigo-800">
-                2
-              </span>
-              Now select your target:
-            </h2>
+      
+      <main className="container mx-auto overflow-auto px-4 py-6 sm:pt-8">
+        <div className="mx-auto max-w-2xl">
+          <h2 className="mb-6 flex items-center justify-center gap-2 text-xl font-semibold text-zinc-800 sm:mb-8 sm:gap-3 sm:text-3xl dark:text-stone-200">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-stone-100 text-base text-zinc-800 sm:h-8 sm:w-8 sm:text-lg dark:text-indigo-800">
+              2
+            </span>
+            Now select your target:
+          </h2>
 
-            {error && (
-              <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-600 backdrop-blur-sm sm:mb-6 sm:p-4 sm:text-base dark:border-red-500/10 dark:bg-red-500/5 dark:text-red-400">
-                {error}
-              </div>
-            )}
+          {error && (
+            <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-600 backdrop-blur-sm sm:mb-6 sm:p-4 sm:text-base dark:border-red-500/10 dark:bg-red-500/5 dark:text-red-400">
+              {error}
+            </div>
+          )}
 
-            <ServiceSelector
-              onTargetSelect={handleTargetSelect}
-              isProcessing={isProcessing}
-              source={searchParams.get("source") as MusicService}
-            />
-          </div>
-        </main>
-        <Footer />
+          <ServiceSelector
+            onTargetSelect={handleTargetSelect}
+            isProcessing={isProcessing}
+            source={searchParams.get("source") as MusicService}
+          />
+        </div>
 
         <SpotifyConsentModal
           isOpen={isSpotifyConsentModalOpen}
@@ -115,8 +113,10 @@ function SourcePageContent() {
           }}
           onAgree={handleSpotifyConsent}
         />
-      </div>
-    </>
+      </main>
+      
+      <Footer />
+    </div>
   );
 }
 
