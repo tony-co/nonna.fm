@@ -70,11 +70,11 @@ function HomePageContent() {
   };
 
   return (
-    <div className="relative min-h-screen">
+    <div className="grid h-[100dvh] grid-rows-[auto_1fr_auto] overflow-hidden">
       <Header />
-      <div className="relative overflow-hidden">
-        {/* Main Content */}
-        <main>
+      
+      <main className="overflow-auto">
+        <div className="relative">
           <div className="mx-auto max-w-7xl px-4 py-12">
             <div className="mx-auto max-w-4xl text-center">
               <div className="mb-2">
@@ -127,7 +127,7 @@ function HomePageContent() {
               </h2>
 
               {/* Service Buttons */}
-              <div className="mx-auto grid max-w-4xl grid-cols-2 items-stretch justify-center gap-4 py-4 pb-16 lg:grid-cols-4">
+              <div className="mx-auto flex max-w-4xl flex-wrap items-stretch justify-center gap-4 py-4 pb-16">
                 {getAvailableServices().map(service => (
                   <button
                     key={service.id}
@@ -142,7 +142,7 @@ function HomePageContent() {
                               ? handleAppleLogin
                               : undefined
                     }
-                    className="group flex h-[180px] w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-3xl bg-indigo-100 px-5 py-5 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-indigo-200 dark:bg-indigo-950 dark:hover:bg-indigo-900/70"
+                    className="group flex h-[180px] w-[280px] cursor-pointer flex-col items-center justify-center gap-4 rounded-3xl bg-indigo-100 px-5 py-5 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-indigo-200 dark:bg-indigo-950 dark:hover:bg-indigo-900/70"
                   >
                     <service.image className="h-12 w-12" size={48} />
                     <span className="text-text text-center text-base font-semibold">
@@ -199,23 +199,23 @@ function HomePageContent() {
               </div>
             </div>
           </div>
+        </div>
 
-          <Footer />
+        {/* Deezer Modal */}
+        <DeezerConnectModal
+          isOpen={isDeezerModalOpen}
+          onClose={() => setIsDeezerModalOpen(false)}
+        />
 
-          {/* Deezer Modal */}
-          <DeezerConnectModal
-            isOpen={isDeezerModalOpen}
-            onClose={() => setIsDeezerModalOpen(false)}
-          />
-
-          {/* Spotify Consent Modal */}
-          <SpotifyConsentModal
-            isOpen={isSpotifyConsentModalOpen}
-            onClose={() => setIsSpotifyConsentModalOpen(false)}
-            onAgree={handleSpotifyConsent}
-          />
-        </main>
-      </div>
+        {/* Spotify Consent Modal */}
+        <SpotifyConsentModal
+          isOpen={isSpotifyConsentModalOpen}
+          onClose={() => setIsSpotifyConsentModalOpen(false)}
+          onAgree={handleSpotifyConsent}
+        />
+      </main>
+      
+      <Footer />
     </div>
   );
 }
