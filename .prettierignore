@@ -1,0 +1,40 @@
+# Build outputs
+.next/
+out/
+build/
+.turbo/
+
+# Dependencies  
+node_modules/
+.pnp
+.pnp.js
+
+# Environment files
+.env*.local
+
+# Testing
+coverage/
+
+# Cache
+.cache/
+
+# Logs
+*.log
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Vercel
+.vercel
+
+# IDE
+.vscode/
+.idea/
+
+# Lock files (generated)
+pnpm-lock.yaml
+
+# Misc
+*.pem
+.DS_Store
