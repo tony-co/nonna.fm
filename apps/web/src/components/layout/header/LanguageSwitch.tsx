@@ -43,7 +43,7 @@ export const LanguageSwitch = () => {
     pt: "Português",
     it: "Italiano",
     de: "Deutsch",
-    jp: "日本語",
+    ja: "日本語",
   } as const;
 
   const getLanguageName = (locale: string): string => {
