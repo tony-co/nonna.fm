@@ -3,6 +3,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Header } from "@/components/layout/Header";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { TransferProvider } from "@/contexts/TransferContext";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "../../../../messages/en.json";
+import { mockNextNavigation } from "@/__tests__/testUtils";
+
+// Setup navigation mocks
+mockNextNavigation();
 
 // Mock next/font/google
 vi.mock("next/font/google", () => ({
@@ -59,11 +65,13 @@ describe("Header", () => {
 
   it("renders the header with logo and navigation", () => {
     render(
-      <ThemeProvider>
-        <TransferProvider>
-          <Header />
-        </TransferProvider>
-      </ThemeProvider>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <ThemeProvider>
+          <TransferProvider>
+            <Header />
+          </TransferProvider>
+        </ThemeProvider>
+      </NextIntlClientProvider>
     );
 
     // Check if the logo text is present
@@ -86,11 +94,13 @@ describe("Header", () => {
 
   it("starts with light theme by default", () => {
     render(
-      <ThemeProvider>
-        <TransferProvider>
-          <Header />
-        </TransferProvider>
-      </ThemeProvider>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <ThemeProvider>
+          <TransferProvider>
+            <Header />
+          </TransferProvider>
+        </ThemeProvider>
+      </NextIntlClientProvider>
     );
 
     // Verify that dark mode class is not present initially
@@ -99,11 +109,13 @@ describe("Header", () => {
 
   it("toggles between light and dark themes when clicking the theme button", () => {
     render(
-      <ThemeProvider>
-        <TransferProvider>
-          <Header />
-        </TransferProvider>
-      </ThemeProvider>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <ThemeProvider>
+          <TransferProvider>
+            <Header />
+          </TransferProvider>
+        </ThemeProvider>
+      </NextIntlClientProvider>
     );
 
     const themeToggle = screen.getByTestId("theme-toggle");
@@ -137,11 +149,13 @@ describe("Header", () => {
     // This ensures ThemeProvider sees the correct system preference on mount
 
     render(
-      <ThemeProvider>
-        <TransferProvider>
-          <Header />
-        </TransferProvider>
-      </ThemeProvider>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <ThemeProvider>
+          <TransferProvider>
+            <Header />
+          </TransferProvider>
+        </ThemeProvider>
+      </NextIntlClientProvider>
     );
 
     // Should start with dark theme when system prefers dark

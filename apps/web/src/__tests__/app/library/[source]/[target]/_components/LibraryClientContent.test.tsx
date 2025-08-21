@@ -55,6 +55,8 @@ import { ItemTitleProvider, useItemTitle } from "@/contexts/ItemTitleContext";
 import { LibraryProvider } from "@/contexts/LibraryContext";
 import { TransferProvider } from "@/contexts/TransferContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "../../../../../../../messages/en.json";
 
 // Mock the children component
 const MockChildren = () => <div data-testid="mock-children">Child Content</div>;
@@ -140,20 +142,22 @@ describe("LibraryClientContent", () => {
     // Render Header and LibraryClientContent directly, with only minimal required providers
     // This avoids a heavy custom TestLayout and keeps the test focused
     render(
-      <ThemeProvider>
-        <LibraryProvider>
-          <TransferProvider>
-            <ItemTitleProvider>
-              {/* Set minimalMobileHeader so Header renders back button */}
-              <SetMinimalMobileHeader />
-              <Header />
-              <LibraryClientContent source="spotify" _target="apple">
-                <MockChildren />
-              </LibraryClientContent>
-            </ItemTitleProvider>
-          </TransferProvider>
-        </LibraryProvider>
-      </ThemeProvider>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <ThemeProvider>
+          <LibraryProvider>
+            <TransferProvider>
+              <ItemTitleProvider>
+                {/* Set minimalMobileHeader so Header renders back button */}
+                <SetMinimalMobileHeader />
+                <Header />
+                <LibraryClientContent source="spotify" _target="apple">
+                  <MockChildren />
+                </LibraryClientContent>
+              </ItemTitleProvider>
+            </TransferProvider>
+          </LibraryProvider>
+        </ThemeProvider>
+      </NextIntlClientProvider>
     );
 
     const backButton = screen.getByTestId("back-to-library");

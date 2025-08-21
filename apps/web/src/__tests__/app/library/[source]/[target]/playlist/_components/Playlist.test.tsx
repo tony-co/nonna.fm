@@ -86,7 +86,12 @@ describe("Playlist", () => {
 
     const count = mockPlaylists[0].tracks.length;
     const unmatched = mockPlaylists[0].tracks.filter(track => track.status === "unmatched").length;
-    expect(screen.getByText(`${count} tracks • ${unmatched} unmatched`)).toBeInTheDocument();
+    expect(screen.getByText((content, _element) => {
+      return content !== null && content.includes(`${count} tracks`);
+    })).toBeInTheDocument();
+    if (unmatched > 0) {
+      expect(screen.getByText(`${unmatched} unmatched`)).toBeInTheDocument();
+    }
   });
 
   it("renders track list correctly", () => {
