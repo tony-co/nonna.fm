@@ -17,7 +17,7 @@ import {
   matchingComplete,
   matchingCancel,
 } from "@/contexts/LibraryContext.matchingActions";
-import { sentryLogger } from "@/lib/utils/sentry-logger";
+import { logger } from "@/lib/utils/logger";
 
 // This hook now uses global matching state from LibraryContext
 export const useMatching = (): UseMatchingReturn => {
@@ -189,7 +189,7 @@ export const useMatching = (): UseMatchingReturn => {
         // Do nothing, user cancelled
       } else {
         // Capture the error to Sentry with context
-        sentryLogger.captureException(err, {
+        logger.captureException(err, {
           tags: {
             category: "matching",
             taskType: task.type,

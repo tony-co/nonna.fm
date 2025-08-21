@@ -1,4 +1,4 @@
-import { sentryLogger } from "./sentry-logger";
+import { logger } from "./logger";
 
 /**
  * Configuration options for retry behavior
@@ -127,10 +127,10 @@ export async function retryWithExponentialBackoff<T>(
             );
 
             if (isYouTubeServiceUnavailable) {
-              sentryLogger.warn("YouTube SERVICE_UNAVAILABLE detected, retrying...");
+              logger.warn("YouTube SERVICE_UNAVAILABLE detected, retrying...");
 
               // Log the retry attempt
-              sentryLogger.warn(`API request failed (attempt ${attempt + 1}/${maxRetries})`, {
+              logger.warn(`API request failed (attempt ${attempt + 1}/${maxRetries})`, {
                 status: response.status,
                 statusText: response.statusText,
                 reason: "SERVICE_UNAVAILABLE",
@@ -148,7 +148,7 @@ export async function retryWithExponentialBackoff<T>(
           }
         } catch (e) {
           // If we couldn't parse the error JSON, just continue with normal error handling
-          sentryLogger.warn("Could not parse response JSON for 409 error", { error: e });
+          logger.warn("Could not parse response JSON for 409 error", { error: e });
         }
       }
 
@@ -161,7 +161,7 @@ export async function retryWithExponentialBackoff<T>(
         const error = new Error(
           `Request failed with status ${response.status}: ${response.statusText}`
         );
-        sentryLogger.captureException(error, {
+        logger.captureException(error, {
           tags: {
             category: "api",
             statusCode: response.status.toString(),
@@ -178,7 +178,7 @@ export async function retryWithExponentialBackoff<T>(
       // For errors with status codes that should be retried
       if (retryableStatusCodes.has(response.status)) {
         // Log the retry attempt
-        sentryLogger.warn(`API request failed (attempt ${attempt + 1}/${maxRetries})`, {
+        logger.warn(`API request failed (attempt ${attempt + 1}/${maxRetries})`, {
           status: response.status,
           statusText: response.statusText,
           retryIn: delay,
@@ -204,13 +204,13 @@ export async function retryWithExponentialBackoff<T>(
 
       // Don't retry if it's a non-retryable status code
       if (isNonRetryableStatusCode) {
-        sentryLogger.captureException(error);
+        logger.captureException(error);
         throw error;
       }
 
       // If it's the last attempt, throw the error
       if (attempt === maxRetries - 1) {
-        sentryLogger.captureException(error, {
+        logger.captureException(error, {
           tags: {
             category: "api",
             finalAttempt: "true",
@@ -223,7 +223,7 @@ export async function retryWithExponentialBackoff<T>(
         throw error;
       }
 
-      sentryLogger.warn(`API request error (attempt ${attempt + 1}/${maxRetries})`, {
+      logger.warn(`API request error (attempt ${attempt + 1}/${maxRetries})`, {
         error: error instanceof Error ? error.message : String(error),
         attempt: attempt + 1,
         maxRetries,

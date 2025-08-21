@@ -23,6 +23,7 @@
     "import-in-the-middle": "^1.14.2",
     "next": "^15.5.0",
     "next-intl": "^4.3.4",
+    "posthog-js": "^1.260.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "redis": "5.8.2",

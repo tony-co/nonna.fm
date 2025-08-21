@@ -11,7 +11,7 @@ import {
 } from "@/lib/utils/matching";
 import { retryWithExponentialBackoff, type RetryOptions } from "@/lib/utils/retry";
 import { AUTH_STORAGE_KEYS, type AuthData, setServiceType } from "@/lib/auth/constants";
-import { sentryLogger } from "@/lib/utils/sentry-logger";
+import { logger } from "@/lib/utils/logger";
 import { MATCHING_STATUS } from "@/types/matching-status";
 import { SERVICES } from "@/config/services";
 
@@ -293,7 +293,7 @@ async function findBestMatch(
 
     return bestMatch;
   } catch (error) {
-    sentryLogger.captureMatchingError("track_search", "apple", error, {
+    logger.captureMatchingError("track_search", "apple", error, {
       trackName: track.name,
       trackArtist: track.artist,
     });
@@ -567,7 +567,7 @@ async function findBestAlbumMatch(
 
     // Process initial search results
     if (!result.results?.albums?.data?.length) {
-      sentryLogger.captureMatchingError(
+      logger.captureMatchingError(
         "album_search",
         "apple",
         new Error(`No search results found for album "${album.name}" by ${album.artist}`),
@@ -600,7 +600,7 @@ async function findBestAlbumMatch(
 
     return { albumId: null };
   } catch (error) {
-    sentryLogger.captureMatchingError("album_search", "apple", error, {
+    logger.captureMatchingError("album_search", "apple", error, {
       albumName: album.name,
       albumArtist: album.artist,
     });
