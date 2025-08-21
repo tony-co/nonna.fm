@@ -1,0 +1,342 @@
+{
+  "HomePage": {
+    "title": "Transfiere tu música",
+    "subtitle": "Transfiere tus listas de reproducción entre plataformas de streaming <strong>fácilmente</strong>.",
+    "selectSource": "Selecciona tu fuente:",
+    "connectWith": "Conectar con",
+    "loading": "Cargando...",
+    "errors": {
+      "spotifyAuthFailed": "La autenticación de Spotify falló. Por favor, inténtalo de nuevo.",
+      "spotifyAuthError": "Ocurrió un error durante la autenticación de Spotify.",
+      "youtubeAuthFailed": "La autenticación de YouTube Music falló. Por favor, inténtalo de nuevo.",
+      "youtubeAuthError": "Ocurrió un error durante la autenticación de YouTube Music.",
+      "notAuthenticated": "Por favor autentícate con un servicio de música para continuar."
+    },
+    "features": {
+      "freeplan": {
+        "title": "Plan Gratuito Generoso",
+        "description": "500 transferencias gratis <strong>todos los días</strong>.<br></br>Mejora a un plan Premium para 10x más."
+      },
+      "secure": {
+        "title": "Seguro y privado",
+        "description": "No vendemos tus datos.<br></br>Nuestro código es de código abierto para total transparencia."
+      }
+    }
+  },
+  "Navigation": {
+    "home": "Inicio",
+    "library": "Biblioteca",
+    "liked": "Canciones Favoritas",
+    "albums": "Álbumes",
+    "playlists": "Listas de Reproducción",
+    "back": "Atrás",
+    "beta": "Beta"
+  },
+  "Footer": {
+    "privacy": "Privacidad",
+    "terms": "Términos"
+  },
+  "LibraryPage": {
+    "title": "Tu Biblioteca",
+    "loadingLibrary": "Cargando tu biblioteca...",
+    "noItems": "No se encontraron elementos",
+    "selectAll": "Seleccionar Todo",
+    "deselectAll": "Deseleccionar Todo",
+    "selectedCount": "{count} seleccionado(s)",
+    "transferSelected": "Transferir Seleccionados",
+    "viewOn": "Ver en {service}",
+    "transferTo": "Transferir a {service}",
+    "addedBy": "Añadido por {name}",
+    "lastPlayed": "Última reproducción: {date}",
+    "duration": "{duration}",
+    "tracks": "{count} canciones",
+    "transferGuide": "Guía de Transferencia",
+    "howItWorks": "Cómo funciona",
+    "steps": {
+      "step1": "Selecciona lo que quieres transferir",
+      "step2": {
+        "title": "Buscaremos las mejores coincidencias en {target}",
+        "description1": "Puedes abrir las listas seleccionadas para verificar las coincidencias",
+        "description2": "Esto puede tomar un tiempo dependiendo de tu selección"
+      },
+      "step3": "Haz clic en <strong>Iniciar transferencia</strong> para copiar tu selección a {target}"
+    },
+    "disclaimer": "Tus listas originales de {source} permanecerán sin cambios."
+  },
+  "TableHeaders": {
+    "number": "#",
+    "title": "Título",
+    "album": "Álbum",
+    "status": "Estado"
+  },
+  "SourcePage": {
+    "title": "Seleccionar destino",
+    "subtitle": "Elige a dónde quieres transferir tu música",
+    "backToHome": "Volver al Inicio",
+    "connectToTransfer": "Conecta para transferir tu música",
+    "alreadyConnected": "Ya conectado"
+  },
+  "Buttons": {
+    "transfer": "Transferir",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "close": "Cerrar",
+    "continue": "Continuar",
+    "agree": "Acepto",
+    "disagree": "No acepto",
+    "connect": "Conectar",
+    "disconnect": "Desconectar",
+    "retry": "Reintentar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "copy": "Copiar",
+    "share": "Compartir",
+    "playOn": "Reproducir en {service}"
+  },
+  "PlayOnButton": {
+    "playOn": "Reproducir en {service}"
+  },
+  "Modals": {
+    "transferLimit": {
+      "title": "Límite de Transferencia Alcanzado",
+      "dailyLimitReached": "Has alcanzado tu límite diario de {limit} transferencias.",
+      "upgradePrompt": "Mejora a Premium para transferencias ilimitadas.",
+      "upgradeCta": "Mejorar a Premium",
+      "waitUntilTomorrow": "Puedes transferir de nuevo mañana a las {time}.",
+      "selectionExceedsLimit": "Has seleccionado {selectedCount} canciones pero solo puedes transferir {availableToday} más hoy.",
+      "resetTimeWarning": "Tu límite de transferencia se reiniciará en {resetTime}",
+      "dailyLimitTitle": "Límite Diario Alcanzado",
+      "usedAllTransfers": "Has usado todas las {dailyLimit} transferencias disponibles en tu plan gratuito hoy",
+      "dailyTransfers": "transferencias diarias",
+      "upgradeToPremium": "Mejora a Premium para un límite mayor",
+      "comingSoonButton": "Próximamente"
+    },
+    "transferSuccess": {
+      "title": "¡Transferencia Completa!",
+      "successMessage": "Se transfirieron exitosamente {count} {type} a {service}.",
+      "viewLibrary": "Ver Tu Biblioteca de {service}",
+      "transferMore": "Transferir Más Música",
+      "enjoyTracks": "Disfruta tus {totalTransferred} canciones en",
+      "musicReady": "¡Tu música transferida está lista!",
+      "likedSongs": "Canciones Favoritas",
+      "albums": "Álbumes",
+      "playlist": "Lista de Reproducción"
+    },
+    "spotifyConsent": {
+      "title": "Permiso de Spotify Requerido",
+      "description": "Nonna.fm necesita permiso para leer tus listas de reproducción y canciones favoritas de Spotify para transferirlas a otros servicios.",
+      "permissions": "Accederemos a:",
+      "permissionsList": [
+        "Tus listas de reproducción públicas",
+        "Tus listas guardadas",
+        "Tus canciones favoritas",
+        "Información básica del perfil"
+      ],
+      "dataUsage": "Uso de tus datos:",
+      "dataUsageList": [
+        "Solo leemos tus datos musicales para transferirlos",
+        "Nunca almacenamos tus listas de forma permanente",
+        "No compartimos tus datos con terceros",
+        "Puedes revocar el acceso en cualquier momento"
+      ],
+      "learnMore": "Aprende más sobre nuestras prácticas de privacidad en nuestra Política de Privacidad."
+    },
+    "spotifyTerms": {
+      "title": "Términos de Servicio de Spotify",
+      "intro": "Antes de usar Spotify con Nonna.fm, ten en cuenta:",
+      "termsItems": [
+        "Nonna.fm no ofrece garantías ni declaraciones en nombre de Spotify y renuncia expresamente a todas las garantías implícitas con respecto a la Plataforma de Spotify, el Servicio de Spotify y el Contenido de Spotify, incluidas las garantías implícitas de comerciabilidad, idoneidad para un propósito particular y no infracción.",
+        "Aceptas no modificar ni crear trabajos derivados basados en la Plataforma de Spotify, el Servicio de Spotify o el Contenido de Spotify.",
+        "Aceptas no descompilar, realizar ingeniería inversa, desensamblar o reducir de otra manera la Plataforma de Spotify, el Servicio de Spotify y el Contenido de Spotify a código fuente u otra forma perceptible por humanos, en la medida permitida por la ley.",
+        "Nonna.fm es el único responsable de esta aplicación y Spotify no tiene responsabilidad relacionada con tu uso de este servicio.",
+        "Spotify es un tercero beneficiario de nuestros términos de servicio y política de privacidad y tiene derecho a hacer cumplir directamente estos términos."
+      ],
+      "privacyTitle": "Información de Privacidad",
+      "privacyIntro": "Mientras usas nuestro servicio con Spotify, ten en cuenta:",
+      "privacyItems": [
+        "Nuestra recopilación y uso de datos está sujeta a nuestra política de privacidad.",
+        "Recopilamos y usamos información sobre tus listas de reproducción de Spotify, canciones guardadas y metadatos relacionados únicamente para proporcionar el servicio de transferencia de listas.",
+        "Todo el procesamiento de tus datos ocurre directamente en tu navegador. No almacenamos tus datos de Spotify en nuestros servidores.",
+        "Para preguntas sobre tu información, contáctanos a través de nuestros canales de soporte.",
+        "No colocamos cookies en tu navegador más allá de lo necesario para la autenticación.",
+        "No permitimos que terceros coloquen cookies en tu navegador para rastrear actividades de navegación.",
+        "Puedes administrar las cookies a través de la configuración de tu navegador si deseas controlarlas."
+      ],
+      "decline": "Rechazar",
+      "agree": "Acepto"
+    },
+    "deezerConnect": {
+      "title": "Conectar a Deezer",
+      "description": "Para transferir tu música a Deezer, necesitas conectar tu cuenta.",
+      "connectButton": "Conectar Cuenta de Deezer"
+    }
+  },
+  "Loading": {
+    "loading": "Cargando...",
+    "general": "Cargando...",
+    "spinner": "Cargando",
+    "preparingTransfer": "Preparando transferencia...",
+    "transferring": "Transfiriendo {current} de {total}...",
+    "almostDone": "Casi terminado...",
+    "finalizing": "Finalizando...",
+    "usage": "Cargando uso..."
+  },
+  "Errors": {
+    "general": "Algo salió mal. Por favor, inténtalo de nuevo.",
+    "networkError": "Error de red. Por favor, verifica tu conexión.",
+    "authenticationFailed": "La autenticación falló. Por favor, inténtalo de nuevo.",
+    "serviceUnavailable": "El servicio no está disponible temporalmente.",
+    "transferFailed": "La transferencia falló. Algunos elementos no pudieron ser transferidos.",
+    "rateLimitExceeded": "Límite de velocidad excedido. Por favor, espera antes de intentar de nuevo.",
+    "invalidData": "Se recibieron datos inválidos. Por favor, actualiza e inténtalo de nuevo.",
+    "failedToValidateProfile": "Falló la validación del perfil",
+    "failedToConnectToDeezer": "Falló la conexión a Deezer"
+  },
+  "Accessibility": {
+    "moneyWithWings": "Dinero con alas",
+    "shieldWithLock": "Escudo con candado",
+    "switchToLight": "Cambiar a tema claro",
+    "switchToDark": "Cambiar a tema oscuro",
+    "selectedLanguage": "Idioma seleccionado: {language}",
+    "toggleTheme": "Alternar tema",
+    "toggleMenu": "Alternar menú",
+    "openMenu": "Abrir menú",
+    "closeModal": "Cerrar modal",
+    "closeDialog": "Cerrar diálogo",
+    "selectLanguage": "Seleccionar idioma",
+    "loadingIndicator": "Indicador de carga",
+    "albumsArtwork": "Portadas de álbumes",
+    "firstAlbumArtwork": "Primera portada de álbum",
+    "likedSongs": "Canciones Favoritas",
+    "albums": "Álbumes",
+    "viewLikedSongs": "Ver Canciones Favoritas",
+    "viewAlbums": "Ver Álbumes",
+    "howToFindProfileId": "Cómo encontrar tu ID de perfil de Deezer"
+  },
+  "Services": {
+    "spotify": "Spotify",
+    "apple": "Apple Music",
+    "youtube": "YouTube Music",
+    "deezer": "Deezer",
+    "tidal": "TIDAL"
+  },
+  "Forms": {
+    "placeholders": {
+      "deezerProfileId": "Pega tu ID de perfil de Deezer (ej. 123456)"
+    }
+  },
+  "Status": {
+    "matched": "Coincidente",
+    "notFound": "No Encontrado",
+    "searching": "Buscando..."
+  },
+  "Dialogs": {
+    "settings": "Configuración",
+    "plans": "Planes",
+    "transferLimit": "Límite de Transferencia",
+    "connectWithDeezer": "Conectar con Deezer",
+    "spotifyTermsOfService": "Términos de Servicio de Spotify",
+    "transferComplete": "¡Transferencia Completa!",
+    "librarySelection": "Selección de Biblioteca",
+    "selectedContent": "Contenido Seleccionado"
+  },
+  "Languages": {
+    "en": "English",
+    "fr": "Français",
+    "es": "Español",
+    "selectLanguage": "Seleccionar idioma",
+    "currentLanguage": "Idioma actual"
+  },
+  "Common": {
+    "item": "Elemento",
+    "language": "Idioma",
+    "authenticationRequired": "Autenticación requerida",
+    "matched": "coincidente",
+    "unmatched": "sin coincidencia",
+    "tracks": "canciones"
+  },
+  "Sidebar": {
+    "navigation": "Navegación",
+    "tracks": "Canciones",
+    "matched": "coincidentes",
+    "unmatched": "sin coincidencia",
+    "liked": "Canciones Favoritas",
+    "albums": "Álbumes",
+    "playlists": "Listas de Reproducción",
+    "transferUsage": "Uso de Transferencia",
+    "yourLibrary": "Tu biblioteca",
+    "selectItemsToTransfer": "Selecciona elementos para transferir"
+  },
+  "LoadingOverlay": {
+    "loadingLibrary": "Cargando tu biblioteca",
+    "gettingReady": "Un momento mientras preparamos todo"
+  },
+  "Plans": {
+    "freePlan": "Plan Gratuito",
+    "premiumPlan": "Plan Premium",
+    "currentPlan": "Plan Actual",
+    "comingSoon": "Próximamente",
+    "goPremium": "Mejorar a Premium",
+    "title": "Planes"
+  },
+  "ServiceSelector": {
+    "notAvailableAsTarget": "No disponible como destino aún",
+    "available": "Disponible",
+    "comingSoon": "Próximamente",
+    "inDevelopment": "En Desarrollo",
+    "maintenance": "Mantenimiento",
+    "from": "De",
+    "to": "A",
+    "selectAService": "Selecciona una plataforma",
+    "connected": "Conectado",
+    "clickToChange": "Haz clic para cambiar",
+    "pleaseSpecifySourceService": "Por favor especifica una plataforma de origen."
+  },
+  "UI": {
+    "theme": "Tema",
+    "connecting": "Conectando...",
+    "connect": "Conectar",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "close": "Cerrar"
+  },
+  "TransferButton": {
+    "findingMatches": "Buscando Coincidencias...",
+    "transferring": "Transfiriendo...",
+    "startTransfer": "Iniciar Transferencia",
+    "likedTracks": "canciones favoritas",
+    "albums": "álbumes",
+    "playlists": "listas de reproducción",
+    "playlist": "Lista de Reproducción",
+    "transfersLeft": "transferencias restantes"
+  },
+  "DeezerConnect": {
+    "title": "Conectar con Deezer",
+    "whyNeedId": {
+      "title": "¿Por qué necesitamos tu ID de perfil?",
+      "explanation": "Deezer funciona diferente a otras plataformas. Para conectar tu cuenta, necesitamos tu ID de perfil - es como tu nombre de usuario único para Deezer.",
+      "seeMore": "Ver más",
+      "technicalDetails": "A partir de 2024, Deezer ya no acepta nuevos registros de aplicaciones OAuth para desarrolladores de terceros. Esto significa que no podemos usar el flujo OAuth tradicional como lo hacemos con Spotify y YouTube. En su lugar, usamos tu ID de perfil público para acceder a tus listas públicas, lo cual aún está permitido bajo los términos de la API de Deezer."
+    },
+    "makePublic": {
+      "title": "Hacer tu perfil público:",
+      "step1": "Inicia sesión en tu cuenta de Deezer y ve a",
+      "step2": "Deberías ver tu configuración de compartir social",
+      "step3": "Asegúrate de que la opción \"Perfil privado\" esté deshabilitada"
+    },
+    "getId": {
+      "title": "Obtén tu ID de perfil de Deezer:",
+      "instructions": "Ve a tus favoritos, copia tu ID de perfil de la URL:",
+      "imageAlt": "Cómo encontrar tu ID de perfil de Deezer"
+    },
+    "form": {
+      "label": "Ingresa tu ID de perfil de Deezer",
+      "placeholder": "Pega tu ID de perfil de Deezer (ej. 123456)"
+    },
+    "privacy": {
+      "line1": "Solo usamos estos datos para el proceso de transferencia.",
+      "line2": "No almacenamos ninguno de tus datos de forma permanente."
+    }
+  }
+}

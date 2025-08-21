@@ -1,7 +1,9 @@
 "use client";
 
 import { handleSpotifyCallback } from "@/lib/services/spotify/auth";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 import { useEffect } from "react";
 import { getServiceType } from "@/lib/auth/constants";
 import { Suspense } from "react";
@@ -57,8 +59,10 @@ function SpotifyCallbackContent() {
 }
 
 export default function SpotifyCallback() {
+  const t = useTranslations("Loading");
+
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>{t("loading")}</div>}>
       <SpotifyCallbackContent />
     </Suspense>
   );

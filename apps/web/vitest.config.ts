@@ -22,6 +22,12 @@ export default defineConfig({
     setupFiles: "./src/__tests__/setup.ts",
     include: ["**/__tests__/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
     exclude: testExclude,
+    server: {
+      deps: {
+        // https://github.com/vercel/next.js/issues/77200
+        inline: ["next-intl"],
+      },
+    },
     // Output coverage for all tests to coverage/
     coverage: {
       provider: "v8",

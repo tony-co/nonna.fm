@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { validateDeezerUser, storeDeezerUserId } from "@/lib/services/deezer/auth";
 import { clearAllServiceData } from "@/lib/auth/utils";
 import dynamic from "next/dynamic";
@@ -20,6 +21,11 @@ export function DeezerConnectModal({
   onClose,
 }: DeezerConnectModalProps): React.ReactElement {
   const router = useRouter();
+  const t = useTranslations("DeezerConnect");
+  const tButtons = useTranslations("Buttons");
+  const tAccessibility = useTranslations("Accessibility");
+  const tUI = useTranslations("UI");
+  const tErrors = useTranslations("Errors");
   const [deezerUserId, setDeezerUserId] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectError, setConnectError] = useState("");
@@ -42,7 +48,9 @@ export function DeezerConnectModal({
         setValidationStatus("success");
       } catch (error) {
         setValidationStatus("error");
-        setConnectError(error instanceof Error ? error.message : "Failed to validate profile");
+        setConnectError(
+          error instanceof Error ? error.message : tErrors("failedToValidateProfile")
+        );
       } finally {
         setIsValidating(false);
       }
@@ -68,28 +76,27 @@ export function DeezerConnectModal({
       router.push("/source?source=deezer");
     } catch (error) {
       console.error("Error connecting to Deezer:", error);
-      setConnectError(error instanceof Error ? error.message : "Failed to connect to Deezer");
+      setConnectError(error instanceof Error ? error.message : tErrors("failedToConnectToDeezer"));
     } finally {
       setIsConnecting(false);
     }
   };
 
   return (
-    <DialogComponent isOpen={isOpen} onClose={onClose} title="Connect with Deezer">
+    <DialogComponent isOpen={isOpen} onClose={onClose} title={t("title")}>
       <div className="space-y-8">
         <div className="space-y-6">
           <div className="flex flex-col gap-3">
             <h3 className="mb-3 text-xl font-semibold text-zinc-800 dark:text-stone-200">
-              Why do we need your profile ID?
+              {t("whyNeedId.title")}
             </h3>
             <p className="text-base text-zinc-600 dark:text-stone-400">
-              Deezer works differently from other platforms. To connect your account, we need your
-              profile ID - it&apos;s like your unique username for Deezer.{" "}
+              {t("whyNeedId.explanation")}{" "}
               <button
                 onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
                 className="inline-flex items-center gap-1 text-indigo-600 hover:underline dark:text-indigo-400"
               >
-                See more
+                {t("whyNeedId.seeMore")}
                 <svg
                   className={`h-4 w-4 transform transition-transform ${showTechnicalDetails ? "rotate-180" : ""}`}
                   fill="none"
@@ -107,21 +114,18 @@ export function DeezerConnectModal({
             </p>
             {showTechnicalDetails && (
               <p className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-sm text-zinc-600 dark:border-indigo-800/30 dark:bg-indigo-950/50 dark:text-stone-400">
-                As of 2024, Deezer no longer accepts new OAuth application registrations for
-                third-party developers. This means we can&apos;t use the traditional OAuth flow like
-                we do with Spotify and YouTube. Instead, we use your public profile ID to access
-                your public playlists, which is still allowed under Deezer&apos;s API terms.
+                {t("whyNeedId.technicalDetails")}
               </p>
             )}
           </div>
 
           <div className="flex flex-col gap-3">
             <h3 className="mb-3 text-xl font-semibold text-zinc-800 dark:text-stone-200">
-              Make your profile public:
+              {t("makePublic.title")}
             </h3>
             <ol className="list-inside list-decimal space-y-3 text-zinc-600 dark:text-stone-400">
               <li>
-                Log in to your Deezer account and go to{" "}
+                {t("makePublic.step1")}{" "}
                 <a
                   href="https://account.deezer.com/login/?redirect_uri=https%3A%2F%2Fwww.deezer.com%2Faccount%2Fshare"
                   target="_blank"
@@ -131,23 +135,23 @@ export function DeezerConnectModal({
                   deezer.com/account/share
                 </a>
               </li>
-              <li>You should see your social sharing settings</li>
-              <li>Make sure the &ldquo;Private profile&rdquo; option is disabled</li>
+              <li>{t("makePublic.step2")}</li>
+              <li>{t("makePublic.step3")}</li>
             </ol>
           </div>
 
           <div className="flex flex-col gap-3">
             <h3 className="mb-3 text-xl font-semibold text-zinc-800 dark:text-stone-200">
-              Get your Deezer profile ID:
+              {t("getId.title")}
             </h3>
             <ol className="list-inside list-decimal space-y-3 text-zinc-600 dark:text-stone-400">
               <li className="leading-relaxed">
-                Go to your favourites, copy your profile ID from the URL:
+                {t("getId.instructions")}
                 <br />
                 <div className="mt-2 space-y-4">
                   <Image
                     src="/images/deezer_id.webp"
-                    alt="How to find your Deezer profile ID"
+                    alt={tAccessibility("howToFindProfileId")}
                     width={400}
                     height={200}
                     className="rounded-xl border border-indigo-100 shadow-sm dark:border-indigo-800/30"
@@ -164,7 +168,7 @@ export function DeezerConnectModal({
             htmlFor="deezer-id-modal"
             className="block text-base font-medium text-zinc-800 dark:text-stone-200"
           >
-            Enter your Deezer profile ID
+            {t("form.label")}
           </label>
           <div className="relative">
             <input
@@ -178,7 +182,7 @@ export function DeezerConnectModal({
                 );
                 setDeezerUserId(profileMatch ? profileMatch[1] : value);
               }}
-              placeholder="Paste your Deezer profile ID (e.g. 123456)"
+              placeholder={t("form.placeholder")}
               className={`w-full border bg-indigo-50 px-4 py-3 dark:bg-indigo-950/50 ${
                 validationStatus === "success"
                   ? "border-emerald-500 dark:border-emerald-400"
@@ -226,9 +230,9 @@ export function DeezerConnectModal({
 
         <div className="flex items-center gap-4 pt-4">
           <p className="flex-1 text-sm text-zinc-600 dark:text-stone-400">
-            We only use this data for the transfer process.
+            {t("privacy.line1")}
             <br />
-            We don&apos;t store any of your data permanently.
+            {t("privacy.line2")}
           </p>
 
           <div className="flex shrink-0 gap-3">
@@ -236,14 +240,14 @@ export function DeezerConnectModal({
               onClick={onClose}
               className="rounded-xl border border-indigo-200 px-6 py-3 font-medium text-zinc-800 transition-colors hover:bg-indigo-50 dark:border-indigo-800/30 dark:text-stone-200 dark:hover:bg-indigo-950/50"
             >
-              Cancel
+              {tButtons("cancel")}
             </button>
             <button
               onClick={handleDeezerConnect}
               disabled={!deezerUserId || isConnecting || validationStatus !== "success"}
               className="min-w-[100px] rounded-xl bg-indigo-600 px-6 py-3 font-semibold text-white transition-colors duration-200 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-600"
             >
-              {isConnecting ? "Connecting..." : "Connect"}
+              {isConnecting ? tUI("connecting") : tButtons("connect")}
             </button>
           </div>
         </div>

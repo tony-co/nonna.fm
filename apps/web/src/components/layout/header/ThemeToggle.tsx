@@ -2,10 +2,12 @@
 
 import React from "react";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
+  const tAccessibility = useTranslations("Accessibility");
   const [mounted, setMounted] = useState(false);
 
   // Avoid hydration mismatch by only rendering after mount
@@ -26,7 +28,9 @@ export function ThemeToggle() {
           ? "bg-gray-300/60 hover:bg-gray-300"
           : "bg-indigo-950/60 hover:bg-indigo-950"
       } focus-visible:ring-primary-500/70 cursor-pointer border-0 transition-colors duration-200 focus:outline-none focus-visible:ring-2`}
-      aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+      aria-label={
+        theme === "dark" ? tAccessibility("switchToLight") : tAccessibility("switchToDark")
+      }
     >
       {/* Sliding background */}
       <span

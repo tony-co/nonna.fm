@@ -63,9 +63,9 @@ describe("LibrarySidebar", () => {
       );
 
       expect(screen.getByText("Liked Songs", { ignore: ".sr-only" })).toBeInTheDocument();
-      expect(screen.getByText(/\d+ songs/, { ignore: ".sr-only" })).toBeInTheDocument();
+      expect(screen.getByText("5 Tracks")).toBeInTheDocument();
       expect(screen.getByText("Albums", { ignore: ".sr-only" })).toBeInTheDocument();
-      expect(screen.getByText(/\d+ albums/, { ignore: ".sr-only" })).toBeInTheDocument();
+      expect(screen.getByText(/\d+ Albums/, { ignore: ".sr-only" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "View Liked Songs" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "View Albums" })).toBeInTheDocument();
     });

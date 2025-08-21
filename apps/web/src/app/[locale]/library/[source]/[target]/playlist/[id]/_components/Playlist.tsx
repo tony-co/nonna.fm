@@ -7,6 +7,7 @@ import { PlayOnButton } from "@/components/shared/PlayOnButton";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { useItemTitle } from "@/contexts/ItemTitleContext";
+import { useTranslations } from "next-intl";
 
 interface PlaylistProps {
   playlistId: string;
@@ -16,7 +17,7 @@ export const Playlist: FC<PlaylistProps> = ({ playlistId }) => {
   const { selectedItems } = useLibrarySelection();
   const { playlist, error, isLoading } = usePlaylistTracks(playlistId);
   const { setItemTitle, setMinimalMobileHeader } = useItemTitle();
-
+  const tCommon = useTranslations("Common");
   // Set playlist name, minimal header, and backHref in header when loaded
   useEffect(() => {
     if (playlist?.name) setItemTitle(playlist.name);
@@ -60,7 +61,12 @@ export const Playlist: FC<PlaylistProps> = ({ playlistId }) => {
               {playlist.name}
             </h1>
             <p className="mt-2 text-sm text-indigo-700 dark:text-indigo-300">
-              {playlist.tracks.length} tracks • {unmatchedCount} unmatched
+              {playlist.tracks.length} {tCommon("tracks")} •{" "}
+              {unmatchedCount > 0 && (
+                <span className="ml-1 text-red-500 dark:text-red-400">
+                  {unmatchedCount} {tCommon("unmatched")}
+                </span>
+              )}
             </p>
           </div>
           <div className="mt-4 lg:mt-6">

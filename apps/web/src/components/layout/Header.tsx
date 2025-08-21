@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { usePathname, Link } from "@/i18n/navigation";
 import { TransferUsageDisplay } from "../shared/TransferUsageDisplay";
 import { ThemeToggle } from "./header/ThemeToggle";
 import { LanguageSwitch } from "./header/LanguageSwitch";
 import { MobileMenu } from "./header/MobileMenu";
 import { NonnaLogo } from "../icons/NonnaLogo";
 import { Inter } from "next/font/google";
-import Link from "next/link";
 import { useItemTitle } from "@/contexts/ItemTitleContext";
 
 const inter = Inter({
@@ -25,6 +26,8 @@ const inter = Inter({
 
 // Remove props from Header
 export const Header = () => {
+  const t = useTranslations("Navigation");
+  const tCommon = useTranslations("Common");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
   const isLibraryPage = pathname?.startsWith("/library");
@@ -46,7 +49,7 @@ export const Header = () => {
               <Link
                 href={backHref}
                 className="absolute left-0 flex items-center px-4 text-gray-900 hover:underline focus:outline-none dark:text-white"
-                aria-label="Back"
+                aria-label={t("back")}
                 data-testid="back-to-library"
               >
                 <svg
@@ -59,13 +62,13 @@ export const Header = () => {
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
-                <span className="sr-only">Back</span>
+                <span className="sr-only">{t("back")}</span>
               </Link>
               <span
                 className={`mx-auto max-w-[65%] overflow-hidden truncate text-ellipsis whitespace-nowrap text-center text-lg font-semibold transition duration-300 ease-out ${showTitle ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0"} `}
-                title={itemTitle || "Item"}
+                title={itemTitle || tCommon("item")}
               >
-                {itemTitle || "Item"}
+                {itemTitle || tCommon("item")}
               </span>
             </div>
           </div>
@@ -91,7 +94,7 @@ export const Header = () => {
                     </span>
                     {/* Use lg:inline-block for desktop beta badge */}
                     <span className="hidden rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-indigo-700 lg:inline-block dark:bg-indigo-900/50 dark:text-indigo-300">
-                      Beta
+                      {t("beta")}
                     </span>
                   </div>
                 </div>
@@ -144,7 +147,7 @@ export const Header = () => {
                 </span>
                 {/* Use lg:inline-block for desktop */}
                 <span className="hidden rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-indigo-700 lg:inline-block dark:bg-indigo-900/50 dark:text-indigo-300">
-                  Beta
+                  {t("beta")}
                 </span>
               </div>
             </div>

@@ -1,6 +1,42 @@
 import { cleanup } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
+import React from "react";
+
+// Mock next-intl locale hook
+vi.mock("next-intl", async () => {
+  const actual = await vi.importActual("next-intl");
+  return {
+    ...actual,
+    useLocale: () => "en",
+  };
+});
+
+// Mock next-intl/navigation to avoid app router context issues
+vi.mock("next-intl/navigation", () => ({
+  createNavigation: () => ({
+    Link: ({
+      children,
+      href,
+      ...props
+    }: {
+      children: React.ReactNode;
+      href: string;
+      [key: string]: unknown;
+    }) => React.createElement("a", { href, ...props }, children),
+    useRouter: () => ({
+      push: vi.fn(),
+      replace: vi.fn(),
+      back: vi.fn(),
+      forward: vi.fn(),
+      refresh: vi.fn(),
+      prefetch: vi.fn(),
+    }),
+    usePathname: () => "/library/spotify/apple",
+    redirect: vi.fn(),
+    getPathname: () => "/library/spotify/apple",
+  }),
+}));
 
 afterEach(() => {
   cleanup();

@@ -25,7 +25,7 @@ vi.mock("@/lib/auth/constants", () => ({
 import React from "react";
 import { render, screen, within } from "@testing-library/react";
 import { describe, it, expect, beforeEach } from "vitest";
-import { Playlist } from "@/app/library/[source]/[target]/playlist/[id]/_components/Playlist";
+import { Playlist } from "@/app/[locale]/library/[source]/[target]/playlist/[id]/_components/Playlist";
 import { TestWrapper } from "@/__tests__/testUtils";
 import { mockPlaylists } from "@/__mocks__/data/libraryData";
 import { MusicService } from "@/types";
@@ -86,7 +86,14 @@ describe("Playlist", () => {
 
     const count = mockPlaylists[0].tracks.length;
     const unmatched = mockPlaylists[0].tracks.filter(track => track.status === "unmatched").length;
-    expect(screen.getByText(`${count} tracks • ${unmatched} unmatched`)).toBeInTheDocument();
+    expect(
+      screen.getByText((content, _element) => {
+        return content !== null && content.includes(`${count} tracks`);
+      })
+    ).toBeInTheDocument();
+    if (unmatched > 0) {
+      expect(screen.getByText(`${unmatched} unmatched`)).toBeInTheDocument();
+    }
   });
 
   it("renders track list correctly", () => {

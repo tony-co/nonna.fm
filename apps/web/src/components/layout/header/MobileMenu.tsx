@@ -1,4 +1,8 @@
-import { useState } from "react";
+import React from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { useRouter, usePathname } from "@/i18n/navigation";
+import { useSearchParams } from "next/navigation";
+import { routing } from "@/i18n/routing";
 import { useTheme } from "@/contexts/ThemeContext";
 import Dialog from "@/components/shared/Dialog";
 import { createPortal } from "react-dom";
@@ -6,28 +10,43 @@ import { createPortal } from "react-dom";
 const GITHUB_BASE_URL = "https://github.com/tony-co/nonna.fm/blob/main";
 const GITHUB_REPO = "https://github.com/tony-co/nonna.fm";
 
-const languages = [
-  { code: "en", name: "English" },
-  { code: "zh", name: "简体中文" },
-  { code: "pt", name: "Português" },
-  { code: "ru", name: "Русский" },
-  { code: "es", name: "Español" },
-  { code: "ko", name: "한국어" },
-  { code: "fa", name: "فارسی" },
-];
-
 interface MobileMenuProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
 }
 
 export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
-  const [selectedLang, setSelectedLang] = useState("en");
+  const tAccessibility = useTranslations("Accessibility");
+  const tDialogs = useTranslations("Dialogs");
+  const tCommon = useTranslations("Common");
+  const tUI = useTranslations("UI");
+  const tFooter = useTranslations("Footer");
+  const currentLocale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { theme, toggleTheme } = useTheme();
 
-  const handleLanguageSelect = (langCode: string) => {
-    setSelectedLang(langCode);
-    // todo: handle language change
+  const handleLanguageSelect = (locale: string) => {
+    // Convert search params to object to preserve URL parameters
+    const searchParamsObj = Object.fromEntries(searchParams.entries());
+
+    router.replace({ pathname, query: searchParamsObj }, { locale });
+  };
+
+  // Native language names - always displayed in their own language
+  const nativeLanguageNames = {
+    en: "English",
+    fr: "Français",
+    es: "Español",
+    pt: "Português",
+    it: "Italiano",
+    de: "Deutsch",
+    ja: "日本語",
+  } as const;
+
+  const getLanguageName = (locale: string): string => {
+    return nativeLanguageNames[locale as keyof typeof nativeLanguageNames] || locale;
   };
 
   return (
@@ -36,7 +55,7 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
       <button
         onClick={() => onOpenChange(true)}
         className="rounded-full p-2 transition-colors duration-200 hover:bg-gray-100 dark:text-white dark:hover:bg-white/10"
-        aria-label="Open menu"
+        aria-label={tAccessibility("openMenu")}
       >
         <svg
           className="size-6"
@@ -54,7 +73,7 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
       {/* Portal for Dialog modal for mobile menu */}
       {isOpen &&
         createPortal(
-          <Dialog isOpen={isOpen} onClose={() => onOpenChange(false)} title="Settings">
+          <Dialog isOpen={isOpen} onClose={() => onOpenChange(false)} title={tDialogs("settings")}>
             {/* Menu Items */}
             <div className="flex flex-col px-4">
               {/* Language Selection */}
@@ -68,21 +87,21 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
                       d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
                     />
                   </svg>
-                  <span className="text-[17px]">Language</span>
+                  <span className="text-[17px]">{tCommon("language")}</span>
                 </div>
                 <select
-                  value={selectedLang}
+                  value={currentLocale}
                   onChange={e => handleLanguageSelect(e.target.value)}
                   className="w-full rounded-lg bg-gray-100 px-3 py-2 text-[15px] text-gray-900 transition-colors hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
-                  aria-label="Select language"
+                  aria-label={tAccessibility("selectLanguage")}
                 >
-                  {languages.map(lang => (
+                  {routing.locales.map(locale => (
                     <option
-                      key={lang.code}
-                      value={lang.code}
+                      key={locale}
+                      value={locale}
                       className="bg-white text-gray-900 dark:bg-[#0A0A1B] dark:text-white"
                     >
-                      {lang.name}
+                      {getLanguageName(locale)}
                     </option>
                   ))}
                 </select>
@@ -99,7 +118,7 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
                       d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
                     />
                   </svg>
-                  <span className="text-[17px]">Theme</span>
+                  <span className="text-[17px]">{tUI("theme")}</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -115,7 +134,7 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
                       <span className="text-2xl font-medium text-gray-900">Aa</span>
                     </div>
                     <p className="mt-2 text-center text-[15px] font-medium text-gray-900 dark:text-white">
-                      Light
+                      {tUI("light")}
                     </p>
                   </button>
 
@@ -131,20 +150,20 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
                       <span className="text-2xl font-medium text-white">Aa</span>
                     </div>
                     <p className="mt-2 text-center text-[15px] font-medium text-gray-900 dark:text-white">
-                      Dark
+                      {tUI("dark")}
                     </p>
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Done Button */}
+            {/* Close Button */}
             <div className="p-8">
               <button
                 className="w-full rounded-full bg-indigo-600 py-3.5 text-center text-[17px] font-medium text-white transition-colors duration-200 hover:bg-indigo-700"
                 onClick={() => onOpenChange(false)}
               >
-                Done
+                {tUI("close")}
               </button>
             </div>
 
@@ -171,7 +190,7 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
                       d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
                     />
                   </svg>
-                  <span className="text-sm">Privacy</span>
+                  <span className="text-sm">{tFooter("privacy")}</span>
                 </a>
                 <a
                   href={`${GITHUB_BASE_URL}/TERMS.md`}
@@ -193,7 +212,7 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
                       d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z"
                     />
                   </svg>
-                  <span className="text-sm">Terms</span>
+                  <span className="text-sm">{tFooter("terms")}</span>
                 </a>
                 <a
                   href={GITHUB_REPO}

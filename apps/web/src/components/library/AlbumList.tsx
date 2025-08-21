@@ -1,5 +1,6 @@
 "use client";
 import { FC, useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import { useIsVisible } from "@/hooks/useIsVisible";
@@ -56,6 +57,7 @@ const AlbumItem: FC<AlbumItemProps> = ({ album }) => {
 };
 
 export const AlbumList: FC = () => {
+  const tAccessibility = useTranslations("Accessibility");
   const { state } = useLibrary();
   const { setItemTitle, setMinimalMobileHeader } = useItemTitle();
 
@@ -84,9 +86,19 @@ export const AlbumList: FC = () => {
   // Placeholder artwork if no albums exist
   const artwork =
     albumArtworks.length > 1 ? (
-      <ArtworkImage multiSrc={albumArtworks} alt="Albums artwork" size={192} type="album" />
+      <ArtworkImage
+        multiSrc={albumArtworks}
+        alt={tAccessibility("albumsArtwork")}
+        size={192}
+        type="album"
+      />
     ) : firstAlbumArtwork ? (
-      <ArtworkImage src={firstAlbumArtwork} alt="First album artwork" size={192} type="album" />
+      <ArtworkImage
+        src={firstAlbumArtwork}
+        alt={tAccessibility("firstAlbumArtwork")}
+        size={192}
+        type="album"
+      />
     ) : (
       <div className="flex h-48 w-48 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800" />
     );

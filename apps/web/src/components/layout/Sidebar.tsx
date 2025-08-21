@@ -1,6 +1,7 @@
 "use client";
 
 import { FC } from "react";
+import { useTranslations } from "next-intl";
 import { useLibrary, useLibrarySelection } from "@/contexts/LibraryContext";
 import { useMatching } from "@/hooks/useMatching";
 import { IndeterminateCheckbox } from "@/components/shared/IndeterminateCheckbox";
@@ -16,6 +17,8 @@ import { LikedSongsIcon } from "@/components/icons/LikedSongsIcon";
 // Main component
 export const LibrarySidebar: FC = () => {
   const { state, actions } = useLibrary();
+  const tSidebar = useTranslations("Sidebar");
+  const tAccessibility = useTranslations("Accessibility");
   const router = useRouter();
   const params = useParams();
   const source = params.source as MusicService;
@@ -170,8 +173,12 @@ export const LibrarySidebar: FC = () => {
   return (
     <div className="min-w-0 p-4">
       <div className="mb-4 mt-2">
-        <h1 className="mb-1 text-xl font-bold text-zinc-800 dark:text-white">Your library</h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">Select items to transfer</p>
+        <h1 className="mb-1 text-xl font-bold text-zinc-800 dark:text-white">
+          {tSidebar("yourLibrary")}
+        </h1>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          {tSidebar("selectItemsToTransfer")}
+        </p>
       </div>
 
       {/* Liked Songs Section */}
@@ -184,7 +191,7 @@ export const LibrarySidebar: FC = () => {
         }`}
         onClick={handleLikedSongsClick}
         role="button"
-        aria-label="View Liked Songs"
+        aria-label={tAccessibility("viewLikedSongs")}
         data-testid="liked-songs-section"
       >
         <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
@@ -193,7 +200,7 @@ export const LibrarySidebar: FC = () => {
             totalCount={likedSongsCount}
             onChange={handleLikedSongsToggle}
             className=""
-            label="Liked Songs"
+            label={tAccessibility("likedSongs")}
             testId="liked-songs-checkbox"
           />
         </div>
@@ -209,18 +216,18 @@ export const LibrarySidebar: FC = () => {
         </div>
         <div className="min-w-0">
           <p
-            className={`truncate font-normal text-zinc-600 group-hover:text-zinc-950 dark:text-zinc-300 dark:group-hover:text-zinc-100 ${
+            className={`truncate font-normal capitalize text-zinc-600 group-hover:text-zinc-950 dark:text-zinc-300 dark:group-hover:text-zinc-100 ${
               currentTask && currentTask.type === "likedSongs" && isMatching ? "animate-pulse" : ""
             }`}
           >
-            Liked Songs
+            {tSidebar("liked")}
           </p>
           <p className="truncate text-sm text-zinc-600 dark:text-zinc-400">
-            {likedSongsCount} songs
+            {likedSongsCount} {tSidebar("tracks")}
             {/* Show unmatched count if any */}
             {unmatchedLikedSongsCount > 0 && (
               <span className="ml-1 text-red-500 dark:text-red-400">
-                • {unmatchedLikedSongsCount} unmatched
+                • {unmatchedLikedSongsCount} {tSidebar("unmatched")}
               </span>
             )}
           </p>
@@ -239,7 +246,7 @@ export const LibrarySidebar: FC = () => {
           }`}
           onClick={handleAlbumsClick}
           role="button"
-          aria-label="View Albums"
+          aria-label={tAccessibility("viewAlbums")}
           data-testid="albums-section"
         >
           <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
@@ -248,7 +255,7 @@ export const LibrarySidebar: FC = () => {
               totalCount={albumsCount}
               onChange={handleAlbumsToggle}
               className=""
-              label="Albums"
+              label={tAccessibility("albums")}
               testId="albums-checkbox"
             />
           </div>
@@ -259,7 +266,7 @@ export const LibrarySidebar: FC = () => {
                 .slice(0, 4)
                 .map(a => a.artwork)
                 .filter((a): a is string => Boolean(a))}
-              alt="Albums artwork"
+              alt={tAccessibility("albumsArtwork")}
               type="album"
               className="rounded-lg"
             />
@@ -270,18 +277,18 @@ export const LibrarySidebar: FC = () => {
           </div>
           <div className="min-w-0">
             <p
-              className={`truncate font-normal text-zinc-600 group-hover:text-zinc-950 dark:text-zinc-300 dark:group-hover:text-zinc-200 ${
+              className={`truncate font-normal capitalize text-zinc-600 group-hover:text-zinc-950 dark:text-zinc-300 dark:group-hover:text-zinc-200 ${
                 currentTask && currentTask.type === "albums" && isMatching ? "animate-pulse" : ""
               }`}
             >
-              Albums
+              {tSidebar("albums")}
             </p>
             <p className="truncate text-sm text-zinc-600 dark:text-zinc-400">
-              {albumsCount} albums
+              {albumsCount} {tSidebar("albums")}
               {/* Show unmatched count if any */}
               {unmatchedAlbumsCount > 0 && (
                 <span className="ml-1 text-red-500 dark:text-red-400">
-                  • {unmatchedAlbumsCount} unmatched
+                  • {unmatchedAlbumsCount} {tSidebar("unmatched")}
                 </span>
               )}
             </p>
@@ -349,7 +356,7 @@ export const LibrarySidebar: FC = () => {
               className="truncate text-sm text-zinc-600 dark:text-zinc-400"
               data-testid={`playlist-track-count-${playlist.id}`}
             >
-              {playlist.tracks?.length || playlist.trackCount} tracks
+              {playlist.tracks?.length || playlist.trackCount} {tSidebar("tracks")}
               {/* Show unmatched count if any */}
               {playlist.tracks &&
                 playlist.tracks.length > 0 &&
@@ -361,7 +368,7 @@ export const LibrarySidebar: FC = () => {
                   );
                   return unmatchedCount > 0 ? (
                     <span className="ml-1 text-red-500 dark:text-red-400">
-                      • {unmatchedCount} unmatched
+                      • {unmatchedCount} {tSidebar("unmatched")}
                     </span>
                   ) : null;
                 })()}

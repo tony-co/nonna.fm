@@ -1,11 +1,14 @@
 import React from "react";
+import { useTranslations } from "next-intl";
 
 const GITHUB_BASE_URL = "https://github.com/tony-co/nonna.fm/blob/main";
 const GITHUB_REPO = "https://github.com/tony-co/nonna.fm";
 
 export function Footer({ children }: { children?: React.ReactNode }): React.ReactElement {
+  const t = useTranslations("Footer");
+
   return (
-    <footer className="sticky bottom-0 z-40 border-t border-indigo-200/20 bg-white/80 px-4 py-4 backdrop-blur-sm dark:border-indigo-800/20 dark:bg-[#0A0A1B]/80">
+    <footer className="border-t border-indigo-200/20 bg-white/80 px-4 py-4 backdrop-blur-sm dark:border-indigo-800/20 dark:bg-[#0A0A1B]/80">
       <div className="container mx-auto flex items-center justify-between">
         {/* Links on the left - hidden on mobile */}
         <div className="hidden items-center gap-4 lg:flex">
@@ -29,7 +32,7 @@ export function Footer({ children }: { children?: React.ReactNode }): React.Reac
                 d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
               />
             </svg>
-            Privacy
+            {t("privacy")}
           </a>
           <a
             href={`${GITHUB_BASE_URL}/TERMS.md`}
@@ -51,7 +54,7 @@ export function Footer({ children }: { children?: React.ReactNode }): React.Reac
                 d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z"
               />
             </svg>
-            Terms
+            {t("terms")}
           </a>
           <a
             href={GITHUB_REPO}
