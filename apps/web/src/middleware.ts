@@ -37,7 +37,6 @@ export const config = {
   matcher: [
     // Match all pathnames except for
     // - API routes, _next static files, images, and favicons
-    // - Sentry tunnel route to avoid conflicts
-    "/((?!api|sentry-tunnel|_next|_vercel|favicons|favicon\\.ico|manifest\\.json|.*\\..*).*)",
+    "/((?!api|_next|_vercel|favicons|favicon\\.ico|manifest\\.json|.*\\..*).*)",
   ],
 };

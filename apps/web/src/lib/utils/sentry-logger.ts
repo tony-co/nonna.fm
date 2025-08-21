@@ -1,54 +1,20 @@
-import * as Sentry from "@sentry/nextjs";
-
-// Check if Sentry is properly configured
-const isSentryConfigured = (): boolean => {
-  return !!process.env.NEXT_PUBLIC_SENTRY_DSN;
-};
-
 /**
- * Centralized Sentry logging utility with fallback to console
- * Provides consistent error capture throughout the application
+ * Console-based logging utility (formerly Sentry logger)
+ * Provides consistent error logging throughout the application
  */
 export const sentryLogger = {
   /**
-   * Log warning messages to Sentry and console
+   * Log warning messages to console
    */
   warn: (message: string, extra?: Record<string, unknown>) => {
-    if (isSentryConfigured()) {
-      Sentry.addBreadcrumb({
-        message,
-        level: "warning",
-        data: extra,
-      });
-    }
-
-    // Always log to console in development
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[Sentry][warn]", message, extra);
-    }
+    console.warn("[WARN]", message, extra);
   },
 
   /**
-   * Log error messages to Sentry and console
+   * Log error messages to console
    */
   error: (error: Error | string, extra?: Record<string, unknown>) => {
-    if (isSentryConfigured()) {
-      if (error instanceof Error) {
-        Sentry.captureException(error, { extra });
-      } else {
-        Sentry.captureMessage(error, "error");
-        Sentry.addBreadcrumb({
-          message: error,
-          level: "error",
-          data: extra,
-        });
-      }
-    }
-
-    // Always log to console in development or if Sentry fails
-    if (process.env.NODE_ENV !== "production") {
-      console.error("[Sentry][error]", error, extra);
-    }
+    console.error("[ERROR]", error, extra);
   },
 
   /**
@@ -60,35 +26,7 @@ export const sentryLogger = {
     error: unknown,
     extra?: Record<string, unknown>
   ) => {
-    if (isSentryConfigured()) {
-      try {
-        Sentry.captureException(error, {
-          tags: {
-            category: "matching",
-            operation,
-            targetService,
-          },
-          extra: {
-            operation,
-            targetService,
-            ...extra,
-          },
-          level: "error",
-        });
-      } catch (sentryError) {
-        // If Sentry fails, at least log to console
-        console.error("[Sentry Error - fallback to console]", {
-          originalError: error,
-          sentryError,
-          operation,
-          targetService,
-          extra,
-        });
-      }
-    } else {
-      // Log to console when Sentry is not configured
-      console.error(`[${operation}] Error in ${targetService}:`, error, extra);
-    }
+    console.error(`[MATCHING_ERROR][${operation}] Error in ${targetService}:`, error, extra);
   },
 
   /**
@@ -102,36 +40,14 @@ export const sentryLogger = {
       level?: "fatal" | "error" | "warning" | "info" | "debug";
     }
   ) => {
-    if (isSentryConfigured()) {
-      try {
-        Sentry.captureException(error, {
-          tags: context?.tags,
-          extra: context?.extra,
-          level: context?.level || "error",
-        });
-      } catch (sentryError) {
-        console.error("[Sentry Error - fallback to console]", {
-          originalError: error,
-          sentryError,
-          context,
-        });
-      }
-    } else {
-      console.error("[Exception]", error, context);
-    }
+    const level = context?.level || "error";
+    console.error(`[EXCEPTION][${level.toUpperCase()}]`, error, context);
   },
 
   /**
-   * Add breadcrumb for debugging context
+   * Add breadcrumb for debugging context (now just logs to console)
    */
   addBreadcrumb: (message: string, data?: Record<string, unknown>) => {
-    if (isSentryConfigured()) {
-      Sentry.addBreadcrumb({
-        message,
-        data,
-        level: "info",
-        timestamp: Date.now() / 1000,
-      });
-    }
+    console.log("[BREADCRUMB]", message, data);
   },
 };

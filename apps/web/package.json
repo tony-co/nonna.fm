@@ -16,7 +16,6 @@
     "clean": "rm -rf .next .turbo node_modules/.cache"
   },
   "dependencies": {
-    "@sentry/nextjs": "10.5.0",
     "@types/crypto-js": "^4.2.2",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",

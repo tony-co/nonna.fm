@@ -1,13 +1,8 @@
-import * as Sentry from "@sentry/nextjs";
+// Next.js instrumentation file
+// This file can be used to configure runtime instrumentation
+// https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation
 
 export async function register(): Promise<void> {
-  if (process.env.NEXT_RUNTIME === "nodejs") {
-    await import("../sentry.server.config");
-  }
-
-  if (process.env.NEXT_RUNTIME === "edge") {
-    await import("../sentry.edge.config");
-  }
+  // Instrumentation setup can be added here
+  // e.g., PostHog, other analytics, or monitoring tools
 }
-
-export const onRequestError = Sentry.captureRequestError;
