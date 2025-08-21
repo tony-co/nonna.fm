@@ -10,7 +10,6 @@ import { createPortal } from "react-dom";
 const GITHUB_BASE_URL = "https://github.com/tony-co/nonna.fm/blob/main";
 const GITHUB_REPO = "https://github.com/tony-co/nonna.fm";
 
-
 interface MobileMenuProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
@@ -31,22 +30,19 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
   const handleLanguageSelect = (locale: string) => {
     // Convert search params to object to preserve URL parameters
     const searchParamsObj = Object.fromEntries(searchParams.entries());
-    
-    router.replace(
-      { pathname, query: searchParamsObj },
-      { locale }
-    );
+
+    router.replace({ pathname, query: searchParamsObj }, { locale });
   };
 
   // Native language names - always displayed in their own language
   const nativeLanguageNames = {
-    'en': 'English',
-    'fr': 'Français', 
-    'es': 'Español',
-    'pt': 'Português',
-    'it': 'Italiano',
-    'de': 'Deutsch',
-    'jp': '日本語'
+    en: "English",
+    fr: "Français",
+    es: "Español",
+    pt: "Português",
+    it: "Italiano",
+    de: "Deutsch",
+    jp: "日本語",
   } as const;
 
   const getLanguageName = (locale: string): string => {

@@ -155,7 +155,6 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
                       isProcessing ||
                       service.id === "deezer";
 
-
                     return (
                       <button
                         key={service.id}

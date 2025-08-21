@@ -18,8 +18,8 @@ import { DeezerConnectModal } from "@/components/modals/DeezerConnectModal";
 import { SpotifyConsentModal } from "@/components/modals/SpotifyConsentModal";
 
 function HomePageContent() {
-  const t = useTranslations('HomePage');
-  const tAccessibility = useTranslations('Accessibility');
+  const t = useTranslations("HomePage");
+  const tAccessibility = useTranslations("Accessibility");
   const router = useRouter();
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
@@ -78,7 +78,7 @@ function HomePageContent() {
       <header className="sticky top-0 z-50 h-auto">
         <Header />
       </header>
-      
+
       <main className="overflow-auto">
         <div className="relative">
           <div className="mx-auto max-w-7xl px-4 py-12">
@@ -90,17 +90,17 @@ function HomePageContent() {
                     contain: "content",
                   }}
                 >
-{t('title')}
+                  {t("title")}
                 </h1>
-<p
+                <p
                   className="mx-auto text-xl leading-relaxed text-zinc-800 lg:text-2xl dark:text-indigo-100"
                   style={{
                     contain: "content",
                     textRendering: "optimizeLegibility",
                   }}
                 >
-                  {t.rich('subtitle', {
-                    strong: (chunks) => <strong>{chunks}</strong>
+                  {t.rich("subtitle", {
+                    strong: chunks => <strong>{chunks}</strong>,
                   })}
                 </p>
               </div>
@@ -110,11 +110,11 @@ function HomePageContent() {
                   className="bg-[var(--color-error)]/5 dark:bg-[var(--color-error)]/10 border-[var(--color-error)]/20 dark:text-[var(--color-error)]/90 mx-auto mb-8 max-w-lg rounded-2xl border px-6 py-4 text-[var(--color-error)] shadow-lg backdrop-blur-sm"
                   style={{ contain: "content" }}
                 >
-{error === "spotify_auth_failed" && t('errors.spotifyAuthFailed')}
-                  {error === "spotify_auth_error" && t('errors.spotifyAuthError')}
-                  {error === "youtube_auth_failed" && t('errors.youtubeAuthFailed')}
-                  {error === "youtube_auth_error" && t('errors.youtubeAuthError')}
-                  {error === "not_authenticated" && t('errors.notAuthenticated')}
+                  {error === "spotify_auth_failed" && t("errors.spotifyAuthFailed")}
+                  {error === "spotify_auth_error" && t("errors.spotifyAuthError")}
+                  {error === "youtube_auth_failed" && t("errors.youtubeAuthFailed")}
+                  {error === "youtube_auth_error" && t("errors.youtubeAuthError")}
+                  {error === "not_authenticated" && t("errors.notAuthenticated")}
                 </div>
               )}
 
@@ -126,7 +126,7 @@ function HomePageContent() {
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-stone-100 text-lg text-zinc-800 dark:text-indigo-800">
                   1
                 </span>
-{t('selectSource')}
+                {t("selectSource")}
               </h2>
 
               {/* Service Buttons */}
@@ -148,8 +148,8 @@ function HomePageContent() {
                     className="group flex h-[180px] w-[280px] cursor-pointer flex-col items-center justify-center gap-4 rounded-3xl bg-indigo-100 px-5 py-5 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-indigo-200 dark:bg-indigo-950 dark:hover:bg-indigo-900/70"
                   >
                     <service.image className="h-12 w-12" size={48} />
-<span className="text-text text-center text-base font-semibold">
-                      {t('connectWith')}
+                    <span className="text-text text-center text-base font-semibold">
+                      {t("connectWith")}
                       <br />
                       {service.name}
                     </span>
@@ -167,18 +167,18 @@ function HomePageContent() {
                   <span
                     className="text-4xl drop-shadow-md filter"
                     role="img"
-aria-label={tAccessibility('moneyWithWings')}
+                    aria-label={tAccessibility("moneyWithWings")}
                   >
                     💸
                   </span>
                 </div>
-<h3 className="mb-4 text-2xl font-semibold text-zinc-800 dark:text-stone-200">
-                  {t('features.freeplan.title')}
+                <h3 className="mb-4 text-2xl font-semibold text-zinc-800 dark:text-stone-200">
+                  {t("features.freeplan.title")}
                 </h3>
                 <p className="text-lg text-zinc-600 dark:text-stone-400">
-                  {t.rich('features.freeplan.description', {
-                    strong: (chunks) => <strong>{chunks}</strong>,
-                    br: () => <br />
+                  {t.rich("features.freeplan.description", {
+                    strong: chunks => <strong>{chunks}</strong>,
+                    br: () => <br />,
                   })}
                 </p>
               </div>
@@ -187,17 +187,17 @@ aria-label={tAccessibility('moneyWithWings')}
                   <span
                     className="text-4xl drop-shadow-md filter"
                     role="img"
-aria-label={tAccessibility('shieldWithLock')}
+                    aria-label={tAccessibility("shieldWithLock")}
                   >
                     🔐
                   </span>
                 </div>
-<h3 className="mb-4 text-2xl font-semibold text-zinc-800 dark:text-stone-200">
-                  {t('features.secure.title')}
+                <h3 className="mb-4 text-2xl font-semibold text-zinc-800 dark:text-stone-200">
+                  {t("features.secure.title")}
                 </h3>
                 <p className="text-lg text-zinc-600 dark:text-stone-400">
-                  {t.rich('features.secure.description', {
-                    br: () => <br />
+                  {t.rich("features.secure.description", {
+                    br: () => <br />,
                   })}
                 </p>
               </div>
@@ -218,17 +218,17 @@ aria-label={tAccessibility('shieldWithLock')}
           onAgree={handleSpotifyConsent}
         />
       </main>
-      
+
       <Footer />
     </div>
   );
 }
 
 export default function HomePage() {
-  const t = useTranslations('Loading');
-  
+  const t = useTranslations("Loading");
+
   return (
-<Suspense fallback={<div>{t('loading')}</div>}>
+    <Suspense fallback={<div>{t("loading")}</div>}>
       <HomePageContent />
     </Suspense>
   );

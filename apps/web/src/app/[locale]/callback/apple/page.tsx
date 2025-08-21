@@ -59,10 +59,10 @@ function AppleCallbackContent() {
 }
 
 export default function AppleCallback() {
-  const t = useTranslations('Loading');
-  
+  const t = useTranslations("Loading");
+
   return (
-    <Suspense fallback={<div>{t('loading')}</div>}>
+    <Suspense fallback={<div>{t("loading")}</div>}>
       <AppleCallbackContent />
     </Suspense>
   );

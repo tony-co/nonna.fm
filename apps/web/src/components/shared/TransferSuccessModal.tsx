@@ -30,9 +30,9 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
   results,
   selectedData,
 }) => {
-  const tAccessibility = useTranslations('Accessibility');
-  const tModals = useTranslations('Modals');
-  const tButtons = useTranslations('Buttons');
+  const tAccessibility = useTranslations("Accessibility");
+  const tModals = useTranslations("Modals");
+  const tButtons = useTranslations("Buttons");
   // Log when the modal is rendered
   useEffect(() => {
     console.log("TransferSuccessModal rendered:", {
@@ -76,7 +76,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
     <Dialog
       isOpen={isOpen}
       onClose={onClose}
-      title={tModals('transferSuccess.title')}
+      title={tModals("transferSuccess.title")}
       closeOnBackdropClick={false}
     >
       <div className="flex flex-col gap-6">
@@ -97,7 +97,9 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
               />
             </svg>
             <div className="flex items-center gap-3">
-              <span className="text-xl font-medium">{tModals('transferSuccess.enjoyTracks', { totalTransferred })}</span>
+              <span className="text-xl font-medium">
+                {tModals("transferSuccess.enjoyTracks", { totalTransferred })}
+              </span>
               <div className="flex items-center gap-2">
                 <targetService.image className="h-8 w-8" size={28} />
                 <span className="text-xl font-medium" style={{ color: targetService.color }}>
@@ -110,7 +112,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
 
         <div className="flex flex-col gap-4">
           <h3 className="text-lg font-semibold text-zinc-800 dark:text-stone-200">
-            {tModals('transferSuccess.musicReady')}
+            {tModals("transferSuccess.musicReady")}
           </h3>
           <div className="flex flex-col gap-3">
             {hasLikedSongs && selectedData.likedSongs.length > 0 && (
@@ -123,11 +125,13 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
                 <div className="flex items-center gap-4">
                   <ArtworkImage
                     src={selectedData.likedSongs[0]?.artwork}
-                    alt={tAccessibility('likedSongs')}
+                    alt={tAccessibility("likedSongs")}
                     type="liked"
                   />
                   <div>
-                    <div className="font-medium text-gray-900 dark:text-white">{tModals('transferSuccess.likedSongs')}</div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      {tModals("transferSuccess.likedSongs")}
+                    </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
                       {results.likedSongs?.added} songs transferred
                     </div>
@@ -157,9 +161,15 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
                 className="group flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 transition-all duration-200 hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-gray-800 dark:bg-gray-900/50 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/50"
               >
                 <div className="flex items-center gap-4">
-                  <ArtworkImage src={selectedData.albums[0]?.artwork} alt={tAccessibility('albums')} type="album" />
+                  <ArtworkImage
+                    src={selectedData.albums[0]?.artwork}
+                    alt={tAccessibility("albums")}
+                    type="album"
+                  />
                   <div>
-                    <div className="font-medium text-gray-900 dark:text-white">{tModals('transferSuccess.albums')}</div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      {tModals("transferSuccess.albums")}
+                    </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
                       {results.albums?.added} albums transferred
                     </div>
@@ -199,12 +209,12 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
                   <div className="flex items-center gap-4">
                     <ArtworkImage
                       src={firstTrack?.artwork}
-                      alt={playlist.name || tModals('transferSuccess.playlist')}
+                      alt={playlist.name || tModals("transferSuccess.playlist")}
                       type="playlist"
                     />
                     <div>
                       <div className="font-medium text-gray-900 dark:text-white">
-                        {playlist.name || tModals('transferSuccess.playlist')}
+                        {playlist.name || tModals("transferSuccess.playlist")}
                       </div>
                       {/* <div className="text-sm text-gray-500 dark:text-gray-400">
                         {result.added} songs transferred
@@ -235,7 +245,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
             onClick={onClose}
             className="rounded-lg bg-indigo-600 px-6 py-2.5 text-white transition-all duration-200 hover:bg-indigo-700 hover:shadow-md dark:bg-indigo-500 dark:hover:bg-indigo-600"
           >
-            {tButtons('close')}
+            {tButtons("close")}
           </button>
         </div>
       </div>

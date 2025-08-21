@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import createIntlMiddleware from 'next-intl/middleware';
+import createIntlMiddleware from "next-intl/middleware";
 import { env } from "./env.mjs";
-import { routing } from './i18n/routing';
+import { routing } from "./i18n/routing";
 
 // Create the i18n middleware
 const intlMiddleware = createIntlMiddleware(routing);
@@ -38,6 +38,6 @@ export const config = {
     // Match all pathnames except for
     // - API routes, _next static files, images, and favicons
     // - Sentry tunnel route to avoid conflicts
-    '/((?!api|sentry-tunnel|_next|_vercel|favicons|favicon\\.ico|manifest\\.json|.*\\..*).*)'
+    "/((?!api|sentry-tunnel|_next|_vercel|favicons|favicon\\.ico|manifest\\.json|.*\\..*).*)",
   ],
 };

@@ -59,10 +59,10 @@ function SpotifyCallbackContent() {
 }
 
 export default function SpotifyCallback() {
-  const t = useTranslations('Loading');
-  
+  const t = useTranslations("Loading");
+
   return (
-    <Suspense fallback={<div>{t('loading')}</div>}>
+    <Suspense fallback={<div>{t("loading")}</div>}>
       <SpotifyCallbackContent />
     </Suspense>
   );

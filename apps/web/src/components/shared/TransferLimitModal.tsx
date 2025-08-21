@@ -12,8 +12,8 @@ interface TransferLimitModalProps {
 
 export function TransferLimitModal({ selectedCount, userStatus }: TransferLimitModalProps) {
   const { dailyLimit, availableToday, resetInSeconds } = userStatus;
-  const tPlans = useTranslations('Plans');
-  const tModals = useTranslations('Modals');
+  const tPlans = useTranslations("Plans");
+  const tModals = useTranslations("Modals");
   const hasAvailableTransfers = availableToday > 0;
   const isSelectionOverLimit = selectedCount > availableToday;
 
@@ -40,12 +40,15 @@ export function TransferLimitModal({ selectedCount, userStatus }: TransferLimitM
                   // Warning: selection exceeds available transfers
                   <>
                     <p className="text-lg">
-                      {tModals('transferLimit.selectionExceedsLimit', { selectedCount, availableToday })}
+                      {tModals("transferLimit.selectionExceedsLimit", {
+                        selectedCount,
+                        availableToday,
+                      })}
                     </p>
                     {/* Show reset time only with warning */}
                     {resetTimeText && (
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {tModals('transferLimit.resetTimeWarning', { resetTime: resetTimeText })}
+                        {tModals("transferLimit.resetTimeWarning", { resetTime: resetTimeText })}
                       </p>
                     )}
                   </>
@@ -54,15 +57,15 @@ export function TransferLimitModal({ selectedCount, userStatus }: TransferLimitM
                 // No available transfers: daily limit reached
                 <>
                   <p className="text-lg font-medium text-amber-600 dark:text-amber-400">
-                    {tModals('transferLimit.dailyLimitTitle')}
+                    {tModals("transferLimit.dailyLimitTitle")}
                   </p>
                   <p className="text-base">
-                    {tModals('transferLimit.usedAllTransfers', { dailyLimit })}
+                    {tModals("transferLimit.usedAllTransfers", { dailyLimit })}
                   </p>
                   {/* Show reset time only with daily limit reached */}
                   {resetTimeText && (
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {tModals('transferLimit.resetTimeWarning', { resetTime: resetTimeText })}
+                      {tModals("transferLimit.resetTimeWarning", { resetTime: resetTimeText })}
                     </p>
                   )}
                 </>
@@ -91,9 +94,11 @@ export function TransferLimitModal({ selectedCount, userStatus }: TransferLimitM
             </svg>
           </div>
           <div className="flex flex-col items-start">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{tPlans('freePlan')}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {tPlans("freePlan")}
+            </h3>
             <span className="mt-2 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-              {tPlans('currentPlan')}
+              {tPlans("currentPlan")}
             </span>
           </div>
         </div>
@@ -108,7 +113,7 @@ export function TransferLimitModal({ selectedCount, userStatus }: TransferLimitM
                 />
               </svg>
             </div>
-            {FREE_TIER_LIMIT} {tModals('transferLimit.dailyTransfers')}
+            {FREE_TIER_LIMIT} {tModals("transferLimit.dailyTransfers")}
           </li>
         </ul>
       </div>
@@ -132,14 +137,16 @@ export function TransferLimitModal({ selectedCount, userStatus }: TransferLimitM
             </svg>
           </div>
           <div className="flex flex-col items-start">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{tPlans('premiumPlan')}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {tPlans("premiumPlan")}
+            </h3>
             <span className="mt-2 rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400">
-              {tPlans('comingSoon')}
+              {tPlans("comingSoon")}
             </span>
           </div>
         </div>
         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-          {tModals('transferLimit.upgradeToPremium')}
+          {tModals("transferLimit.upgradeToPremium")}
         </p>
         <ul className="mb-4 mt-3 space-y-2 text-gray-600 dark:text-gray-300">
           <li className="flex items-center gap-2.5">
@@ -153,7 +160,9 @@ export function TransferLimitModal({ selectedCount, userStatus }: TransferLimitM
               </svg>
             </div>
             <span className="flex items-center gap-1.5">
-              <span>{PREMIUM_TIER_LIMIT} {tModals('transferLimit.dailyTransfers')}</span>
+              <span>
+                {PREMIUM_TIER_LIMIT} {tModals("transferLimit.dailyTransfers")}
+              </span>
             </span>
           </li>
         </ul>
@@ -161,7 +170,7 @@ export function TransferLimitModal({ selectedCount, userStatus }: TransferLimitM
           disabled
           className="w-full cursor-not-allowed rounded-lg bg-gray-100 px-6 py-2.5 text-center font-medium text-gray-400 dark:bg-gray-800 dark:text-gray-500"
         >
-          {tModals('transferLimit.comingSoonButton')}
+          {tModals("transferLimit.comingSoonButton")}
         </button>
       </div>
     </div>

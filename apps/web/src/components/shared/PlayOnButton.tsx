@@ -12,7 +12,7 @@ interface PlayOnButtonProps {
 export const PlayOnButton: FC<PlayOnButtonProps> = ({ type, playlistId }) => {
   const serviceType = getServiceType("source");
   const service = getServiceById(serviceType);
-  const tPlayOnButton = useTranslations('PlayOnButton');
+  const tPlayOnButton = useTranslations("PlayOnButton");
 
   if (!service) return null;
 
@@ -42,7 +42,9 @@ export const PlayOnButton: FC<PlayOnButtonProps> = ({ type, playlistId }) => {
       className="hover:text-[var(--service-color)]/80 hover:bg-[var(--service-color)]/5 inline-flex w-fit items-center gap-2 rounded-full px-3 py-1.5 text-[var(--service-color)] transition-colors lg:px-4 lg:py-2"
     >
       <service.image size={20} className="lg:h-6 lg:w-6" />
-      <span className="text-xs font-medium lg:text-sm">{tPlayOnButton('playOn', { service: service.name })}</span>
+      <span className="text-xs font-medium lg:text-sm">
+        {tPlayOnButton("playOn", { service: service.name })}
+      </span>
     </a>
   );
 };

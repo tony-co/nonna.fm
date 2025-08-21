@@ -57,7 +57,7 @@ const AlbumItem: FC<AlbumItemProps> = ({ album }) => {
 };
 
 export const AlbumList: FC = () => {
-  const tAccessibility = useTranslations('Accessibility');
+  const tAccessibility = useTranslations("Accessibility");
   const { state } = useLibrary();
   const { setItemTitle, setMinimalMobileHeader } = useItemTitle();
 
@@ -86,9 +86,19 @@ export const AlbumList: FC = () => {
   // Placeholder artwork if no albums exist
   const artwork =
     albumArtworks.length > 1 ? (
-      <ArtworkImage multiSrc={albumArtworks} alt={tAccessibility('albumsArtwork')} size={192} type="album" />
+      <ArtworkImage
+        multiSrc={albumArtworks}
+        alt={tAccessibility("albumsArtwork")}
+        size={192}
+        type="album"
+      />
     ) : firstAlbumArtwork ? (
-      <ArtworkImage src={firstAlbumArtwork} alt={tAccessibility('firstAlbumArtwork')} size={192} type="album" />
+      <ArtworkImage
+        src={firstAlbumArtwork}
+        alt={tAccessibility("firstAlbumArtwork")}
+        size={192}
+        type="album"
+      />
     ) : (
       <div className="flex h-48 w-48 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800" />
     );

@@ -59,10 +59,10 @@ function DeezerCallbackContent() {
 }
 
 export default function DeezerCallback() {
-  const t = useTranslations('Loading');
-  
+  const t = useTranslations("Loading");
+
   return (
-    <Suspense fallback={<div>{t('loading')}</div>}>
+    <Suspense fallback={<div>{t("loading")}</div>}>
       <DeezerCallbackContent />
     </Suspense>
   );
