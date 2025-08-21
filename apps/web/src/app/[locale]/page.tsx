@@ -2,7 +2,9 @@
 
 import React, { Suspense } from "react";
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { AudioEqualizer } from "@/components/shared/AudioEqualizer";
@@ -16,6 +18,8 @@ import { DeezerConnectModal } from "@/components/modals/DeezerConnectModal";
 import { SpotifyConsentModal } from "@/components/modals/SpotifyConsentModal";
 
 function HomePageContent() {
+  const t = useTranslations('HomePage');
+  const tAccessibility = useTranslations('Accessibility');
   const router = useRouter();
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
@@ -71,7 +75,9 @@ function HomePageContent() {
 
   return (
     <div className="grid h-[100dvh] grid-rows-[auto_1fr_auto] overflow-hidden">
-      <Header />
+      <header className="sticky top-0 z-50 h-auto">
+        <Header />
+      </header>
       
       <main className="overflow-auto">
         <div className="relative">
@@ -84,16 +90,18 @@ function HomePageContent() {
                     contain: "content",
                   }}
                 >
-                  Your Music, Anywhere
+{t('title')}
                 </h1>
-                <p
+<p
                   className="mx-auto text-xl leading-relaxed text-zinc-800 lg:text-2xl dark:text-indigo-100"
                   style={{
                     contain: "content",
                     textRendering: "optimizeLegibility",
                   }}
                 >
-                  Move your playlists between streaming platforms <strong>easily</strong>.
+                  {t.rich('subtitle', {
+                    strong: (chunks) => <strong>{chunks}</strong>
+                  })}
                 </p>
               </div>
 
@@ -102,16 +110,11 @@ function HomePageContent() {
                   className="bg-[var(--color-error)]/5 dark:bg-[var(--color-error)]/10 border-[var(--color-error)]/20 dark:text-[var(--color-error)]/90 mx-auto mb-8 max-w-lg rounded-2xl border px-6 py-4 text-[var(--color-error)] shadow-lg backdrop-blur-sm"
                   style={{ contain: "content" }}
                 >
-                  {error === "spotify_auth_failed" &&
-                    "Spotify authentication failed. Please try again."}
-                  {error === "spotify_auth_error" &&
-                    "An error occurred during Spotify authentication."}
-                  {error === "youtube_auth_failed" &&
-                    "YouTube Music authentication failed. Please try again."}
-                  {error === "youtube_auth_error" &&
-                    "An error occurred during YouTube Music authentication."}
-                  {error === "not_authenticated" &&
-                    "Please authenticate with a music service to continue."}
+{error === "spotify_auth_failed" && t('errors.spotifyAuthFailed')}
+                  {error === "spotify_auth_error" && t('errors.spotifyAuthError')}
+                  {error === "youtube_auth_failed" && t('errors.youtubeAuthFailed')}
+                  {error === "youtube_auth_error" && t('errors.youtubeAuthError')}
+                  {error === "not_authenticated" && t('errors.notAuthenticated')}
                 </div>
               )}
 
@@ -123,7 +126,7 @@ function HomePageContent() {
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-stone-100 text-lg text-zinc-800 dark:text-indigo-800">
                   1
                 </span>
-                Select your source:
+{t('selectSource')}
               </h2>
 
               {/* Service Buttons */}
@@ -145,8 +148,8 @@ function HomePageContent() {
                     className="group flex h-[180px] w-[280px] cursor-pointer flex-col items-center justify-center gap-4 rounded-3xl bg-indigo-100 px-5 py-5 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-indigo-200 dark:bg-indigo-950 dark:hover:bg-indigo-900/70"
                   >
                     <service.image className="h-12 w-12" size={48} />
-                    <span className="text-text text-center text-base font-semibold">
-                      Connect with
+<span className="text-text text-center text-base font-semibold">
+                      {t('connectWith')}
                       <br />
                       {service.name}
                     </span>
@@ -164,18 +167,19 @@ function HomePageContent() {
                   <span
                     className="text-4xl drop-shadow-md filter"
                     role="img"
-                    aria-label="Money with wings"
+aria-label={tAccessibility('moneyWithWings')}
                   >
                     💸
                   </span>
                 </div>
-                <h3 className="mb-4 text-2xl font-semibold text-zinc-800 dark:text-stone-200">
-                  Generous Free Plan
+<h3 className="mb-4 text-2xl font-semibold text-zinc-800 dark:text-stone-200">
+                  {t('features.freeplan.title')}
                 </h3>
                 <p className="text-lg text-zinc-600 dark:text-stone-400">
-                  500 transfers for free <strong>everyday</strong>
-                  <br />
-                  Upgrade to Premium for 10x more.
+                  {t.rich('features.freeplan.description', {
+                    strong: (chunks) => <strong>{chunks}</strong>,
+                    br: () => <br />
+                  })}
                 </p>
               </div>
               <div className="rounded-3xl border border-indigo-200/50 bg-indigo-100 p-10 shadow-lg transition-all duration-200 hover:shadow-xl dark:border-indigo-800/30 dark:bg-indigo-950/70">
@@ -183,18 +187,18 @@ function HomePageContent() {
                   <span
                     className="text-4xl drop-shadow-md filter"
                     role="img"
-                    aria-label="Shield with lock"
+aria-label={tAccessibility('shieldWithLock')}
                   >
                     🔐
                   </span>
                 </div>
-                <h3 className="mb-4 text-2xl font-semibold text-zinc-800 dark:text-stone-200">
-                  Secure and private
+<h3 className="mb-4 text-2xl font-semibold text-zinc-800 dark:text-stone-200">
+                  {t('features.secure.title')}
                 </h3>
                 <p className="text-lg text-zinc-600 dark:text-stone-400">
-                  We do not sell your data.
-                  <br />
-                  Our code is open source for full transparency.
+                  {t.rich('features.secure.description', {
+                    br: () => <br />
+                  })}
                 </p>
               </div>
             </div>
@@ -221,8 +225,10 @@ function HomePageContent() {
 }
 
 export default function HomePage() {
+  const t = useTranslations('Loading');
+  
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+<Suspense fallback={<div>{t('loading')}</div>}>
       <HomePageContent />
     </Suspense>
   );

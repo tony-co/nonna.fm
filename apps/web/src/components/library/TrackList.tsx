@@ -1,6 +1,7 @@
 "use client";
 
 import { FC, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { useIsVisible } from "@/hooks/useIsVisible";
 import type { ITrack, IPlaylist } from "@/types";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
@@ -79,7 +80,10 @@ const TrackRow: FC<{
 };
 
 // Empty state component for empty playlists
-const EmptyPlaylistState: FC = () => (
+const EmptyPlaylistState: FC = () => {
+  const tLibraryPage = useTranslations('LibraryPage');
+  
+  return (
   <div className="flex flex-col items-center justify-center py-16 text-center">
     {/* Simple playlist SVG illustration */}
     <svg
@@ -99,12 +103,14 @@ const EmptyPlaylistState: FC = () => (
       <circle cx="72" cy="54" r="4" fill="currentColor" fillOpacity="0.35" />
     </svg>
     <div className="text-lg font-semibold text-slate-700 dark:text-slate-200">
-      This playlist seems to be empty
+      {tLibraryPage('noItems')}
     </div>
   </div>
-);
+  );
+};
 
 export const TrackList: FC<TrackListProps> = ({ tracks, selection = new Set(), playlist }) => {
+  const tTableHeaders = useTranslations('TableHeaders');
   // Show empty state if no tracks
   if (!tracks || tracks.length === 0) {
     return <EmptyPlaylistState />;
@@ -118,17 +124,17 @@ export const TrackList: FC<TrackListProps> = ({ tracks, selection = new Set(), p
         role="row"
       >
         <div className="hidden items-center lg:flex" role="columnheader">
-          #
+          {tTableHeaders('number')}
         </div>
         <div className="flex items-center" role="columnheader">
-          Title
+          {tTableHeaders('title')}
         </div>
         <div className="flex items-center" role="columnheader"></div>
         <div className="hidden items-center lg:flex" role="columnheader">
-          Album
+          {tTableHeaders('album')}
         </div>
         <div className="flex items-center justify-end" role="columnheader">
-          Status
+          {tTableHeaders('status')}
         </div>
       </div>
 

@@ -1,0 +1,346 @@
+{
+  "HomePage": {
+    "title": "音楽を転送する",
+    "subtitle": "ストリーミング配信プラットフォーム間でプレイリストを<strong>簡単に</strong>転送。",
+    "selectSource": "ソースを選択:",
+    "connectWith": "接続",
+    "loading": "読み込み中...",
+    "errors": {
+      "spotifyAuthFailed": "Spotify認証に失敗しました。もう一度お試しください。",
+      "spotifyAuthError": "Spotify認証中にエラーが発生しました。",
+      "youtubeAuthFailed": "YouTube Music認証に失敗しました。もう一度お試しください。",
+      "youtubeAuthError": "YouTube Music認証中にエラーが発生しました。",
+      "notAuthenticated": "続行するには音楽サービスで認証してください。"
+    },
+    "features": {
+      "freeplan": {
+        "title": "充実した無料プラン",
+        "description": "<strong>毎日</strong>500回の転送が無料。<br></br>プレミアムプランにアップグレードして10倍に。"
+      },
+      "secure": {
+        "title": "安全でプライベート",
+        "description": "データを販売することはありません。<br></br>完全な透明性のためコードはオープンソースです。"
+      }
+    }
+  },
+  "Navigation": {
+    "home": "ホーム",
+    "library": "ライブラリ",
+    "liked": "お気に入りの楽曲",
+    "albums": "アルバム",
+    "playlists": "プレイリスト",
+    "back": "戻る",
+    "beta": "ベータ"
+  },
+  "Footer": {
+    "privacy": "プライバシー",
+    "terms": "利用規約"
+  },
+  "LibraryPage": {
+    "title": "あなたのライブラリ",
+    "loadingLibrary": "ライブラリを読み込み中...",
+    "noItems": "項目が見つかりません",
+    "selectAll": "すべて選択",
+    "deselectAll": "すべて選択解除",
+    "selectedCount": "{count}個選択中",
+    "transferSelected": "選択したものを転送",
+    "viewOn": "{service}で表示",
+    "transferTo": "{service}に転送",
+    "addedBy": "{name}によって追加",
+    "lastPlayed": "最後に再生: {date}",
+    "duration": "{duration}",
+    "tracks": "{count}曲",
+    "transferGuide": "転送ガイド",
+    "howItWorks": "使い方",
+    "steps": {
+      "step1": "転送したいものを選択",
+      "step2": {
+        "title": "{target}で最適なマッチを検索します",
+        "description1": "選択したプレイリストを開いてマッチを確認できます",
+        "description2": "選択内容によって時間がかかる場合があります"
+      },
+      "step3": "<strong>転送開始</strong>をクリックして選択を{target}にコピー"
+    },
+    "disclaimer": "元の{source}プレイリストは変更されません。"
+  },
+  "TableHeaders": {
+    "number": "#",
+    "title": "タイトル",
+    "album": "アルバム",
+    "status": "ステータス"
+  },
+  "SourcePage": {
+    "title": "転送先を選択",
+    "subtitle": "音楽を転送する場所を選択",
+    "backToHome": "ホームに戻る",
+    "connectToTransfer": "接続して音楽を転送",
+    "alreadyConnected": "すでに接続済み"
+  },
+  "Buttons": {
+    "transfer": "転送",
+    "cancel": "キャンセル",
+    "confirm": "確認",
+    "close": "閉じる",
+    "continue": "続行",
+    "agree": "同意する",
+    "disagree": "同意しない",
+    "connect": "接続",
+    "disconnect": "切断",
+    "retry": "再試行",
+    "save": "保存",
+    "delete": "削除",
+    "edit": "編集",
+    "copy": "コピー",
+    "share": "共有",
+    "playOn": "{service}で再生"
+  },
+  "PlayOnButton": {
+    "playOn": "{service}で再生"
+  },
+  "Modals": {
+    "transferLimit": {
+      "title": "転送制限に達しました",
+      "dailyLimitReached": "1日の転送制限{limit}回に達しました。",
+      "upgradePrompt": "プレミアムにアップグレードして無制限転送。",
+      "upgradeCta": "プレミアムにアップグレード",
+      "waitUntilTomorrow": "明日の{time}に再度転送できます。",
+      "selectionExceedsLimit": "{selectedCount}曲を選択しましたが、今日はあと{availableToday}曲しか転送できません。",
+      "resetTimeWarning": "転送制限は{resetTime}後にリセットされます",
+      "dailyLimitTitle": "1日制限に達しました",
+      "usedAllTransfers": "今日の無料プランで利用可能な{dailyLimit}転送をすべて使用しました",
+      "dailyTransfers": "1日の転送",
+      "upgradeToPremium": "より高い制限のためプレミアムにアップグレード",
+      "comingSoonButton": "近日公開"
+    },
+    "transferSuccess": {
+      "title": "転送完了！",
+      "successMessage": "{count}個の{type}を{service}に正常に転送しました。",
+      "viewLibrary": "{service}ライブラリを表示",
+      "transferMore": "もっと音楽を転送",
+      "enjoyTracks": "{totalTransferred}曲を楽しんでください",
+      "musicReady": "転送された音楽の準備完了！",
+      "likedSongs": "お気に入りの楽曲",
+      "albums": "アルバム",
+      "playlist": "プレイリスト"
+    },
+    "spotifyConsent": {
+      "title": "Spotify許可が必要",
+      "description": "Nonna.fmは、他のサービスに転送するためにSpotifyプレイリストとお気に入りの楽曲を読み取る許可が必要です。",
+      "permissions": "アクセスするもの:",
+      "permissionsList": [
+        "パブリックプレイリスト",
+        "保存されたプレイリスト",
+        "お気に入りの楽曲",
+        "基本プロフィール情報"
+      ],
+      "dataUsage": "データ使用:",
+      "dataUsageList": [
+        "転送のために音楽データのみを読み取ります",
+        "プレイリストを永続的に保存することはありません",
+        "第三者とデータを共有することはありません",
+        "いつでもアクセスを取り消すことができます"
+      ],
+      "learnMore": "プライバシーポリシーでプライバシー慣行について詳しく学ぶ。"
+    },
+    "spotifyTerms": {
+      "title": "Spotify利用規約",
+      "intro": "Nonna.fmでSpotifyを使用する前に、以下をご注意ください:",
+      "termsItems": [
+        "Nonna.fmはSpotifyの代理として保証や表明を行わず、商品性、特定目的への適合性、非侵害の黙示保証を含む、Spotifyプラットフォーム、Spotifyサービス、Spotifyコンテンツに関するすべての黙示保証を明示的に否認します。",
+        "Spotifyプラットフォーム、Spotifyサービス、またはSpotifyコンテンツを変更したり、それらに基づく派生物を作成したりしないことに同意します。",
+        "法律で許可されている範囲で、Spotifyプラットフォーム、Spotifyサービス、Spotifyコンテンツを逆コンパイル、リバースエンジニアリング、逆アセンブル、またはソースコードやその他の人間が知覚できる形式に還元しないことに同意します。",
+        "Nonna.fmはこのアプリケーションの単独責任者であり、Spotifyはこのサービスの使用に関連する責任を負いません。",
+        "Spotifyは私たちの利用規約とプライバシーポリシーの第三者受益者であり、これらの条件を直接執行する権利があります。"
+      ],
+      "privacyTitle": "プライバシー情報",
+      "privacyIntro": "Spotifyでサービスをご利用の際は、以下をご了承ください:",
+      "privacyItems": [
+        "データの収集と使用は、当社のプライバシーポリシーに従います。",
+        "Spotifyプレイリスト、保存された楽曲、関連メタデータに関する情報は、プレイリスト転送サービスを提供するためにのみ収集・使用されます。",
+        "すべてのデータ処理はブラウザで直接行われます。Spotifyデータをサーバーに保存することはありません。",
+        "情報に関するご質問は、サポートチャンネルからお問い合わせください。",
+        "認証に必要な範囲を超えてブラウザにクッキーを配置することはありません。",
+        "第三者がブラウジング活動を追跡するためにブラウザにクッキーを配置することを許可しません。",
+        "コントロールしたい場合は、ブラウザ設定からクッキーを管理できます。"
+      ],
+      "decline": "拒否",
+      "agree": "同意する"
+    },
+    "deezerConnect": {
+      "title": "Deezerに接続",
+      "description": "音楽をDeezerに転送するには、アカウントを接続する必要があります。",
+      "connectButton": "Deezerアカウントを接続"
+    }
+  },
+  "Loading": {
+    "loading": "読み込み中...",
+    "general": "読み込み中...",
+    "spinner": "読み込み中",
+    "preparingTransfer": "転送を準備中...",
+    "transferring": "{current}個中{total}個を転送中...",
+    "almostDone": "もうすぐ完了...",
+    "finalizing": "仕上げ中...",
+    "usage": "使用状況を読み込み中..."
+  },
+  "Errors": {
+    "general": "何か問題が発生しました。もう一度お試しください。",
+    "networkError": "ネットワークエラー。接続を確認してください。",
+    "authenticationFailed": "認証に失敗しました。もう一度お試しください。",
+    "serviceUnavailable": "サービスが一時的に利用できません。",
+    "transferFailed": "転送に失敗しました。一部の項目を転送できませんでした。",
+    "rateLimitExceeded": "レート制限を超えました。しばらく待ってから再試行してください。",
+    "invalidData": "無効なデータを受信しました。更新して再試行してください。",
+    "failedToValidateProfile": "プロフィールの検証に失敗",
+    "failedToConnectToDeezer": "Deezerへの接続に失敗"
+  },
+  "Accessibility": {
+    "moneyWithWings": "羽が生えたお金",
+    "shieldWithLock": "鍵付きシールド",
+    "switchToLight": "ライトテーマに切り替え",
+    "switchToDark": "ダークテーマに切り替え",
+    "selectedLanguage": "選択された言語: {language}",
+    "toggleTheme": "テーマ切り替え",
+    "toggleMenu": "メニュー切り替え",
+    "openMenu": "メニューを開く",
+    "closeModal": "モーダルを閉じる",
+    "closeDialog": "ダイアログを閉じる",
+    "selectLanguage": "言語を選択",
+    "loadingIndicator": "読み込みインジケータ",
+    "albumsArtwork": "アルバムアートワーク",
+    "firstAlbumArtwork": "最初のアルバムアートワーク",
+    "likedSongs": "お気に入りの楽曲",
+    "albums": "アルバム",
+    "viewLikedSongs": "お気に入りの楽曲を表示",
+    "viewAlbums": "アルバムを表示",
+    "howToFindProfileId": "DeezerプロフィールIDの見つけ方"
+  },
+  "Services": {
+    "spotify": "Spotify",
+    "apple": "Apple Music",
+    "youtube": "YouTube Music",
+    "deezer": "Deezer",
+    "tidal": "TIDAL"
+  },
+  "Forms": {
+    "placeholders": {
+      "deezerProfileId": "DeezerプロフィールIDを貼り付け (例: 123456)"
+    }
+  },
+  "Status": {
+    "matched": "マッチ",
+    "notFound": "見つかりません",
+    "searching": "検索中..."
+  },
+  "Dialogs": {
+    "settings": "設定",
+    "plans": "プラン",
+    "transferLimit": "転送制限",
+    "connectWithDeezer": "Deezerと接続",
+    "spotifyTermsOfService": "Spotify利用規約",
+    "transferComplete": "転送完了！",
+    "librarySelection": "ライブラリ選択",
+    "selectedContent": "選択されたコンテンツ"
+  },
+  "Languages": {
+    "en": "English",
+    "fr": "Français",
+    "es": "Español",
+    "pt": "Português",
+    "it": "Italiano",
+    "de": "Deutsch",
+    "jp": "日本語",
+    "selectLanguage": "言語を選択",
+    "currentLanguage": "現在の言語"
+  },
+  "Common": {
+    "item": "項目",
+    "language": "言語",
+    "authenticationRequired": "認証が必要",
+    "matched": "マッチ",
+    "unmatched": "アンマッチ",
+    "tracks": "楽曲"
+  },
+  "Sidebar": {
+    "navigation": "ナビゲーション",
+    "tracks": "楽曲",
+    "matched": "マッチ",
+    "unmatched": "アンマッチ",
+    "liked": "お気に入りの楽曲",
+    "albums": "アルバム",
+    "playlists": "プレイリスト",
+    "transferUsage": "転送使用量",
+    "yourLibrary": "あなたのライブラリ",
+    "selectItemsToTransfer": "転送する項目を選択"
+  },
+  "LoadingOverlay": {
+    "loadingLibrary": "ライブラリを読み込み中",
+    "gettingReady": "すべての準備が整うまでお待ちください"
+  },
+  "Plans": {
+    "freePlan": "無料プラン",
+    "premiumPlan": "プレミアムプラン",
+    "currentPlan": "現在のプラン",
+    "comingSoon": "近日公開",
+    "goPremium": "プレミアムにする",
+    "title": "プラン"
+  },
+  "ServiceSelector": {
+    "notAvailableAsTarget": "まだ転送先として利用できません",
+    "available": "利用可能",
+    "comingSoon": "近日公開",
+    "inDevelopment": "開発中",
+    "maintenance": "メンテナンス",
+    "from": "から",
+    "to": "へ",
+    "selectAService": "プラットフォームを選択",
+    "connected": "接続済み",
+    "clickToChange": "クリックして変更",
+    "pleaseSpecifySourceService": "ソースプラットフォームを指定してください。"
+  },
+  "UI": {
+    "theme": "テーマ",
+    "connecting": "接続中...",
+    "connect": "接続",
+    "light": "ライト",
+    "dark": "ダーク",
+    "close": "閉じる"
+  },
+  "TransferButton": {
+    "findingMatches": "マッチを検索中...",
+    "transferring": "転送中...",
+    "startTransfer": "転送開始",
+    "likedTracks": "お気に入りの楽曲",
+    "albums": "アルバム",
+    "playlists": "プレイリスト",
+    "playlist": "プレイリスト",
+    "transfersLeft": "残り転送回数"
+  },
+  "DeezerConnect": {
+    "title": "Deezerと接続",
+    "whyNeedId": {
+      "title": "なぜプロフィールIDが必要ですか？",
+      "explanation": "Deezerは他のプラットフォームとは異なる仕組みです。アカウントを接続するには、プロフィールIDが必要です - これはDeezerでの一意のユーザー名のようなものです。",
+      "seeMore": "詳細を見る",
+      "technicalDetails": "2024年現在、Deezerはサードパーティ開発者向けの新しいOAuthアプリケーション登録を受け付けていません。これは、SpotifyやYouTubeで行っているような従来のOAuthフローを使用できないことを意味します。代わりに、DeezerのAPI利用規約で許可されている公開プロフィールIDを使用して公開プレイリストにアクセスします。"
+    },
+    "makePublic": {
+      "title": "プロフィールを公開にする:",
+      "step1": "Deezerアカウントにログインして以下にアクセス",
+      "step2": "ソーシャル共有設定が表示されます",
+      "step3": "「プライベートプロフィール」オプションが無効になっていることを確認"
+    },
+    "getId": {
+      "title": "DeezerプロフィールIDを取得:",
+      "instructions": "お気に入りに移動し、URLからプロフィールIDをコピー:",
+      "imageAlt": "DeezerプロフィールIDの見つけ方"
+    },
+    "form": {
+      "label": "DeezerプロフィールIDを入力",
+      "placeholder": "DeezerプロフィールIDを貼り付け (例: 123456)"
+    },
+    "privacy": {
+      "line1": "これらのデータは転送プロセスのためにのみ使用します。",
+      "line2": "データを永続的に保存することはありません。"
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import type { JSX } from "react";
+import { useTranslations } from "next-intl";
 
 interface DialogProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export default function Dialog({
   closeOnBackdropClick = true,
 }: DialogProps): JSX.Element | null {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const tAccessibility = useTranslations('Accessibility');
 
   // Handle clicking outside to close
   useEffect(() => {
@@ -97,7 +99,7 @@ export default function Dialog({
             onClick={onClose}
             // On mobile: match menu button (rounded-full, p-2, size-6). On desktop: original style.
             className="rounded-full p-0 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 lg:rounded-lg lg:p-1 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 dark:focus:ring-indigo-400"
-            aria-label="Close dialog"
+            aria-label={tAccessibility('closeDialog')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

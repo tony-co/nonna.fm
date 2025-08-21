@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { useMatching } from "@/hooks/useMatching";
 import { useTransfer as useTransferHook } from "@/hooks/useTransfer";
@@ -14,6 +15,7 @@ export const fetchingPlaylists = new Set<string>();
 
 export function TransferButton() {
   const { state } = useLibrary();
+  const tTransferButton = useTranslations("TransferButton");
   const { isLoading: isMatching } = useMatching();
   const { userStatus: status } = useTransfer();
   const {
@@ -48,22 +50,22 @@ export function TransferButton() {
   // Determine button text based on state
   const buttonText =
     isMatching || isFetchingPlaylists
-      ? "Finding Matches..."
+      ? tTransferButton("findingMatches")
       : isTransferring
-        ? "Transferring..."
-        : "Start Transfer";
+        ? tTransferButton("transferring")
+        : tTransferButton("startTransfer");
 
   // Format summary text of selected items
   const getSummaryText = () => {
     const parts = [];
     if (state.selectedItems.tracks.size > 0) {
-      parts.push(`${state.selectedItems.tracks.size} liked tracks`);
+      parts.push(`${state.selectedItems.tracks.size} ${tTransferButton("likedTracks")}`);
     }
     if (state.selectedItems.albums.size > 0) {
-      parts.push(`${state.selectedItems.albums.size} albums`);
+      parts.push(`${state.selectedItems.albums.size} ${tTransferButton("albums")}`);
     }
     if (state.selectedItems.playlists.size > 0) {
-      parts.push(`${state.selectedItems.playlists.size} playlists`);
+      parts.push(`${state.selectedItems.playlists.size} ${tTransferButton("playlists")}`);
     }
     return parts.join(", ");
   };
@@ -137,7 +139,7 @@ export function TransferButton() {
       <div className="flex items-center gap-4">
         {status && (
           <span className="text-sm text-gray-600 dark:text-gray-400">
-            {status.availableToday} transfers left
+            {status.availableToday} {tTransferButton("transfersLeft")}
           </span>
         )}
         <button

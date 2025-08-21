@@ -1,16 +1,19 @@
 "use client";
 
 import { handleYouTubeCallback } from "@/lib/services/youtube/auth";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useRouter, Link } from "@/i18n/navigation";
 import { useEffect, useState } from "react";
 import { getServiceType } from "@/lib/auth/constants";
 import { Suspense } from "react";
-import Link from "next/link";
 import Dialog from "@/components/shared/Dialog";
 
 import "@/app/globals.css";
 
 function YouTubeCallbackContent() {
+  const t = useTranslations('Errors');
+  const tButtons = useTranslations('Buttons');
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +78,7 @@ function YouTubeCallbackContent() {
         <Dialog
           isOpen={showErrorDialog}
           onClose={handleCloseDialog}
-          title="YouTube Connection Error"
+          title={t('youtubeConnectionError')}
         >
           <div className="flex flex-col items-center">
             <div className="mb-6 flex justify-center">
@@ -107,13 +110,13 @@ function YouTubeCallbackContent() {
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
                 </svg>
-                Create YouTube Channel
+                {tButtons('createYouTubeChannel')}
               </Link>
               <button
                 onClick={handleCloseDialog}
                 className="rounded-lg border border-gray-300 bg-transparent px-5 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
               >
-                Return to Home
+                {tButtons('returnToHome')}
               </button>
             </div>
           </div>

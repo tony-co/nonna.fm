@@ -47,7 +47,7 @@ vi.mock("next/font/google", () => ({
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, beforeEach } from "vitest";
-import { LibraryClientContent } from "@/app/library/[source]/[target]/_components/LibraryClientContent";
+import { LibraryClientContent } from "@/app/[locale]/library/[source]/[target]/_components/LibraryClientContent";
 import { TestWrapper } from "@/__tests__/testUtils";
 import { mockLibraryState } from "@/__mocks__/contexts/LibraryContext";
 import { Header } from "@/components/layout/Header";

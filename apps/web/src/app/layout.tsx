@@ -1,12 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
-import Script from "next/script";
-import { ThemeProvider } from "@/contexts/ThemeContext";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Nonna.fm",
@@ -39,31 +31,11 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
+// Minimal root layout - locale-specific layout is in [locale]/layout.tsx
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
-}): React.ReactElement {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <Script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-                document.documentElement.classList.toggle('dark', theme === 'dark');
-              })();
-            `,
-          }}
-        />
-      </head>
-      <body className={`${inter.className} text-text-primary antialiased`}>
-        <ThemeProvider>{children}</ThemeProvider>
-        <Analytics />
-        <SpeedInsights />
-      </body>
-    </html>
-  );
+}) {
+  return children;
 }

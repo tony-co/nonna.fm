@@ -1,12 +1,14 @@
 "use client";
 
-import { handleDeezerCallback } from "@/lib/services/deezer/auth";
-import { useRouter, useSearchParams } from "next/navigation";
+import { handleSpotifyCallback } from "@/lib/services/spotify/auth";
+import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 import { useEffect } from "react";
 import { getServiceType } from "@/lib/auth/constants";
 import { Suspense } from "react";
 
-function DeezerCallbackContent() {
+function SpotifyCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -17,12 +19,12 @@ function DeezerCallbackContent() {
         const searchString = searchParams.toString();
 
         // Handle the callback and get the result
-        const { success, role } = await handleDeezerCallback(searchString);
+        const { success, role } = await handleSpotifyCallback(searchString);
 
-        console.log("Deezer callback result:", success, role);
+        console.log("Callback result:", success, role);
 
         if (!success) {
-          console.error("Failed to handle Deezer callback");
+          console.error("Failed to handle Spotify callback");
           router.push("/");
           return;
         }
@@ -39,12 +41,12 @@ function DeezerCallbackContent() {
 
         // Build redirect URL with service parameters
         const redirectUrl =
-          role === "target" ? `/library/${sourceService}/deezer` : `/source?source=deezer`;
+          role === "target" ? `/library/${sourceService}/spotify` : `/source?source=spotify`;
 
         console.log("Redirecting to:", redirectUrl);
         router.push(redirectUrl);
       } catch (error) {
-        console.error("Error during Deezer callback:", error);
+        console.error("Error during Spotify callback:", error);
         router.push("/");
       }
     };
@@ -56,10 +58,12 @@ function DeezerCallbackContent() {
   return null;
 }
 
-export default function DeezerCallback() {
+export default function SpotifyCallback() {
+  const t = useTranslations('Loading');
+  
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <DeezerCallbackContent />
+    <Suspense fallback={<div>{t('loading')}</div>}>
+      <SpotifyCallbackContent />
     </Suspense>
   );
 }

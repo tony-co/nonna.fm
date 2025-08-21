@@ -1,4 +1,5 @@
 import { FC, useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import {
   getAvailableServices,
   getServiceById,
@@ -18,6 +19,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
   isProcessing,
   source,
 }) => {
+  const tServiceSelector = useTranslations("ServiceSelector");
   const [isOpen, setIsOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<ServiceConfig | null>(null);
   const sourceService = source ? getServiceById(source) : null;
@@ -44,7 +46,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
   if (!sourceService) {
     return (
       <div className="mb-8 rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-4 text-yellow-500 dark:bg-yellow-500/5">
-        Please specify a source service.
+        {tServiceSelector("pleaseSpecifySourceService")}
       </div>
     );
   }
@@ -55,7 +57,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
         {/* Source Service - Non-interactive */}
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            From
+            {tServiceSelector("from")}
           </label>
           <div className="relative">
             <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-lg lg:gap-4 lg:p-4 dark:border-indigo-900 dark:bg-indigo-950/50">
@@ -67,7 +69,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
                   {sourceService.name}
                 </span>
                 <span className="mt-0.5 block text-sm text-emerald-600 dark:text-emerald-500">
-                  Connected
+                  {tServiceSelector("connected")}
                 </span>
               </div>
             </div>
@@ -77,7 +79,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
         {/* Target Service (Selectable) */}
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            To
+            {tServiceSelector("to")}
           </label>
           <div className="relative">
             <button
@@ -99,7 +101,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
                       {selectedService.name}
                     </span>
                     <span className="mt-0.5 block text-sm text-gray-500 dark:text-gray-400">
-                      Click to change
+                      {tServiceSelector("clickToChange")}
                     </span>
                   </div>
                 </>
@@ -121,7 +123,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
                     </svg>
                   </div>
                   <span className="flex-1 text-left font-medium text-indigo-500">
-                    Select a service
+                    {tServiceSelector("selectAService")}
                   </span>
                 </>
               )}
@@ -153,23 +155,6 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
                       isProcessing ||
                       service.id === "deezer";
 
-                    const getStatusText = (): string => {
-                      if (service.id === "deezer") return "Not available as target yet";
-                      return service.status === SERVICE_STATUS.AVAILABLE
-                        ? "Available"
-                        : service.status === SERVICE_STATUS.OFF
-                          ? "Coming Soon"
-                          : service.status === SERVICE_STATUS.DEV
-                            ? "In Development"
-                            : service.status === SERVICE_STATUS.MAINTENANCE
-                              ? "Maintenance"
-                              : service.status;
-                    };
-
-                    const getStatusColor = (): string => {
-                      if (service.id === "deezer") return "text-amber-500 dark:text-amber-400";
-                      return "text-gray-500 dark:text-gray-400";
-                    };
 
                     return (
                       <button
@@ -185,7 +170,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
                           <span className="font-medium text-gray-900 dark:text-white">
                             {service.name}
                           </span>
-                          <span className={`text-sm ${getStatusColor()}`}>{getStatusText()}</span>
+                          {/* <span className={`text-sm ${getStatusColor()}`}>{getStatusText()}</span> */}
                         </div>
                       </button>
                     );

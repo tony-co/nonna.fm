@@ -24,7 +24,7 @@ vi.mock("@/lib/auth/constants", () => ({
 import React from "react";
 import { render, screen, within } from "@testing-library/react";
 import { describe, it, expect, beforeEach } from "vitest";
-import LikedSongsPage from "@/app/library/[source]/[target]/liked/page";
+import LikedSongsPage from "@/app/[locale]/library/[source]/[target]/liked/page";
 import { TestWrapper } from "@/__tests__/testUtils";
 
 describe("LikedSongsPage", () => {

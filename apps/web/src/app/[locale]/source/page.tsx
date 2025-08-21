@@ -1,6 +1,8 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ServiceSelector } from "@/components/shared/ServiceSelector";
@@ -10,9 +12,10 @@ import { useState, Suspense } from "react";
 import { MusicService } from "@/types";
 import { initiateYouTubeAuth } from "@/lib/services/youtube/auth";
 import { SpotifyConsentModal } from "@/components/modals/SpotifyConsentModal";
-import { useRouter } from "next/navigation";
 
 function SourcePageContent() {
+  const t = useTranslations('SourcePage');
+  const tErrors = useTranslations('Errors');
   const searchParams = useSearchParams();
   const { authorize: authorizeAppleMusic } = useAppleMusic();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -28,7 +31,7 @@ function SourcePageContent() {
     try {
       const source = searchParams.get("source");
       if (!source) {
-        throw new Error("No source service selected");
+        throw new Error(tErrors('noSourceService'));
       }
 
       if (serviceId === "apple") {
@@ -48,9 +51,8 @@ function SourcePageContent() {
       }
     } catch (err) {
       console.error("Authorization error:", err);
-      setError(
-        `Failed to connect to ${serviceId === "apple" ? "Apple Music" : "Spotify"}. Please try again.`
-      );
+      const serviceName = serviceId === "apple" ? "Apple Music" : "Spotify";
+      setError(tErrors('failedToConnect', { service: serviceName }));
       setIsProcessing(false);
     }
   };
@@ -64,7 +66,7 @@ function SourcePageContent() {
     try {
       const source = searchParams.get("source");
       if (!source) {
-        throw new Error("No source service selected");
+        throw new Error(tErrors('noSourceService'));
       }
 
       await initiateSpotifyAuth("target");
@@ -73,7 +75,7 @@ function SourcePageContent() {
       return;
     } catch (err) {
       console.error("Authorization error:", err);
-      setError("Failed to connect to Spotify. Please try again.");
+      setError(tErrors('failedToConnect', { service: 'Spotify' }));
       setIsProcessing(false);
     }
   };
@@ -88,7 +90,7 @@ function SourcePageContent() {
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-stone-100 text-base text-zinc-800 sm:h-8 sm:w-8 sm:text-lg dark:text-indigo-800">
               2
             </span>
-            Now select your target:
+            {t('title')}
           </h2>
 
           {error && (
@@ -121,8 +123,10 @@ function SourcePageContent() {
 }
 
 export default function SourcePage() {
+  const t = useTranslations('Loading');
+  
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>{t('loading')}</div>}>
       <SourcePageContent />
     </Suspense>
   );
