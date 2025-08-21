@@ -17,11 +17,9 @@ export const envSchema = z.object({
   NEXT_PUBLIC_YOUTUBE_CLIENT_ID: z.string().min(1),
   YOUTUBE_CLIENT_SECRET: z.string().min(1),
 
-  // Sentry Configuration
-  SENTRY_AUTH_TOKEN: z.string().min(1),
-  SENTRY_ORG: z.string().min(1),
-  SENTRY_PROJECT: z.string().min(1),
-  NEXT_PUBLIC_SENTRY_DSN: z.string().url(),
+  // PostHog Configuration
+  NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1),
+  NEXT_PUBLIC_POSTHOG_HOST: z.string().url(),
 
   // Basic Auth Configuration
   BASIC_AUTH_USER: z.string().min(1),

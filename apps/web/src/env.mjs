@@ -5,7 +5,8 @@
 export const env = {
   BASIC_AUTH_USER: process.env.BASIC_AUTH_USER || "",
   BASIC_AUTH_PASSWORD: process.env.BASIC_AUTH_PASSWORD || "",
-  NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN || "",
+  NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY || "",
+  NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST || "",
   // Add other public/edge-safe env vars as needed
 };
 

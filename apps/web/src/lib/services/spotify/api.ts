@@ -9,7 +9,7 @@ import type {
 } from "@/types";
 import type { AuthData } from "@/lib/auth/constants";
 import { retryWithExponentialBackoff, type RetryOptions } from "@/lib/utils/retry";
-import { sentryLogger } from "@/lib/utils/sentry-logger";
+import { logger } from "@/lib/utils/logger";
 import {
   SpotifyTrackItem,
   SpotifyTrack,
@@ -332,7 +332,7 @@ async function findBestMatch(track: ITrack, authData: AuthData): Promise<string 
 
     return bestMatch;
   } catch (error) {
-    sentryLogger.captureMatchingError("track_search", "spotify", error, {
+    logger.captureMatchingError("track_search", "spotify", error, {
       trackName: track.name,
       trackArtist: track.artist,
     });
@@ -585,7 +585,7 @@ async function findBestAlbumMatch(album: IAlbum, authData: AuthData): Promise<st
     );
 
     if (!response.albums?.items?.length) {
-      sentryLogger.captureMatchingError(
+      logger.captureMatchingError(
         "album_search",
         "spotify",
         new Error(`No search results found for album "${album.name}" by ${album.artist}`),
@@ -615,7 +615,7 @@ async function findBestAlbumMatch(album: IAlbum, authData: AuthData): Promise<st
     // Return the ID if we have a good match (score >= minimum threshold)
     return matches[0].score >= DEFAULT_ALBUM_CONFIG.thresholds.minimum ? matches[0].album.id : null;
   } catch (error) {
-    sentryLogger.captureMatchingError("album_search", "spotify", error, {
+    logger.captureMatchingError("album_search", "spotify", error, {
       albumName: album.name,
       albumArtist: album.artist,
     });

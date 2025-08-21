@@ -3,7 +3,7 @@ import { YTMusicAdapter } from "./ytmusic-adapter";
 import type { ITrack, ILibraryData, IAlbum, SearchResult, TransferResult } from "@/types";
 import { retryWithExponentialBackoff } from "@/lib/utils/retry";
 import { processInBatches } from "@/lib/utils/batch-processor";
-import { sentryLogger } from "@/lib/utils/sentry-logger";
+import { logger } from "@/lib/utils/logger";
 
 // Note: YouTube API uses internal API routes (/api/youtube/*) rather than direct API calls
 // The base URL from services configuration is available as SERVICES.youtube.apiBaseUrl if needed
@@ -120,7 +120,7 @@ async function findBestAlbumMatch(album: Pick<ITrack, "name" | "artist">): Promi
     );
 
     if (!data.matches?.length) {
-      sentryLogger.captureMatchingError(
+      logger.captureMatchingError(
         "album_search",
         "youtube",
         new Error(`No search results found for album "${album.name}" by ${album.artist}`),
@@ -142,7 +142,7 @@ async function findBestAlbumMatch(album: Pick<ITrack, "name" | "artist">): Promi
     }
     return null;
   } catch (error) {
-    sentryLogger.captureMatchingError("album_search", "youtube", error, {
+    logger.captureMatchingError("album_search", "youtube", error, {
       albumName: album.name,
       albumArtist: album.artist,
     });
@@ -168,7 +168,7 @@ export async function findMatchingAlbums(
     );
     return results;
   } catch (error) {
-    sentryLogger.captureMatchingError("album_search", "youtube", error, {});
+    logger.captureMatchingError("album_search", "youtube", error, {});
     return albums.map(album => ({ ...album }));
   }
 }
@@ -222,7 +222,7 @@ export async function search(
       tracks: results,
     };
   } catch (error) {
-    sentryLogger.captureMatchingError("track_search", "youtube", error, {});
+    logger.captureMatchingError("track_search", "youtube", error, {});
     return {
       matched: 0,
       unmatched: tracks.length,
@@ -768,7 +768,7 @@ export async function searchAlbums(
       albums: results,
     };
   } catch (error) {
-    sentryLogger.captureMatchingError("album_search", "youtube", error, {});
+    logger.captureMatchingError("album_search", "youtube", error, {});
     return {
       matched: 0,
       unmatched: albums.length,

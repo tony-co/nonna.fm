@@ -1,12 +1,24 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
 import NextError from "next/error";
 import { useEffect } from "react";
+import { logger } from "@/lib/utils/logger";
 
 export default function GlobalError({ error }: { error: Error & { digest?: string } }) {
   useEffect(() => {
-    Sentry.captureException(error);
+    // Capture global errors with PostHog
+    logger.captureException(error, {
+      level: "fatal",
+      tags: {
+        component: "global-error",
+        errorBoundary: "root",
+      },
+      extra: {
+        digest: error.digest,
+        timestamp: new Date().toISOString(),
+        userAgent: typeof window !== "undefined" ? window.navigator.userAgent : "unknown",
+      },
+    });
   }, [error]);
 
   return (
