@@ -51,16 +51,23 @@ export const mockNextNavigation = () => {
     useParams: () => mockNavigationImplementation.useParams(),
     useSearchParams: () => mockNavigationImplementation.useSearchParams(),
   }));
-  
+
   vi.mock("@/i18n/navigation", () => ({
     useRouter: () => mockNavigationImplementation.useRouter(),
     usePathname: () => mockNavigationImplementation.usePathname(),
-    Link: ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => 
-      React.createElement('a', { href, ...props }, children),
+    Link: ({
+      children,
+      href,
+      ...props
+    }: {
+      children: React.ReactNode;
+      href: string;
+      [key: string]: unknown;
+    }) => React.createElement("a", { href, ...props }, children),
     redirect: vi.fn(),
     getPathname: () => mockNavigationImplementation.usePathname(),
   }));
-  
+
   return null;
 };
 

@@ -15,8 +15,15 @@ vi.mock("next-intl", async () => {
 // Mock next-intl/navigation to avoid app router context issues
 vi.mock("next-intl/navigation", () => ({
   createNavigation: () => ({
-    Link: ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => 
-      React.createElement('a', { href, ...props }, children),
+    Link: ({
+      children,
+      href,
+      ...props
+    }: {
+      children: React.ReactNode;
+      href: string;
+      [key: string]: unknown;
+    }) => React.createElement("a", { href, ...props }, children),
     useRouter: () => ({
       push: vi.fn(),
       replace: vi.fn(),
