@@ -218,9 +218,11 @@ export function validateCanonicalImplementation(
   }
 
   // Check for locale consistency
-  const canonicalHasLocale = SEO_CONFIG.supportedLocales.some(locale =>
-    canonicalUrl.includes(`/${locale}/`)
-  );
+  const canonicalHasLocale = SEO_CONFIG.supportedLocales.some(locale => {
+    // Match both /locale/ and /locale (at end of URL) to handle root locale paths
+    const localePattern = new RegExp(`/${locale}(?:/|$)`);
+    return localePattern.test(canonicalUrl);
+  });
 
   if (!canonicalHasLocale && currentLocale !== SEO_CONFIG.defaultLocale) {
     recommendations.push("Consider using locale-specific canonical for non-default locale");
