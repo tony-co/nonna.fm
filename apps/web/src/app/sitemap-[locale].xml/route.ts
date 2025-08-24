@@ -33,10 +33,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error(
-      `Error generating sitemap for locale:`,
-      error
-    );
+    console.error(`Error generating sitemap for locale:`, error);
     return new Response("Internal Server Error", { status: 500 });
   }
 }
