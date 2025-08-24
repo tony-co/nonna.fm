@@ -342,5 +342,29 @@
       "line1": "We only use this data for the transfer process.",
       "line2": "We don't store any of your data permanently."
     }
+  },
+  "SEO": {
+    "breadcrumbs": {
+      "home": "Home",
+      "library": "Library",
+      "selectSource": "Select Source",
+      "likedSongs": "Liked Songs",
+      "albums": "Albums",
+      "playlists": "Playlists",
+      "playlist": "Playlist"
+    },
+    "metadata": {
+      "defaultTitle": "Nonna.fm - Transfer Music Between Streaming Services",
+      "defaultDescription": "Transfer your music library between streaming services seamlessly. Move playlists, albums, and liked songs from Spotify to Apple Music, YouTube Music, Deezer, and more. Free and secure.",
+      "homepageTitle": "Transfer Music Between Streaming Services | Free Playlist Migration",
+      "homepageDescription": "Transfer your music library between streaming services seamlessly. Move playlists, albums, and liked songs from Spotify to Apple Music, YouTube Music, Deezer, and more. Free and secure.",
+      "libraryTitle": "Transfer from {source} to {target} | Music Library Migration",
+      "libraryDescription": "Transfer your music library from {source} to {target}. Move playlists, albums, and liked songs quickly and securely with our free music transfer tool."
+    },
+    "keywords": {
+      "primary": "music transfer, playlist transfer, streaming transfer, music migration, playlist migration",
+      "features": "free music transfer, bulk playlist transfer, liked songs transfer, album transfer, instant music transfer, secure music migration, cross-platform transfer",
+      "services": "Spotify to Apple Music, Apple Music to Spotify, Spotify to YouTube Music, YouTube Music to Spotify, Deezer to Spotify, TIDAL to Spotify"
+    }
   }
 }

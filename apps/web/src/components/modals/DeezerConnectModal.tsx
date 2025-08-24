@@ -58,7 +58,7 @@ export function DeezerConnectModal({
 
     const timeoutId = setTimeout(validateProfile, 500);
     return () => clearTimeout(timeoutId);
-  }, [deezerUserId]);
+  }, [deezerUserId, tErrors]);
 
   const handleDeezerConnect = async (): Promise<void> => {
     try {
