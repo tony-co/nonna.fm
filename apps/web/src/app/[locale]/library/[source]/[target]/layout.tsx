@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Header } from "@/components/layout/Header";
 import { LibraryClientContent } from "./_components/LibraryClientContent";
 import { MusicService } from "@/types";
@@ -6,22 +7,46 @@ import { TransferButton } from "@/components/shared/TransferButton";
 import { LibraryProvider } from "@/contexts/LibraryContext";
 import { TransferProvider } from "@/contexts/TransferContext";
 import { ItemTitleProvider } from "@/contexts/ItemTitleContext";
+import {
+  generateMetadata as generateSEOMetadata,
+  ServiceTransferStructuredData,
+  generateServiceTransferBreadcrumbs,
+} from "@/lib/seo";
+import type { Locale } from "@/lib/seo";
 
 interface LibraryLayoutProps {
   children: React.ReactNode;
   params: Promise<{
+    locale: string;
     source: string;
     target: string;
   }>;
 }
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; source: string; target: string }>;
+}): Promise<Metadata> {
+  const { locale, source, target } = await params;
+
+  return generateSEOMetadata({
+    locale: locale as Locale,
+    pathname: `/library/${source}/${target}`,
+    params: { source, target },
+  });
+}
+
 export default async function LibraryLayout({ children, params }: LibraryLayoutProps) {
   // Next.js 15 async params handling
-  const { source, target } = await params;
+  const { locale, source, target } = await params;
 
   // Type assertion for MusicService
   const sourceService = source as MusicService;
   const targetService = target as MusicService;
+
+  // Generate breadcrumbs for structured data
+  const breadcrumbs = generateServiceTransferBreadcrumbs(locale as Locale, source, target);
 
   return (
     <LibraryProvider>
@@ -52,6 +77,14 @@ export default async function LibraryLayout({ children, params }: LibraryLayoutP
               <TransferButton />
             </Footer>
           </div>
+
+          {/* SEO Structured Data */}
+          <ServiceTransferStructuredData
+            locale={locale as Locale}
+            source={source}
+            target={target}
+            breadcrumbs={breadcrumbs}
+          />
         </ItemTitleProvider>
       </TransferProvider>
     </LibraryProvider>
