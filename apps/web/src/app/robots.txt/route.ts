@@ -5,13 +5,29 @@
 
 import { SEO_CONFIG } from "@/lib/seo/config/base";
 
-export async function GET(): Promise<Response> {
-  const isProduction = process.env.NODE_ENV === "production";
+export async function GET(request: Request): Promise<Response> {
+  // Extract hostname from request headers
+  const requestHost = request.headers.get("host");
+
+  // Parse primary domain from SEO_CONFIG
+  const primaryUrl = new URL(SEO_CONFIG.brand.url);
+  const primaryHostname = primaryUrl.hostname; // "nonna.fm"
+
+  // Only allow indexing when request Host exactly matches primary domain
+  const allowIndexing = requestHost === primaryHostname;
+
+  // Log for debugging (can be removed in production)
+  if (!requestHost) {
+    console.warn("robots.txt: Missing host header, blocking indexing");
+  } else if (requestHost !== primaryHostname) {
+    console.info(`robots.txt: Host "${requestHost}" != "${primaryHostname}", blocking indexing`);
+  }
+
   const baseUrl = SEO_CONFIG.brand.url;
 
   let robotsTxt = "";
 
-  if (isProduction) {
+  if (allowIndexing) {
     // Production robots.txt - Allow crawling with specific rules
     robotsTxt = `# Robots.txt for ${SEO_CONFIG.brand.name}
 # Music streaming transfer platform
@@ -101,14 +117,14 @@ Allow: /
 # Sitemap reference
 Sitemap: ${baseUrl}/sitemap.xml`;
   } else {
-    // Development/staging robots.txt - Block all crawling
-    robotsTxt = `# Development/Staging Environment
-# All crawling blocked
+    // Non-primary domain robots.txt - Block all crawling
+    robotsTxt = `# Non-Primary Domain (${requestHost || "unknown"})
+# All crawling blocked to prevent duplicate content
 
 User-agent: *
 Disallow: /
 
-# Block all bots in non-production
+# Block all bots on non-primary domains
 User-agent: Googlebot
 Disallow: /
 
@@ -118,8 +134,9 @@ Disallow: /
 User-agent: *
 Disallow: /
 
-# No sitemaps in development
-# Sitemap: ${baseUrl}/sitemap.xml`;
+# No sitemaps on non-primary domains
+# Primary domain: ${primaryHostname}
+# Sitemap available at: ${baseUrl}/sitemap.xml`;
   }
 
   return new Response(robotsTxt, {
