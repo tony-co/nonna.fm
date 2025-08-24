@@ -10,10 +10,11 @@ import type { Locale } from "@/lib/seo/config/base";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ locale: string }> }
+  context: { params: Promise<Record<string, string>> }
 ): Promise<Response> {
   try {
-    const { locale } = await params;
+    const params = await context.params;
+    const { locale } = params;
 
     // Validate locale
     if (!SEO_CONFIG.supportedLocales.includes(locale as Locale)) {
@@ -33,7 +34,7 @@ export async function GET(
     });
   } catch (error) {
     console.error(
-      `Error generating sitemap for locale ${await params.then(p => p.locale)}:`,
+      `Error generating sitemap for locale:`,
       error
     );
     return new Response("Internal Server Error", { status: 500 });
