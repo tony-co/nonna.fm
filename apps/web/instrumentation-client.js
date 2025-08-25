@@ -12,7 +12,7 @@ if (process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NEXT_PUBLIC_POSTHOG_HOST)
     },
 
     // PostHog configuration options
-    capture_pageview: false, // Disable automatic pageview capture, we'll capture manually
+    capture_pageview: true, // Enable automatic pageview capture for Next.js App Router
     capture_pageleave: true, // Capture when users leave the page
 
     // Privacy and GDPR compliance
