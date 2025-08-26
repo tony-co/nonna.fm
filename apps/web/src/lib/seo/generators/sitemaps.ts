@@ -24,56 +24,48 @@ export interface SitemapIndexEntry {
 }
 
 /**
- * Generate main sitemap index that references all locale-specific sitemaps
+ * Generate main sitemap index that references all sitemaps
+ * Only includes publicly accessible content (no authentication required)
  */
 export function generateSitemapIndex(): SitemapIndexEntry[] {
   const sitemaps: SitemapIndexEntry[] = [];
   const now = new Date().toISOString();
 
-  // Add locale-specific sitemaps
-  SEO_CONFIG.supportedLocales.forEach(locale => {
-    sitemaps.push({
-      sitemap: `${SEO_CONFIG.brand.url}/sitemap-${locale}.xml`,
-      lastModified: now,
-    });
+  // Add consolidated public pages sitemap
+  sitemaps.push({
+    sitemap: `${SEO_CONFIG.brand.url}/sitemap-public.xml`,
+    lastModified: now,
   });
-
-  // Add special sitemaps
-  sitemaps.push(
-    {
-      sitemap: `${SEO_CONFIG.brand.url}/sitemap-services.xml`,
-      lastModified: now,
-    },
-    {
-      sitemap: `${SEO_CONFIG.brand.url}/sitemap-transfers.xml`,
-      lastModified: now,
-    }
-  );
 
   return sitemaps;
 }
 
 /**
- * Generate locale-specific sitemap URLs
+ * Generate sitemap URLs for publicly accessible pages only
+ * Excludes authentication-gated content per SEO best practices
  */
-export function generateLocaleSitemap(locale: Locale): SitemapUrl[] {
+export function generatePublicSitemap(): SitemapUrl[] {
   const urls: SitemapUrl[] = [];
   const baseUrl = SEO_CONFIG.brand.url;
 
-  // Static pages
-  const staticPages = [
+  // Only truly public pages that don't require authentication
+  const publicPages = [
     { path: "/", priority: 1.0, changeFrequency: "daily" as const },
-    { path: "/source", priority: 0.8, changeFrequency: "weekly" as const },
+    // Note: /source excluded as it may require authentication for service selection
+    // Add other public pages here: /about, /privacy, /terms, /help, etc.
   ];
 
-  staticPages.forEach(({ path, priority, changeFrequency }) => {
-    const localizedPath = generateLocalizedPath(path, locale);
-    urls.push({
-      url: `${baseUrl}${localizedPath}`,
-      lastModified: new Date().toISOString(),
-      changeFrequency,
-      priority,
-      alternateRefs: generateAlternateRefs(path),
+  // Generate URLs for all supported locales
+  SEO_CONFIG.supportedLocales.forEach(locale => {
+    publicPages.forEach(({ path, priority, changeFrequency }) => {
+      const localizedPath = generateLocalizedPath(path, locale);
+      urls.push({
+        url: `${baseUrl}${localizedPath}`,
+        lastModified: new Date().toISOString(),
+        changeFrequency,
+        priority,
+        alternateRefs: generateAlternateRefs(path),
+      });
     });
   });
 
@@ -82,75 +74,37 @@ export function generateLocaleSitemap(locale: Locale): SitemapUrl[] {
 
 /**
  * Generate service combination sitemap
+ * 
+ * ❌ DISABLED FOR SEO COMPLIANCE
+ * These URLs require OAuth authentication for both source and target services,
+ * making them inaccessible to search engine crawlers. Including authentication-gated
+ * URLs in sitemaps violates Google's guidelines and can harm search rankings.
+ * 
+ * URLs like /library/spotify/apple require users to authenticate with BOTH
+ * Spotify AND Apple Music before access, making them unsuitable for public sitemaps.
  */
 export function generateServiceSitemap(): SitemapUrl[] {
-  const urls: SitemapUrl[] = [];
-  const baseUrl = SEO_CONFIG.brand.url;
-  const services = SEO_CONFIG.services;
-
-  // Generate service combination pages for each locale
-  SEO_CONFIG.supportedLocales.forEach(locale => {
-    services.forEach(source => {
-      services.forEach(target => {
-        if (source !== target) {
-          const path = `/library/${source}/${target}`;
-          const localizedPath = generateLocalizedPath(path, locale);
-
-          urls.push({
-            url: `${baseUrl}${localizedPath}`,
-            lastModified: new Date().toISOString(),
-            changeFrequency: "weekly",
-            priority: 0.7,
-            alternateRefs: generateAlternateRefs(path),
-          });
-
-          // Add sub-pages (liked, albums)
-          ["liked", "albums"].forEach(subPage => {
-            const subPath = `${path}/${subPage}`;
-            const localizedSubPath = generateLocalizedPath(subPath, locale);
-
-            urls.push({
-              url: `${baseUrl}${localizedSubPath}`,
-              lastModified: new Date().toISOString(),
-              changeFrequency: "weekly",
-              priority: 0.6,
-              alternateRefs: generateAlternateRefs(subPath),
-            });
-          });
-        }
-      });
-    });
-  });
-
-  return urls;
+  // Return empty array - authentication-gated content excluded per SEO best practices
+  return [];
 }
 
 /**
  * Generate dynamic transfer pages sitemap
+ * 
+ * ❌ DISABLED FOR SEO COMPLIANCE  
+ * OAuth callback URLs are technical server-to-server endpoints used for authentication
+ * flows, not user-facing content. These should never appear in public sitemaps as:
+ * 
+ * 1. They're not intended for search engine discovery
+ * 2. They don't contain user-valuable content 
+ * 3. They may expose technical implementation details
+ * 4. They can confuse search engines about site structure
+ * 
+ * URLs like /callback/spotify are purely functional OAuth endpoints.
  */
 export function generateTransferSitemap(): SitemapUrl[] {
-  const urls: SitemapUrl[] = [];
-  const baseUrl = SEO_CONFIG.brand.url;
-
-  // Add callback pages for each service and locale
-  const callbackServices = ["spotify", "apple", "youtube", "deezer"];
-
-  SEO_CONFIG.supportedLocales.forEach(locale => {
-    callbackServices.forEach(service => {
-      const path = `/callback/${service}`;
-      const localizedPath = generateLocalizedPath(path, locale);
-
-      urls.push({
-        url: `${baseUrl}${localizedPath}`,
-        lastModified: new Date().toISOString(),
-        changeFrequency: "monthly",
-        priority: 0.3,
-        alternateRefs: generateAlternateRefs(path),
-      });
-    });
-  });
-
-  return urls;
+  // Return empty array - OAuth callbacks excluded per SEO best practices
+  return [];
 }
 
 /**
