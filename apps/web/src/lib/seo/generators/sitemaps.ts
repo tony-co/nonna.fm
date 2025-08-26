@@ -74,12 +74,12 @@ export function generatePublicSitemap(): SitemapUrl[] {
 
 /**
  * Generate service combination sitemap
- * 
+ *
  * ❌ DISABLED FOR SEO COMPLIANCE
  * These URLs require OAuth authentication for both source and target services,
  * making them inaccessible to search engine crawlers. Including authentication-gated
  * URLs in sitemaps violates Google's guidelines and can harm search rankings.
- * 
+ *
  * URLs like /library/spotify/apple require users to authenticate with BOTH
  * Spotify AND Apple Music before access, making them unsuitable for public sitemaps.
  */
@@ -90,16 +90,16 @@ export function generateServiceSitemap(): SitemapUrl[] {
 
 /**
  * Generate dynamic transfer pages sitemap
- * 
- * ❌ DISABLED FOR SEO COMPLIANCE  
+ *
+ * ❌ DISABLED FOR SEO COMPLIANCE
  * OAuth callback URLs are technical server-to-server endpoints used for authentication
  * flows, not user-facing content. These should never appear in public sitemaps as:
- * 
+ *
  * 1. They're not intended for search engine discovery
- * 2. They don't contain user-valuable content 
+ * 2. They don't contain user-valuable content
  * 3. They may expose technical implementation details
  * 4. They can confuse search engines about site structure
- * 
+ *
  * URLs like /callback/spotify are purely functional OAuth endpoints.
  */
 export function generateTransferSitemap(): SitemapUrl[] {
