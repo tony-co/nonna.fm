@@ -15,7 +15,7 @@ export function middleware(request: NextRequest): NextResponse {
 export const config = {
   matcher: [
     // Match all pathnames except for
-    // - API routes, _next static files, images, and favicons
-    "/((?!api|_next|_vercel|favicons|favicon\\.ico|manifest\\.json|.*\\..*).*)",
+    // - API routes, _next static files, images, favicons, XML files (sitemaps), and robots.txt
+    "/((?!api/|_next/|_vercel/|favicons/|favicon\\.ico|manifest\\.json|sitemap|robots\\.txt).*)",
   ],
 };
