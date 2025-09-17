@@ -16,6 +16,7 @@ import { authorizeAppleMusic } from "@/lib/services/apple/api";
 import { getAvailableServices } from "@/config/services";
 import { DeezerConnectModal } from "@/components/modals/DeezerConnectModal";
 import { SpotifyConsentModal } from "@/components/modals/SpotifyConsentModal";
+import { initiateTidalAuth } from "@/lib/services/tidal/auth";
 
 function HomePageContent() {
   const t = useTranslations("HomePage");
@@ -65,6 +66,15 @@ function HomePageContent() {
       await initiateYouTubeAuth("source");
     } catch (error) {
       console.error("Error initiating YouTube auth:", error);
+    }
+  };
+
+  const handleTidalLogin = async (): Promise<void> => {
+    try {
+      clearAllServiceData();
+      await initiateTidalAuth("source");
+    } catch (error) {
+      console.error("Error initiating Tidal auth:", error);
     }
   };
 
@@ -143,7 +153,9 @@ function HomePageContent() {
                             ? openDeezerModal
                             : service.id === "apple"
                               ? handleAppleLogin
-                              : undefined
+                              : service.id === "tidal"
+                                ? handleTidalLogin
+                                : undefined
                     }
                     className="group flex h-[180px] w-[280px] cursor-pointer flex-col items-center justify-center gap-4 rounded-3xl bg-indigo-100 px-5 py-5 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-indigo-200 dark:bg-indigo-950 dark:hover:bg-indigo-900/70"
                   >

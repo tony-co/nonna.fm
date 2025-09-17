@@ -3,6 +3,7 @@ import * as appleService from "./apple/api";
 import * as spotifyService from "./spotify/api";
 import * as youtubeService from "./youtube/api";
 import * as deezerService from "./deezer/api";
+import * as tidalService from "./tidal/api";
 
 class MusicServiceFactory implements IServiceFactory {
   private providers: Record<MusicService, IMusicServiceProvider> = {
@@ -10,6 +11,7 @@ class MusicServiceFactory implements IServiceFactory {
     spotify: spotifyService,
     youtube: youtubeService,
     deezer: deezerService,
+    tidal: tidalService,
   };
 
   getProvider(service: MusicService): IMusicServiceProvider {

@@ -11,6 +11,7 @@ import { isDeezerSource } from "./services/deezer/auth";
 import { getYouTubeAuthData } from "./services/youtube/auth";
 import { getSpotifyAuthData } from "./services/spotify/auth";
 import { getAppleMusicAuthData } from "./services/apple/auth";
+import { getTidalAuthData } from "./services/tidal/auth";
 
 async function getCurrentService(
   role: "source" | "target" = "source"
@@ -43,6 +44,14 @@ async function getActiveService(role: "source" | "target"): Promise<MusicService
       if (youtubeAuth !== null) return "youtube";
     } catch (error) {
       console.error("Error checking YouTube auth:", error);
+    }
+
+    // Check Tidal
+    try {
+      const tidalAuth = await getTidalAuthData(role);
+      if (tidalAuth !== null) return "tidal";
+    } catch (error) {
+      console.error("Error checking Tidal auth:", error);
     }
 
     // Special case for Deezer - only works as source

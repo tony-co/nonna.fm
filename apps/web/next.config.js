@@ -10,6 +10,7 @@ const nextConfig = {
       "i.scdn.co", // Spotify images
       "mosaic.scdn.co", // Spotify images
       "api.music.apple.com", // Apple Music images
+      "resources.tidal.com", // Tidal images
     ],
     remotePatterns: [
       {
