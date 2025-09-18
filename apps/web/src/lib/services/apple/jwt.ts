@@ -1,5 +1,13 @@
 import jwt from "jsonwebtoken";
 
+// Interface for JWT payload structure
+interface JWTPayload {
+  iss?: string; // Issuer
+  iat?: number; // Issued at
+  exp?: number; // Expiration time
+  [key: string]: unknown; // Allow additional properties
+}
+
 // Interface for token validation result
 export interface TokenValidationResult {
   isValid: boolean;
@@ -52,7 +60,7 @@ export function validateToken(token: string): TokenValidationResult {
       return { isValid: false };
     }
 
-    const payload = decoded.payload as any;
+    const payload = decoded.payload as JWTPayload;
     const now = Math.floor(Date.now() / 1000);
 
     if (payload.exp && payload.exp <= now) {

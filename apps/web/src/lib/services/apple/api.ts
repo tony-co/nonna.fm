@@ -261,17 +261,8 @@ export async function initializeAppleMusic(
           await refreshDeveloperToken();
         }
 
-        // Retry initialization with the new token
-        const freshToken = await getDeveloperToken();
-        await musicKit.configure({
-          developerToken: freshToken,
-          app: {
-            name: "Nonna.fm",
-            build: "1.0.0",
-          },
-        });
-
-        return musicKit.getInstance();
+        // Retry initialization with the new token by recursively calling this function
+        return initializeAppleMusic(injectedMusicKit);
       } catch (retryError) {
         console.error("Failed to recover from expired token:", retryError);
         throw new Error(
