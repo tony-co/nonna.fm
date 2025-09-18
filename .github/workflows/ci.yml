@@ -61,24 +61,4 @@ jobs:
 
       - name: Build
         if: github.ref == 'refs/heads/main'
-        # Build the Next.js app to generate the .next directory and sourcemaps for Sentry
         run: pnpm run build
-
-      - name: Upload sourcemaps to Sentry
-        if: github.ref == 'refs/heads/main'
-        uses: getsentry/action-release@v3
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-        with:
-          environment: production
-          sourcemaps: |
-            .next/static/chunks
-            .next/server/**/*.js.map
-            .next/server/app/**/*.js.map
-            .next/server/middleware.js.map
-          url_prefix: "~/"
-          release: ${{ github.sha }}
-          ignore_missing: true
-          disable_telemetry: true

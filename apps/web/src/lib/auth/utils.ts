@@ -8,6 +8,11 @@ import { clearDeezerUserId, clearDeezerPlaylist } from "../services/deezer/auth"
  * Call this before initiating a new service authentication
  */
 export function clearAllServiceData(): void {
+  // Check if running in browser environment
+  if (typeof window === "undefined") {
+    return;
+  }
+
   // Clear service-specific data
   clearSpotifyAuth();
   clearYouTubeAuth();

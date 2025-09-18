@@ -1,10 +1,11 @@
 import { createClient } from "redis";
 // WARNING: This module contains server-only code and should NEVER be imported in client components
 import { FREE_TIER_LIMIT, PREMIUM_TIER_LIMIT } from "./constants";
+import { env } from "../env.server.mjs";
 
-// Initialize Redis client with environmental URL
+// Initialize Redis client with validated environmental URL
 export const redis = createClient({
-  url: process.env.REDIS_URL || "",
+  url: env.REDIS_URL || "",
 });
 
 // Add error handling

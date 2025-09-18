@@ -60,6 +60,11 @@ async function fetchSpotifyUserProfile(accessToken: string): Promise<{ id: strin
 }
 
 export async function initiateSpotifyAuth(role: "source" | "target"): Promise<void> {
+  // Check if running in browser environment
+  if (typeof window === "undefined") {
+    throw new Error("Spotify authentication can only be initiated in browser environment");
+  }
+
   initializeEncryption();
 
   // Clear any existing auth data for this role
@@ -137,11 +142,14 @@ export async function handleSpotifyCallback(
   // Verify state
   let storedState: { role: "source" | "target" } | null = null;
   try {
-    const encryptedState =
-      localStorage.getItem(AUTH_STORAGE_KEYS.SOURCE.STATE) ||
-      localStorage.getItem(AUTH_STORAGE_KEYS.TARGET.STATE);
-    if (encryptedState) {
-      storedState = JSON.parse(decrypt(encryptedState));
+    // Check if running in browser environment
+    if (typeof window !== "undefined") {
+      const encryptedState =
+        localStorage.getItem(AUTH_STORAGE_KEYS.SOURCE.STATE) ||
+        localStorage.getItem(AUTH_STORAGE_KEYS.TARGET.STATE);
+      if (encryptedState) {
+        storedState = JSON.parse(decrypt(encryptedState));
+      }
     }
   } catch (error) {
     console.error("Failed to decrypt stored state:", error);

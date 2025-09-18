@@ -23,7 +23,7 @@ export const ServiceConfigSchema = z.object({
   name: z.string(),
   image: z.custom<FC<{ className: string; size: number }>>(val => typeof val === "function"),
   color: z.string(),
-  status: z.literal([
+  status: z.enum([
     SERVICE_STATUS.OFF,
     SERVICE_STATUS.DEV,
     SERVICE_STATUS.AVAILABLE,
@@ -159,9 +159,9 @@ export const getAvailableServices = (): ServiceConfig[] => {
         return true;
       }
       // Include DEV services when not in production
-      // if (!isProduction && service.status === SERVICE_STATUS.DEV) {
-      //   return true;
-      // }
+      if (process.env.NODE_ENV !== "production" && service.status === SERVICE_STATUS.DEV) {
+        return true;
+      }
       return false;
     });
 

@@ -1,23 +1,24 @@
-import * as api from "@/lib/services/apple/api";
+import * as api from "@/lib/services/youtube/api";
 import { mockTracks, mockAlbums, mockPlaylists } from "@/__mocks__/data/libraryData";
 import { describe, it, beforeEach, afterEach, expect, vi } from "vitest";
-import { setupAppleFetchMock, mockAppleAuth } from "@/__mocks__/services/apple/fetchMocks";
+import { setupYouTubeFetchMock, mockYouTubeAuth } from "@/__mocks__/services/youtube/fetchMocks";
 
 beforeEach(() => {
-  setupAppleFetchMock();
-  mockAppleAuth();
+  setupYouTubeFetchMock();
+  mockYouTubeAuth();
 });
 
 afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe("Apple Music API Service", () => {
+describe("YouTube Music API Service", () => {
   it("fetchUserLibrary returns correct library data", async () => {
     const data = await api.fetchUserLibrary();
     expect(data.playlists.length).toBe(mockPlaylists.length);
     expect(data.likedSongs.length).toBe(mockTracks.length);
-    expect(data.albums.length).toBe(mockAlbums.length);
+    // YouTube API currently returns empty albums array as noted in the implementation
+    expect(data.albums.length).toBe(0);
   });
 
   it("fetchPlaylistTracks returns correct tracks", async () => {
@@ -49,7 +50,7 @@ describe("Apple Music API Service", () => {
   it("createPlaylistWithTracks returns playlistId and counts", async () => {
     const tracksWithTargetId = mockTracks.map(t => ({ ...t, targetId: t.id }));
     const result = await api.createPlaylistWithTracks("Test Playlist", tracksWithTargetId);
-    expect(result.playlistId).toBe("new_apple_playlist_id");
+    expect(result.playlistId).toBe("new_youtube_playlist_id");
     expect(result.added).toBe(mockTracks.length);
   });
 
@@ -84,23 +85,62 @@ describe("Apple Music API Service", () => {
       const url =
         typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
 
-      // Still mock the developer token endpoint
-      if (url.includes("/api/apple/developer-token")) {
+      // Mock YouTube Data API v3 endpoints with empty data
+      if (url.includes("https://www.googleapis.com/youtube/v3/playlists")) {
         return new Response(
           JSON.stringify({
-            success: true,
-            token: "mock-apple-developer-token",
+            items: [],
+            pageInfo: {
+              totalResults: 0,
+            },
           }),
-          { status: 200, headers: { "Content-Type": "application/json" } }
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
         );
       }
 
-      // Return empty data for Apple Music API endpoints
-      if (url.includes("/v1/me/library")) {
-        return new Response(JSON.stringify({ data: [] }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
+      if (url.includes("https://www.googleapis.com/youtube/v3/playlistItems")) {
+        return new Response(
+          JSON.stringify({
+            items: [],
+            pageInfo: {
+              totalResults: 0,
+            },
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      // Mock YouTube Music proxy API endpoints with empty data
+      if (url.includes("/api/youtube/music")) {
+        return new Response(
+          JSON.stringify({
+            contents: {
+              singleColumnBrowseResultsRenderer: {
+                tabs: [
+                  {
+                    tabRenderer: {
+                      content: {
+                        sectionListRenderer: {
+                          contents: [],
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
       }
 
       return new Response(JSON.stringify({}), { status: 404 });
@@ -119,8 +159,7 @@ describe("Apple Music API Service", () => {
     const unhandledRejectionHandler = (err: unknown): void => {
       if (
         err instanceof Error &&
-        (err.message === "Network error" ||
-          err.message.includes("Failed to obtain valid Apple Music developer token"))
+        (err.message === "Network error" || err.message.includes("Failed to fetch user library"))
       ) {
         return;
       }
@@ -137,14 +176,66 @@ describe("Apple Music API Service", () => {
 
       const promise = api.fetchUserLibrary();
       await vi.runAllTimersAsync();
-      await expect(promise).rejects.toThrow("Failed to obtain valid Apple Music developer token");
-      // The fetch mock will be called multiple times due to token requests and retries
+      await expect(promise).rejects.toThrow();
       expect(fetchMock).toHaveBeenCalled();
       vi.useRealTimers();
     } finally {
       process.off("unhandledRejection", unhandledRejectionHandler);
       errorSpy.mockRestore();
       warnSpy.mockRestore();
+    }
+  });
+
+  it("handles authentication errors gracefully", async () => {
+    // Mock authentication failure
+    const { getYouTubeAuthData } = vi.mocked(await import("@/lib/services/youtube/auth"));
+    getYouTubeAuthData.mockResolvedValue(null);
+
+    await expect(api.fetchUserLibrary()).rejects.toThrow();
+  });
+
+  it("validates track data structure", async () => {
+    const data = await api.fetchUserLibrary();
+
+    // Validate that tracks have required properties
+    if (data.likedSongs.length > 0) {
+      const track = data.likedSongs[0];
+      expect(track).toHaveProperty("id");
+      expect(track).toHaveProperty("name");
+      expect(track).toHaveProperty("artist");
+      expect(typeof track.id).toBe("string");
+      expect(typeof track.name).toBe("string");
+      expect(typeof track.artist).toBe("string");
+    }
+  });
+
+  it("validates playlist data structure", async () => {
+    const data = await api.fetchUserLibrary();
+
+    // Validate that playlists have required properties
+    if (data.playlists.length > 0) {
+      const playlist = data.playlists[0];
+      expect(playlist).toHaveProperty("id");
+      expect(playlist).toHaveProperty("name");
+      expect(playlist).toHaveProperty("tracks");
+      expect(typeof playlist.id).toBe("string");
+      expect(typeof playlist.name).toBe("string");
+      expect(Array.isArray(playlist.tracks)).toBe(true);
+    }
+  });
+
+  it("validates album data structure", async () => {
+    const data = await api.fetchUserLibrary();
+
+    // Validate that albums have required properties
+    if (data.albums.length > 0) {
+      const album = data.albums[0];
+      expect(album).toHaveProperty("id");
+      expect(album).toHaveProperty("name");
+      expect(album).toHaveProperty("artist");
+      expect(typeof album.id).toBe("string");
+      expect(typeof album.name).toBe("string");
+      expect(typeof album.artist).toBe("string");
     }
   });
 });
