@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { env } from "../../../env.server.mjs";
 
 // Interface for JWT payload structure
 interface JWTPayload {
@@ -17,9 +18,9 @@ export interface TokenValidationResult {
 
 // Generate Apple Music developer token for MusicKit
 export function generateAppleDeveloperToken(): string {
-  const privateKey = process.env.APPLE_MUSIC_PRIVATE_KEY;
-  const teamId = process.env.APPLE_MUSIC_TEAM_ID;
-  const keyId = process.env.APPLE_MUSIC_KEY_ID;
+  const privateKey = env.APPLE_MUSIC_PRIVATE_KEY;
+  const teamId = env.APPLE_MUSIC_TEAM_ID;
+  const keyId = env.APPLE_MUSIC_KEY_ID;
 
   if (!privateKey || !teamId || !keyId) {
     throw new Error("Missing required Apple Music configuration for developer token");

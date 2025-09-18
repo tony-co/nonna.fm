@@ -10,6 +10,20 @@ import { LOCALE_KEYWORDS, getServiceTransferKeywords } from "../config/keywords"
 import { generateHreflang } from "../utils/hreflang";
 import { generateCanonicalUrl } from "../utils/canonical";
 
+// Helper function to safely get Google Site Verification
+function getGoogleSiteVerification(): string {
+  // This is safely handled on the server-side only
+  if (typeof window === "undefined") {
+    try {
+      // Use process.env directly for the optional environment variable
+      return process.env.GOOGLE_SITE_VERIFICATION || "";
+    } catch {
+      return "";
+    }
+  }
+  return "";
+}
+
 export interface MetadataOptions {
   locale: Locale;
   title?: string;
@@ -122,7 +136,7 @@ export function generateMetadata(options: MetadataOptions): Metadata {
       "mobile-web-app-capable": "yes",
       "theme-color": "#4F46E5",
       "format-detection": "telephone=no",
-      "google-site-verification": process.env.GOOGLE_SITE_VERIFICATION || "",
+      "google-site-verification": getGoogleSiteVerification(),
     },
   };
 

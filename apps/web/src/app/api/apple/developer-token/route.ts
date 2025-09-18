@@ -13,7 +13,7 @@ export async function GET(): Promise<NextResponse> {
     // Get token status for debugging info
     const status = getTokenStatus();
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       token,
       debug: {
@@ -22,10 +22,17 @@ export async function GET(): Promise<NextResponse> {
         daysUntilExpiry: status.daysUntilExpiry,
       },
     });
+
+    // Add cache prevention headers
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
+
+    return response;
   } catch (error) {
     console.error("Failed to get Apple Music developer token:", error);
 
-    return NextResponse.json(
+    const errorResponse = NextResponse.json(
       {
         success: false,
         error: "Failed to obtain valid developer token",
@@ -33,6 +40,13 @@ export async function GET(): Promise<NextResponse> {
       },
       { status: 500 }
     );
+
+    // Add cache prevention headers
+    errorResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    errorResponse.headers.set("Pragma", "no-cache");
+    errorResponse.headers.set("Expires", "0");
+
+    return errorResponse;
   }
 }
 
@@ -46,7 +60,7 @@ export async function POST(): Promise<NextResponse> {
     const token = await refreshDeveloperToken();
     const status = getTokenStatus();
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       token,
       refreshed: true,
@@ -56,10 +70,17 @@ export async function POST(): Promise<NextResponse> {
         daysUntilExpiry: status.daysUntilExpiry,
       },
     });
+
+    // Add cache prevention headers
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
+
+    return response;
   } catch (error) {
     console.error("Failed to refresh Apple Music developer token:", error);
 
-    return NextResponse.json(
+    const errorResponse = NextResponse.json(
       {
         success: false,
         error: "Failed to refresh developer token",
@@ -67,5 +88,12 @@ export async function POST(): Promise<NextResponse> {
       },
       { status: 500 }
     );
+
+    // Add cache prevention headers
+    errorResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    errorResponse.headers.set("Pragma", "no-cache");
+    errorResponse.headers.set("Expires", "0");
+
+    return errorResponse;
   }
 }

@@ -57,6 +57,9 @@ export const validateDeezerUser = async (userId: string): Promise<DeezerUser> =>
  * Stores Deezer user ID and sets up source service
  */
 export const storeDeezerUserId = (userId: string): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
   localStorage.setItem("deezer_user_id", userId);
   setServiceType("source", "deezer");
 };
@@ -65,6 +68,9 @@ export const storeDeezerUserId = (userId: string): void => {
  * Retrieves stored Deezer user ID
  */
 export const getDeezerUserId = (): string | null => {
+  if (typeof window === "undefined") {
+    return null;
+  }
   return localStorage.getItem("deezer_user_id");
 };
 
@@ -72,6 +78,9 @@ export const getDeezerUserId = (): string | null => {
  * Clears stored Deezer user ID and service type
  */
 export const clearDeezerUserId = (): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
   localStorage.removeItem("deezer_user_id");
   clearAuthData("source"); // Clear any source service type
 };
@@ -80,6 +89,9 @@ export const clearDeezerUserId = (): void => {
  * Stores selected Deezer playlist in local storage
  */
 export const storeDeezerPlaylist = (playlist: IPlaylist): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
   localStorage.setItem("deezer_selected_playlist", JSON.stringify(playlist));
 };
 
@@ -87,6 +99,9 @@ export const storeDeezerPlaylist = (playlist: IPlaylist): void => {
  * Retrieves stored Deezer playlist
  */
 export const getDeezerPlaylist = (): IPlaylist | null => {
+  if (typeof window === "undefined") {
+    return null;
+  }
   const playlist = localStorage.getItem("deezer_selected_playlist");
   return playlist ? JSON.parse(playlist) : null;
 };
@@ -95,6 +110,9 @@ export const getDeezerPlaylist = (): IPlaylist | null => {
  * Clears stored Deezer playlist
  */
 export const clearDeezerPlaylist = (): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
   localStorage.removeItem("deezer_selected_playlist");
 };
 
@@ -102,6 +120,9 @@ export const clearDeezerPlaylist = (): void => {
  * Check if Deezer is currently set as the source service
  */
 export const isDeezerSource = (): boolean => {
+  if (typeof window === "undefined") {
+    return false;
+  }
   const serviceType = localStorage.getItem("nonna_source_service");
   return serviceType === "deezer";
 };
@@ -126,8 +147,10 @@ export const handleDeezerCallback = async (
     }
 
     // Store the user ID and set the service type
-    localStorage.setItem("deezer_user_id", userId);
-    setServiceType(role, "deezer");
+    if (typeof window !== "undefined") {
+      localStorage.setItem("deezer_user_id", userId);
+      setServiceType(role, "deezer");
+    }
 
     return { success: true, role };
   } catch (error) {

@@ -154,7 +154,7 @@ async function getDeveloperToken(): Promise<string> {
   }
 }
 
-// Helper function to fetch Apple Music API with authentication
+// Helper function to fetch Apple Music API with authentication (returns Response like other services)
 async function fetchAppleMusic(
   url: string | URL,
   options: RequestInit = {},
@@ -279,6 +279,11 @@ export async function authorizeAppleMusic(
   role: "source" | "target",
   injectedMusicKit?: MusicKitGlobal
 ): Promise<string> {
+  // Check if running in browser environment
+  if (typeof window === "undefined") {
+    throw new Error("Apple Music authorization can only be performed in browser environment");
+  }
+
   try {
     const music = await initializeAppleMusic(injectedMusicKit);
     const musicUserToken = await music.authorize();
@@ -314,13 +319,14 @@ async function performSearch(
   searchTerm: string,
   authData: AuthData
 ): Promise<{ songId: string | null; albumId: string | null }> {
+  const url = new URL(`${BASE_URL}/v1/catalog/fr/search`);
+  url.searchParams.set("term", searchTerm);
+  url.searchParams.set("types", "songs");
+  url.searchParams.set("limit", "3");
+  url.searchParams.set("fields[songs]", "name,artistName,albumName");
+  url.searchParams.set("include", "albums");
+
   const result = await retryWithExponentialBackoff<AppleMusicSearchResponse>(async () => {
-    const url = new URL(`${BASE_URL}/v1/catalog/fr/search`);
-    url.searchParams.set("term", searchTerm);
-    url.searchParams.set("types", "songs");
-    url.searchParams.set("limit", "3");
-    url.searchParams.set("fields[songs]", "name,artistName,albumName");
-    url.searchParams.set("include", "albums");
     return fetchAppleMusic(url, { method: "GET" }, authData);
   }, APPLE_RETRY_OPTIONS);
 
@@ -641,15 +647,15 @@ async function findBestAlbumMatch(
     // Clean search terms
     const searchTerm = `${cleanSearchTerm(album.name)} ${cleanSearchTerm(album.artist)}`;
 
+    const url = new URL(`${BASE_URL}/v1/catalog/fr/search`);
+    url.searchParams.set("term", searchTerm);
+    url.searchParams.set("types", "albums");
+    url.searchParams.set("limit", "3");
+    url.searchParams.set("fields[albums]", "name,artistName");
+
     const result = await retryWithExponentialBackoff<{
       results?: { albums?: { data: AppleAlbum[] } };
     }>(async () => {
-      const url = new URL(`${BASE_URL}/v1/catalog/fr/search`);
-      url.searchParams.set("term", searchTerm);
-      url.searchParams.set("types", "albums");
-      url.searchParams.set("limit", "3");
-      url.searchParams.set("fields[albums]", "name,artistName");
-
       return fetchAppleMusic(url, { method: "GET" }, authData);
     }, APPLE_RETRY_OPTIONS);
 

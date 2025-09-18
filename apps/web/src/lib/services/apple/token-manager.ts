@@ -5,12 +5,16 @@ import { generateAppleDeveloperToken, validateToken, isTokenExpiringWithinDays }
 let cachedToken: string | null = null;
 let tokenGeneratedAt: number | null = null;
 
+// In-flight promise deduplication to prevent concurrent token generation
+let tokenGenerationPromise: Promise<string> | null = null;
+
 // Token refresh threshold - regenerate if expires within 7 days
 const REFRESH_THRESHOLD_DAYS = 7;
 
 /**
  * Gets a valid Apple Music developer token, generating a new one if needed
  * This function ensures we always have a valid, non-expiring token
+ * Uses promise deduplication to prevent concurrent token generation
  */
 export async function getValidDeveloperToken(): Promise<string> {
   try {
@@ -33,25 +37,51 @@ export async function getValidDeveloperToken(): Promise<string> {
       }
     }
 
-    // Generate a new token
-    console.log("Generating new Apple Music developer token");
-    cachedToken = generateAppleDeveloperToken();
-    tokenGeneratedAt = Date.now();
-
-    // Validate the newly generated token
-    const validation = validateToken(cachedToken);
-    if (!validation.isValid) {
-      throw new Error("Failed to generate valid Apple Music developer token");
+    // Check if token generation is already in progress
+    if (tokenGenerationPromise) {
+      console.log("Token generation already in progress, waiting for completion");
+      return await tokenGenerationPromise;
     }
 
-    console.log(
-      `New Apple Music developer token generated, expires at: ${validation.expiresAt?.toISOString()}`
-    );
-    return cachedToken;
+    // Start token generation and store the promise
+    tokenGenerationPromise = generateNewToken();
+
+    try {
+      const token = await tokenGenerationPromise;
+      return token;
+    } finally {
+      // Clear the in-flight promise when done (success or failure)
+      tokenGenerationPromise = null;
+    }
   } catch (error) {
     console.error("Error managing Apple Music developer token:", error);
     throw new Error("Failed to obtain valid Apple Music developer token");
   }
+}
+
+/**
+ * Internal function to generate a new token
+ * Separated for better error handling and promise deduplication
+ */
+async function generateNewToken(): Promise<string> {
+  // Generate a new token
+  console.log("Generating new Apple Music developer token");
+  const newToken = generateAppleDeveloperToken();
+
+  // Validate the newly generated token
+  const validation = validateToken(newToken);
+  if (!validation.isValid) {
+    throw new Error("Failed to generate valid Apple Music developer token");
+  }
+
+  // Update cache
+  cachedToken = newToken;
+  tokenGeneratedAt = Date.now();
+
+  console.log(
+    `New Apple Music developer token generated, expires at: ${validation.expiresAt?.toISOString()}`
+  );
+  return newToken;
 }
 
 /**
@@ -62,6 +92,7 @@ export async function refreshDeveloperToken(): Promise<string> {
   console.log("Force refreshing Apple Music developer token");
   cachedToken = null;
   tokenGeneratedAt = null;
+  tokenGenerationPromise = null; // Clear any in-flight generation
   return getValidDeveloperToken();
 }
 
@@ -106,4 +137,5 @@ export function clearCachedToken(): void {
   console.log("Clearing cached Apple Music developer token");
   cachedToken = null;
   tokenGeneratedAt = null;
+  tokenGenerationPromise = null; // Clear any in-flight generation
 }

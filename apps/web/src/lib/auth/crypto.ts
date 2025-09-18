@@ -8,6 +8,11 @@ const STATE_STORAGE = "spotify_auth_state";
 let ENCRYPTION_KEY: string;
 
 export function initializeEncryption(): void {
+  // Check if running in browser environment
+  if (typeof window === "undefined") {
+    return;
+  }
+
   // Try to get existing key from localStorage
   const storedKey = localStorage.getItem(ENCRYPTION_KEY_STORAGE);
   if (storedKey) {
@@ -54,6 +59,10 @@ export async function generateCodeChallenge(codeVerifier: string): Promise<strin
 
 export function clearEncryption(): void {
   ENCRYPTION_KEY = "";
-  localStorage.removeItem(ENCRYPTION_KEY_STORAGE);
-  localStorage.removeItem(STATE_STORAGE);
+
+  // Check if running in browser environment
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(ENCRYPTION_KEY_STORAGE);
+    localStorage.removeItem(STATE_STORAGE);
+  }
 }

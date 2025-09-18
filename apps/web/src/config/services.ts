@@ -23,7 +23,7 @@ export const ServiceConfigSchema = z.object({
   name: z.string(),
   image: z.custom<FC<{ className: string; size: number }>>(val => typeof val === "function"),
   color: z.string(),
-  status: z.literal([
+  status: z.enum([
     SERVICE_STATUS.OFF,
     SERVICE_STATUS.DEV,
     SERVICE_STATUS.AVAILABLE,
