@@ -5,7 +5,29 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": [
+        "NODE_ENV",
+        "NEXT_PUBLIC_APP_URL",
+        "NEXT_PUBLIC_SPOTIFY_CLIENT_ID",
+        "SPOTIFY_CLIENT_SECRET",
+        "NEXT_PUBLIC_SPOTIFY_REDIRECT_URI",
+        "SPOTIFY_CLIENT_ID",
+        "SPOTIFY_REDIRECT_URI",
+        "NEXT_PUBLIC_YOUTUBE_CLIENT_ID",
+        "YOUTUBE_CLIENT_SECRET",
+        "APPLE_MUSIC_TEAM_ID",
+        "APPLE_MUSIC_KEY_ID",
+        "APPLE_MUSIC_PRIVATE_KEY",
+        "REDIS_URL",
+        "GOOGLE_SITE_VERIFICATION",
+        "NEXT_PUBLIC_POSTHOG_KEY",
+        "NEXT_PUBLIC_POSTHOG_HOST",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "SENTRY_AUTH_TOKEN",
+        "NEXT_PUBLIC_SENTRY_DSN"
+      ]
     },
     "dev": {
       "cache": false,

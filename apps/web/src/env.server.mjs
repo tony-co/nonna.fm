@@ -20,7 +20,7 @@ export const envSchema = z.object({
   NEXT_PUBLIC_SPOTIFY_CLIENT_ID: z
     .string({ error: "NEXT_PUBLIC_SPOTIFY_CLIENT_ID is required" })
     .min(1),
-  SPOTIFY_CLIENT_SECRET: z.string({ error: "SPOTIFY_CLIENT_SECRET is required" }).min(1),
+  SPOTIFY_CLIENT_SECRET: z.string({ error: "SPOTIFY_CLIENT_SECRET is required" }).min(1).optional(),
   NEXT_PUBLIC_SPOTIFY_REDIRECT_URI: z
     .string({ error: "NEXT_PUBLIC_SPOTIFY_REDIRECT_URI must be a valid URL" })
     .url(),
@@ -35,12 +35,12 @@ export const envSchema = z.object({
   NEXT_PUBLIC_YOUTUBE_CLIENT_ID: z
     .string({ error: "NEXT_PUBLIC_YOUTUBE_CLIENT_ID is required" })
     .min(1),
-  YOUTUBE_CLIENT_SECRET: z.string({ error: "YOUTUBE_CLIENT_SECRET is required" }).min(1),
+  YOUTUBE_CLIENT_SECRET: z.string({ error: "YOUTUBE_CLIENT_SECRET is required" }).min(1).optional(),
 
   // === Apple Music Configuration ===
-  APPLE_MUSIC_TEAM_ID: z.string({ error: "APPLE_MUSIC_TEAM_ID is required" }).min(1),
-  APPLE_MUSIC_KEY_ID: z.string({ error: "APPLE_MUSIC_KEY_ID is required" }).min(1),
-  APPLE_MUSIC_PRIVATE_KEY: z.string({ error: "APPLE_MUSIC_PRIVATE_KEY is required" }).min(1),
+  APPLE_MUSIC_TEAM_ID: z.string({ error: "APPLE_MUSIC_TEAM_ID is required" }).min(1).optional(),
+  APPLE_MUSIC_KEY_ID: z.string({ error: "APPLE_MUSIC_KEY_ID is required" }).min(1).optional(),
+  APPLE_MUSIC_PRIVATE_KEY: z.string({ error: "APPLE_MUSIC_PRIVATE_KEY is required" }).min(1).optional(),
 });
 
 // Server-side env: use only on the server!
