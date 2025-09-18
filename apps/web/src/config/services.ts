@@ -159,9 +159,9 @@ export const getAvailableServices = (): ServiceConfig[] => {
         return true;
       }
       // Include DEV services when not in production
-      // if (!isProduction && service.status === SERVICE_STATUS.DEV) {
-      //   return true;
-      // }
+      if (process.env.NODE_ENV !== "production" && service.status === SERVICE_STATUS.DEV) {
+        return true;
+      }
       return false;
     });
 

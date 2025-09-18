@@ -129,23 +129,86 @@ const APPLE_RETRY_OPTIONS: RetryOptions = {
   jitterFactor: 0.1,
 };
 
+// Helper function to get a valid developer token
+async function getDeveloperToken(): Promise<string> {
+  try {
+    // In client-side code, fetch from our API endpoint
+    if (typeof window !== "undefined") {
+      const response = await fetch("/api/apple/developer-token");
+      if (!response.ok) {
+        throw new Error(`Failed to get developer token: ${response.status}`);
+      }
+      const data = await response.json();
+      if (!data.success || !data.token) {
+        throw new Error("Invalid developer token response");
+      }
+      return data.token;
+    } else {
+      // In server-side code, use the token manager directly
+      const { getValidDeveloperToken } = await import("./token-manager");
+      return getValidDeveloperToken();
+    }
+  } catch (error) {
+    console.error("Error getting developer token:", error);
+    throw new Error("Failed to obtain valid Apple Music developer token");
+  }
+}
+
 // Helper function to fetch Apple Music API with authentication
 async function fetchAppleMusic(
   url: string | URL,
   options: RequestInit = {},
-  authData: AuthData
+  authData: AuthData,
+  retryCount = 0
 ): Promise<Response> {
   const finalUrl = url instanceof URL ? url.toString() : url;
-  const headers = {
-    ...options.headers,
-    Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}`,
-    "Music-User-Token": authData.accessToken,
-  };
 
-  return fetch(finalUrl, {
-    ...options,
-    headers,
-  });
+  try {
+    // Get a fresh, valid developer token
+    const developerToken = await getDeveloperToken();
+
+    const headers = {
+      ...options.headers,
+      Authorization: `Bearer ${developerToken}`,
+      "Music-User-Token": authData.accessToken,
+    };
+
+    const response = await fetch(finalUrl, {
+      ...options,
+      headers,
+    });
+
+    // Check for token-related errors
+    if (response.status === 401 && retryCount === 0) {
+      console.warn("Apple Music API returned 401, attempting token refresh...");
+
+      // Force refresh the token
+      try {
+        if (typeof window !== "undefined") {
+          await fetch("/api/apple/developer-token", { method: "POST" });
+        } else {
+          const { refreshDeveloperToken } = await import("./token-manager");
+          await refreshDeveloperToken();
+        }
+
+        // Retry the request once with the new token
+        return fetchAppleMusic(url, options, authData, retryCount + 1);
+      } catch (refreshError) {
+        console.error("Failed to refresh Apple Music token:", refreshError);
+        throw new Error("Apple Music authentication failed and token could not be refreshed");
+      }
+    }
+
+    return response;
+  } catch (error) {
+    // If this is a network error and we haven't retried yet, try once more
+    if (retryCount === 0 && error instanceof TypeError && error.message.includes("fetch")) {
+      console.warn("Network error calling Apple Music API, retrying once...");
+      return fetchAppleMusic(url, options, authData, retryCount + 1);
+    }
+
+    throw error;
+  }
 }
 
 export async function initializeAppleMusic(
@@ -173,8 +236,11 @@ export async function initializeAppleMusic(
       }
     }
 
+    // Get a fresh, valid developer token
+    const developerToken = await getDeveloperToken();
+
     await musicKit.configure({
-      developerToken: process.env.NEXT_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN || "",
+      developerToken,
       app: {
         name: "Nonna.fm",
         build: "1.0.0",
@@ -183,6 +249,37 @@ export async function initializeAppleMusic(
 
     return musicKit.getInstance();
   } catch (error) {
+    // If the error is about an expired token, try to refresh and retry once
+    if (error instanceof Error && error.message.includes("expired token")) {
+      console.warn("Apple Music token expired, attempting to refresh...");
+      try {
+        // Force refresh the token by making a POST request to our API
+        if (typeof window !== "undefined") {
+          await fetch("/api/apple/developer-token", { method: "POST" });
+        } else {
+          const { refreshDeveloperToken } = await import("./token-manager");
+          await refreshDeveloperToken();
+        }
+
+        // Retry initialization with the new token
+        const freshToken = await getDeveloperToken();
+        await musicKit.configure({
+          developerToken: freshToken,
+          app: {
+            name: "Nonna.fm",
+            build: "1.0.0",
+          },
+        });
+
+        return musicKit.getInstance();
+      } catch (retryError) {
+        console.error("Failed to recover from expired token:", retryError);
+        throw new Error(
+          "Apple Music token expired and could not be refreshed. Please check your Apple Music configuration."
+        );
+      }
+    }
+
     throw error;
   }
 }
@@ -714,7 +811,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
       APPLE_RETRY_OPTIONS
     );
 
-    const playlistItems = data.data.map(playlist => ({
+    const playlistItems = (data.data || []).map(playlist => ({
       id: playlist.id,
       name: playlist.attributes.name,
       trackCount: playlist.attributes.trackCount,
@@ -739,7 +836,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
       APPLE_RETRY_OPTIONS
     );
 
-    const songItems = data.data.map(song => ({
+    const songItems = (data.data || []).map(song => ({
       id: song.id,
       name: song.attributes.name,
       artist: song.attributes.artistName,
@@ -763,7 +860,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
       APPLE_RETRY_OPTIONS
     );
 
-    const albumItems = data.data.map(album => ({
+    const albumItems = (data.data || []).map(album => ({
       id: album.id,
       name: album.attributes.name,
       artist: album.attributes.artistName,
@@ -810,7 +907,7 @@ export async function fetchPlaylistTracks(
     );
 
     // Apple API does not return total, so we estimate progress by assuming 100 per page
-    const trackItems = data.data.map(item => ({
+    const trackItems = (data.data || []).map(item => ({
       id: item.id,
       name: item.attributes.name,
       artist: item.attributes.artistName,

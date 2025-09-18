@@ -1,11 +1,6 @@
 import { FC, useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import {
-  getAvailableServices,
-  getServiceById,
-  ServiceConfig,
-  SERVICE_STATUS,
-} from "@/config/services";
+import { getAvailableServices, getServiceById, ServiceConfig } from "@/config/services";
 import { MusicService } from "@/types";
 
 interface ServiceSelectorProps {
@@ -36,7 +31,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
     if (service.id === "deezer") {
       return;
     }
-    if (service.status === SERVICE_STATUS.AVAILABLE && !isProcessing) {
+    if (!isProcessing) {
       setSelectedService(service);
       setIsOpen(false);
       onTargetSelect(service.id);
@@ -150,10 +145,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
                   .filter(service => service.id !== sourceService?.id)
                   .map(service => {
                     // Determine if service should be disabled - Deezer special case for target
-                    const isDisabled =
-                      service.status !== SERVICE_STATUS.AVAILABLE ||
-                      isProcessing ||
-                      service.id === "deezer";
+                    const isDisabled = isProcessing || service.id === "deezer";
 
                     return (
                       <button

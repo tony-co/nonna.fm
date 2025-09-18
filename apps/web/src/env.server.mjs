@@ -17,6 +17,11 @@ export const envSchema = z.object({
   NEXT_PUBLIC_YOUTUBE_CLIENT_ID: z.string().min(1),
   YOUTUBE_CLIENT_SECRET: z.string().min(1),
 
+  // Apple Music Configuration (MusicKit developer token only)
+  APPLE_MUSIC_TEAM_ID: z.string().min(1),
+  APPLE_MUSIC_KEY_ID: z.string().min(1),
+  APPLE_MUSIC_PRIVATE_KEY: z.string().min(1),
+
   // PostHog Configuration
   NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1),
   NEXT_PUBLIC_POSTHOG_HOST: z.string().url(),

@@ -58,6 +58,25 @@ export function setupAppleFetchMock(): void {
   global.fetch = vi.fn(async (input: string | URL | Request, options?: RequestInit) => {
     const url =
       typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+
+    // Mock the developer token API endpoint
+    if (url.includes("/api/apple/developer-token")) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          token: "mock-apple-developer-token",
+          debug: {
+            generatedAt: new Date().toISOString(),
+            expiresAt: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),
+            daysUntilExpiry: 180,
+          },
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
     // Playlist tracks endpoint: /v1/me/library/playlists/{playlistId}/tracks
     if (/\/v1\/me\/library\/playlists\/[^/]+\/tracks/.test(url) && options?.method === "GET") {
       const match = url.match(/\/v1\/me\/library\/playlists\/([^/]+)\/tracks/);

@@ -7,7 +7,6 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "dev:https": "turbo run dev:https",
     "lint": "turbo run lint",
     "format": "turbo run format",
     "type-check": "turbo run type-check",
