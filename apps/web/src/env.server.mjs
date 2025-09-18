@@ -40,7 +40,10 @@ export const envSchema = z.object({
   // === Apple Music Configuration ===
   APPLE_MUSIC_TEAM_ID: z.string({ error: "APPLE_MUSIC_TEAM_ID is required" }).min(1).optional(),
   APPLE_MUSIC_KEY_ID: z.string({ error: "APPLE_MUSIC_KEY_ID is required" }).min(1).optional(),
-  APPLE_MUSIC_PRIVATE_KEY: z.string({ error: "APPLE_MUSIC_PRIVATE_KEY is required" }).min(1).optional(),
+  APPLE_MUSIC_PRIVATE_KEY: z
+    .string({ error: "APPLE_MUSIC_PRIVATE_KEY is required" })
+    .min(1)
+    .optional(),
 });
 
 // Server-side env: use only on the server!
