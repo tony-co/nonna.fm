@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
-import { Header } from "@/components/layout/Header";
-import { LibraryClientContent } from "./_components/LibraryClientContent";
-import { MusicService } from "@/types";
 import { Footer } from "@/components/layout/Footer";
+import { Header } from "@/components/layout/Header";
 import { TransferButton } from "@/components/shared/TransferButton";
+import { ItemTitleProvider } from "@/contexts/ItemTitleContext";
 import { LibraryProvider } from "@/contexts/LibraryContext";
 import { TransferProvider } from "@/contexts/TransferContext";
-import { ItemTitleProvider } from "@/contexts/ItemTitleContext";
+import type { Locale } from "@/lib/seo";
 import {
   generateMetadata as generateSEOMetadata,
-  ServiceTransferStructuredData,
   generateServiceTransferBreadcrumbs,
+  ServiceTransferStructuredData,
 } from "@/lib/seo";
-import type { Locale } from "@/lib/seo";
+import type { MusicService } from "@/types";
+import { LibraryClientContent } from "./_components/LibraryClientContent";
 
 interface LibraryLayoutProps {
   children: React.ReactNode;

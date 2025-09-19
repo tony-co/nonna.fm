@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { Albums } from "./_components/Albums";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { Albums } from "./_components/Albums";
 
 export default function AlbumsPage() {
   return (

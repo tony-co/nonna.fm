@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { TrackSchema, ITrack } from "./track";
-import { AlbumSchema, IAlbum } from "./album";
-import { ILibraryData } from "./library";
-import { MusicService } from "./music-service";
+import { AlbumSchema, type IAlbum } from "./album";
+import type { ILibraryData } from "./library";
+import type { MusicService } from "./music-service";
+import { type ITrack, TrackSchema } from "./track";
 
 export const SearchResultSchema = z.object({
   matched: z.number(),

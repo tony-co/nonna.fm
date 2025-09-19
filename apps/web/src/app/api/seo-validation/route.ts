@@ -3,9 +3,9 @@
  * Tests and validates the SEO implementation
  */
 
-import { NextRequest } from "next/server";
-import { validatePageSEO, generateSEOReport } from "@/lib/seo/utils/validation";
+import type { NextRequest } from "next/server";
 import type { Locale } from "@/lib/seo";
+import { generateSEOReport, validatePageSEO } from "@/lib/seo/utils/validation";
 
 export async function GET(request: NextRequest): Promise<Response> {
   try {

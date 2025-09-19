@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 
 const DEEZER_API_BASE = "https://api.deezer.com";
 

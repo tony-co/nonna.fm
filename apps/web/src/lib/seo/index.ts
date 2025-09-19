@@ -3,32 +3,25 @@
  * Centralized exports for all SEO functionality
  */
 
+// Re-export common types
+export type { Locale, Service } from "./config/base";
 // Configuration
 export * from "./config/base";
 export * from "./config/keywords";
 export * from "./config/structured-data";
-
+export type { BreadcrumbItem, BreadcrumbOptions } from "./generators/breadcrumbs";
+export * from "./generators/breadcrumbs";
+export { generateBreadcrumbs, generateServiceTransferBreadcrumbs } from "./generators/breadcrumbs";
+export type { MetadataOptions } from "./generators/metadata";
 // Generators
 export * from "./generators/metadata";
-export * from "./generators/sitemaps";
-export * from "./generators/structured-data";
-export * from "./generators/breadcrumbs";
-
-// Utilities
-export * from "./utils/hreflang";
-export * from "./utils/canonical";
-export * from "./utils/validation";
-
-// Re-export common types
-export type { Locale, Service } from "./config/base";
-
-export type { MetadataOptions } from "./generators/metadata";
-
-export type { BreadcrumbItem, BreadcrumbOptions } from "./generators/breadcrumbs";
-
-export type { SitemapUrl, SitemapIndexEntry } from "./generators/sitemaps";
-
 // Common SEO utilities
 export { generateMetadata } from "./generators/metadata";
-export { StructuredData, HomepageStructuredData } from "./generators/structured-data";
-export { generateBreadcrumbs, generateServiceTransferBreadcrumbs } from "./generators/breadcrumbs";
+export type { SitemapIndexEntry, SitemapUrl } from "./generators/sitemaps";
+export * from "./generators/sitemaps";
+export * from "./generators/structured-data";
+export { HomepageStructuredData, StructuredData } from "./generators/structured-data";
+export * from "./utils/canonical";
+// Utilities
+export * from "./utils/hreflang";
+export * from "./utils/validation";

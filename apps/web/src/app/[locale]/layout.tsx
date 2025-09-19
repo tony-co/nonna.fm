@@ -1,15 +1,15 @@
-import { Inter } from "next/font/google";
-import Script from "next/script";
-import type { Metadata } from "next";
-import { NextIntlClientProvider, hasLocale } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
-import { notFound } from "next/navigation";
-import { ThemeProvider } from "@/contexts/ThemeContext";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { notFound } from "next/navigation";
+import Script from "next/script";
+import { hasLocale, NextIntlClientProvider } from "next-intl";
+import { setRequestLocale } from "next-intl/server";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { routing } from "@/i18n/routing";
-import { generateMetadata as generateSEOMetadata, HomepageStructuredData } from "@/lib/seo";
 import type { Locale } from "@/lib/seo";
+import { generateMetadata as generateSEOMetadata, HomepageStructuredData } from "@/lib/seo";
 import "../globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -59,6 +59,7 @@ export default async function LocaleLayout({
       <head>
         <Script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js" />
         <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: Static theme initialization script to prevent FOUC
           dangerouslySetInnerHTML={{
             __html: `
               (function() {

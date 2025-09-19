@@ -1,11 +1,11 @@
 "use client";
 
-import { FC, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { useIsVisible } from "@/hooks/useIsVisible";
-import type { ITrack, IPlaylist } from "@/types";
+import { type FC, useRef } from "react";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import { StatusIcon } from "@/components/shared/StatusIcon";
+import { useIsVisible } from "@/hooks/useIsVisible";
+import type { IPlaylist, ITrack } from "@/types";
 
 interface TrackListProps {
   tracks: Array<ITrack>;
@@ -27,12 +27,12 @@ const TrackRow: FC<{
   return (
     <div
       ref={ref}
+      data-testid="track"
       className={`group grid grid-cols-[32px_1fr_32px] items-center gap-2 rounded-md p-1.5 transition-colors duration-200 lg:grid-cols-[32px_32px_1fr_231px_32px] lg:gap-4 lg:p-2 ${
         isSelected
           ? "bg-indigo-50 dark:bg-indigo-950/30"
           : "bg-transparent hover:bg-indigo-50/70 dark:bg-transparent dark:hover:bg-indigo-950/20"
       }`}
-      role="track"
     >
       {/* Index number */}
       <div className="hidden text-sm font-normal text-slate-500 lg:block dark:text-slate-400">
@@ -117,29 +117,32 @@ export const TrackList: FC<TrackListProps> = ({ tracks, selection = new Set(), p
   }
 
   return (
-    <div className="relative bg-transparent dark:bg-transparent" role="tracklist">
+    <div className="relative bg-transparent dark:bg-transparent">
       {/* Header */}
-      <div
-        className="mb-4 grid grid-cols-[32px_1fr_32px] gap-2 border-b border-slate-200 bg-white/80 p-1.5 py-2 text-xs font-normal text-slate-500 backdrop-blur-sm lg:grid-cols-[32px_32px_1fr_231px_32px] lg:gap-4 lg:p-2 lg:text-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400"
-        role="row"
-      >
-        <div className="hidden items-center lg:flex" role="columnheader">
-          {tTableHeaders("number")}
-        </div>
-        <div className="flex items-center" role="columnheader">
-          {tTableHeaders("title")}
-        </div>
-        <div className="flex items-center" role="columnheader"></div>
-        <div className="hidden items-center lg:flex" role="columnheader">
-          {tTableHeaders("album")}
-        </div>
-        <div className="flex items-center justify-end" role="columnheader">
-          {tTableHeaders("status")}
-        </div>
+      <div className="mb-4">
+        <table className="w-full">
+          <thead>
+            <tr className="grid grid-cols-[32px_1fr_32px] gap-2 border-b border-slate-200 bg-white/80 p-1.5 py-2 text-xs font-normal text-slate-500 backdrop-blur-sm lg:grid-cols-[32px_32px_1fr_231px_32px] lg:gap-4 lg:p-2 lg:text-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400">
+              <th scope="col" className="hidden items-center lg:flex">
+                {tTableHeaders("number")}
+              </th>
+              <th scope="col" className="flex items-center">
+                {tTableHeaders("title")}
+              </th>
+              <th scope="col" className="flex items-center"></th>
+              <th scope="col" className="hidden items-center lg:flex">
+                {tTableHeaders("album")}
+              </th>
+              <th scope="col" className="flex items-center justify-end">
+                {tTableHeaders("status")}
+              </th>
+            </tr>
+          </thead>
+        </table>
       </div>
 
       {/* Tracks */}
-      <div className="space-y-2">
+      <div className="space-y-2" data-testid="tracklist">
         {tracks.map((track, index) => {
           const isSelected = Array.from(selection).some(
             selectedTrack => selectedTrack.id === track.id

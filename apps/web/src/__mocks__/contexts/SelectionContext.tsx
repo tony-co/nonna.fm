@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { ISelectionState } from "@/types";
+import type { ISelectionState } from "@/types";
 
 // Mock state
 export const mockSelectionState: ISelectionState = {
@@ -25,7 +25,9 @@ export const resetMocks = () => {
   mockSelectionState.playlists.clear();
   mockSelectionState.likedSongs.clear();
   mockSelectionState.albums.clear();
-  Object.values(mockFns).forEach(mock => mock.mockReset());
+  for (const mock of Object.values(mockFns)) {
+    mock.mockReset();
+  }
 };
 
 // Default mock implementation

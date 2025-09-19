@@ -1,7 +1,7 @@
 import { vi } from "vitest";
-import * as auth from "@/lib/services/apple/auth";
-import { mockTracks, mockAlbums, mockPlaylists } from "@/__mocks__/data/libraryData";
+import { mockAlbums, mockPlaylists, mockTracks } from "@/__mocks__/data/libraryData";
 import type { AuthData } from "@/lib/auth/constants";
+import * as auth from "@/lib/services/apple/auth";
 
 // --- Type-safe mock AuthData for Apple Music ---
 export const mockAppleAuthData: AuthData = {

@@ -1,5 +1,12 @@
 "use client";
-import { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from "react";
+import {
+  createContext,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+  useContext,
+  useState,
+} from "react";
 
 // Context value type: title, minimal header flag, show title flag and their setters
 interface ItemTitleContextValue {

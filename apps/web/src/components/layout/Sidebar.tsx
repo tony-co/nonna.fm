@@ -1,18 +1,17 @@
 "use client";
 
-import { FC } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useLibrary, useLibrarySelection } from "@/contexts/LibraryContext";
-import { useMatching } from "@/hooks/useMatching";
-import { IndeterminateCheckbox } from "@/components/shared/IndeterminateCheckbox";
+import React, { type FC } from "react";
+import { LikedSongsIcon } from "@/components/icons/LikedSongsIcon";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import { CircularProgress } from "@/components/shared/CircularProgress";
-import { useRouter, useParams } from "next/navigation";
-import { MusicService, IPlaylist } from "@/types";
-import { fetchPlaylistTracks } from "@/lib/musicApi";
-import React from "react";
+import { IndeterminateCheckbox } from "@/components/shared/IndeterminateCheckbox";
 import { fetchingPlaylists } from "@/components/shared/TransferButton";
-import { LikedSongsIcon } from "@/components/icons/LikedSongsIcon";
+import { useLibrary, useLibrarySelection } from "@/contexts/LibraryContext";
+import { useMatching } from "@/hooks/useMatching";
+import { fetchPlaylistTracks } from "@/lib/musicApi";
+import type { IPlaylist, MusicService } from "@/types";
 
 // Main component
 export const LibrarySidebar: FC = () => {
@@ -182,19 +181,23 @@ export const LibrarySidebar: FC = () => {
       </div>
 
       {/* Liked Songs Section */}
-      <div
+      <button
+        type="button"
         // Add margin-bottom to separate from next item, and reduce vertical padding
-        className={`group mb-1 flex cursor-pointer items-center gap-4 rounded-lg px-2.5 py-2 transition-all duration-200 ${
+        className={`group mb-1 flex w-full cursor-pointer items-center gap-4 rounded-lg px-2.5 py-2 transition-all duration-200 text-left ${
           selectedLikedSongsCount === likedSongsCount && likedSongsCount > 0
             ? "bg-indigo-100/60 group-hover:bg-indigo-200/80 dark:bg-indigo-900/40 dark:group-hover:bg-indigo-800/60"
             : "hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
         }`}
         onClick={handleLikedSongsClick}
-        role="button"
         aria-label={tAccessibility("viewLikedSongs")}
         data-testid="liked-songs-section"
       >
-        <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
+        <fieldset
+          onClick={e => e.stopPropagation()}
+          onKeyDown={e => e.stopPropagation()}
+          className="pl-2 lg:pl-0 border-0 p-0 m-0"
+        >
           <IndeterminateCheckbox
             selectedCount={selectedLikedSongsCount}
             totalCount={likedSongsCount}
@@ -203,7 +206,7 @@ export const LibrarySidebar: FC = () => {
             label={tAccessibility("likedSongs")}
             testId="liked-songs-checkbox"
           />
-        </div>
+        </fieldset>
         <div className="relative flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-300">
           <LikedSongsIcon className="h-5 w-5 text-white" />
           {/* Show progress if matching liked songs */}
@@ -232,24 +235,28 @@ export const LibrarySidebar: FC = () => {
             )}
           </p>
         </div>
-      </div>
+      </button>
 
       {/* Only show Albums section if neither source nor target is YouTube Music */}
       {/* YouTube Music API does not support adding albums to the user library as source or target */}
       {!isYouTubeService(source) && !isYouTubeService(target) && (
-        <div
+        <button
+          type="button"
           // Add margin-bottom to separate from next item, and reduce vertical padding
-          className={`group mb-1 flex cursor-pointer items-center gap-4 rounded-lg px-2.5 py-2 transition-all duration-200 ${
+          className={`group mb-1 flex w-full cursor-pointer items-center gap-4 rounded-lg px-2.5 py-2 transition-all duration-200 text-left ${
             selectedAlbumsCount === albumsCount && albumsCount > 0
               ? "bg-indigo-100/60 group-hover:bg-indigo-200/80 dark:bg-indigo-900/40 dark:group-hover:bg-indigo-800/60"
               : "hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
           }`}
           onClick={handleAlbumsClick}
-          role="button"
           aria-label={tAccessibility("viewAlbums")}
           data-testid="albums-section"
         >
-          <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
+          <fieldset
+            onClick={e => e.stopPropagation()}
+            onKeyDown={e => e.stopPropagation()}
+            className="pl-2 lg:pl-0 border-0 p-0 m-0"
+          >
             <IndeterminateCheckbox
               selectedCount={selectedAlbumsCount}
               totalCount={albumsCount}
@@ -258,7 +265,7 @@ export const LibrarySidebar: FC = () => {
               label={tAccessibility("albums")}
               testId="albums-checkbox"
             />
-          </div>
+          </fieldset>
           <div className="relative overflow-hidden rounded-lg">
             <ArtworkImage
               src={Array.from(state.albums ?? [])[0]?.artwork}
@@ -293,23 +300,29 @@ export const LibrarySidebar: FC = () => {
               )}
             </p>
           </div>
-        </div>
+        </button>
       )}
 
       {/* Playlists Section */}
       {Array.from(state.playlists?.values() ?? []).map((playlist, idx, arr) => (
-        <div
+        <button
+          type="button"
           key={playlist.id}
           // Add margin-bottom to separate from next item, except last; reduce vertical padding
-          className={`group flex cursor-pointer items-center gap-4 rounded-lg ${idx !== arr.length - 1 ? "mb-1" : ""} px-2.5 py-2 transition-all duration-200 ${
+          className={`group flex w-full cursor-pointer items-center gap-4 rounded-lg text-left ${idx !== arr.length - 1 ? "mb-1" : ""} px-2.5 py-2 transition-all duration-200 ${
             selectedItems.playlists.has(playlist.id)
               ? "bg-indigo-100/60 group-hover:bg-indigo-200/80 dark:bg-indigo-900/40 dark:group-hover:bg-indigo-800/60"
               : "hover:bg-indigo-100/50 dark:hover:bg-indigo-950/20"
           }`}
           onClick={() => handlePlaylistClick(playlist.id)}
+          aria-label={playlist.name}
           data-testid={`playlist-item-${playlist.id}`}
         >
-          <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
+          <fieldset
+            onClick={e => e.stopPropagation()}
+            onKeyDown={e => e.stopPropagation()}
+            className="pl-2 lg:pl-0 border-0 p-0 m-0"
+          >
             <IndeterminateCheckbox
               selectedCount={selectedItems.playlists.has(playlist.id) ? 1 : 0}
               totalCount={1}
@@ -317,7 +330,7 @@ export const LibrarySidebar: FC = () => {
               label={playlist.name}
               testId={`playlist-checkbox-${playlist.id}`}
             />
-          </div>
+          </fieldset>
           <div className="relative overflow-hidden rounded-lg">
             <ArtworkImage
               src={playlist.artwork}
@@ -339,11 +352,12 @@ export const LibrarySidebar: FC = () => {
           <div className="min-w-0 flex-1">
             <p
               className={`truncate font-normal text-zinc-600 group-hover:text-zinc-950 dark:text-zinc-300 dark:group-hover:text-zinc-100 ${
-                (currentTask &&
-                  currentTask.type === "playlist" &&
-                  currentTask.playlist.id === playlist.id &&
-                  isMatching) ||
-                fetchingPlaylists.has(playlist.id)
+                (
+                  currentTask &&
+                    currentTask.type === "playlist" &&
+                    currentTask.playlist.id === playlist.id &&
+                    isMatching
+                ) || fetchingPlaylists.has(playlist.id)
                   ? "animate-pulse"
                   : ""
               }`}
@@ -374,7 +388,7 @@ export const LibrarySidebar: FC = () => {
                 })()}
             </p>
           </div>
-        </div>
+        </button>
       ))}
     </div>
   );

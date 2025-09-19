@@ -97,7 +97,9 @@ export function getMockCancelled(): string[] {
 
 // --- Reset all mocks and state (extended) ---
 export function resetMocks(): void {
-  Object.values(mockFns).forEach(fn => fn.mockClear());
+  for (const fn of Object.values(mockFns)) {
+    fn.mockClear();
+  }
   mockState = {
     isLoading: false,
     error: null,

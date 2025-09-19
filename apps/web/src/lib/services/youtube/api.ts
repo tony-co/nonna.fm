@@ -1,9 +1,9 @@
-import { getYouTubeAuthData } from "./auth";
-import { YTMusicAdapter } from "./ytmusic-adapter";
-import type { ITrack, ILibraryData, IAlbum, SearchResult, TransferResult } from "@/types";
-import { retryWithExponentialBackoff } from "@/lib/utils/retry";
 import { processInBatches } from "@/lib/utils/batch-processor";
 import { logger } from "@/lib/utils/logger";
+import { retryWithExponentialBackoff } from "@/lib/utils/retry";
+import type { IAlbum, ILibraryData, ITrack, SearchResult, TransferResult } from "@/types";
+import { getYouTubeAuthData } from "./auth";
+import { YTMusicAdapter } from "./ytmusic-adapter";
 
 // Note: YouTube API uses internal API routes (/api/youtube/*) rather than direct API calls
 // The base URL from services configuration is available as SERVICES.youtube.apiBaseUrl if needed
@@ -240,91 +240,87 @@ export async function createPlaylistWithTracks(
   tracks: ITrack[],
   description?: string
 ): Promise<TransferResult> {
-  try {
-    const authData = await getYouTubeAuthData("target");
-    if (!authData) throw new Error("Not authenticated with YouTube");
+  const authData = await getYouTubeAuthData("target");
+  if (!authData) throw new Error("Not authenticated with YouTube");
 
-    const validTracks = tracks.filter(track => track.targetId);
-    if (validTracks.length === 0) {
-      return {
-        added: 0,
-        failed: tracks.length,
-        total: tracks.length,
-        playlistId: null,
-      };
-    }
-
-    // Create the playlist using retryWithExponentialBackoff for reliability
-    const playlistData = await retryWithExponentialBackoff<YouTubePlaylistCreateResponse>(
-      () =>
-        fetch("https://www.googleapis.com/youtube/v3/playlists?part=snippet", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${authData.accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            snippet: {
-              title: name,
-              description: description || "",
-              privacyStatus: "private",
-            },
-          }),
-        }),
-      YOUTUBE_RETRY_OPTIONS
-    );
-    const playlistId = playlistData.id;
-
-    // Add tracks to the playlist in batches, using retryWithExponentialBackoff for each request
-    const result = await processInBatches(
-      async batch => {
-        await Promise.all(
-          batch
-            .filter(track => track.targetId)
-            .map(async track => {
-              // Use retryWithExponentialBackoff for each add-track request
-              const data = await retryWithExponentialBackoff<YouTubePlaylistItemInsertResponse>(
-                () =>
-                  fetch("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet", {
-                    method: "POST",
-                    headers: {
-                      Authorization: `Bearer ${authData.accessToken}`,
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      snippet: {
-                        playlistId,
-                        resourceId: {
-                          kind: "youtube#video",
-                          videoId: track.targetId,
-                        },
-                      },
-                    }),
-                  }),
-                YOUTUBE_RETRY_OPTIONS
-              );
-              // If no data.id, treat as error
-              if (!data.id) {
-                throw new Error("Failed to add track to playlist: No item ID returned");
-              }
-            })
-        );
-      },
-      {
-        items: validTracks,
-        batchSize: 1,
-        delayBetweenBatches: 200,
-        onBatchStart: () => {},
-      }
-    );
-
+  const validTracks = tracks.filter(track => track.targetId);
+  if (validTracks.length === 0) {
     return {
-      ...result,
-      playlistId,
+      added: 0,
+      failed: tracks.length,
+      total: tracks.length,
+      playlistId: null,
     };
-  } catch (error) {
-    throw error;
   }
+
+  // Create the playlist using retryWithExponentialBackoff for reliability
+  const playlistData = await retryWithExponentialBackoff<YouTubePlaylistCreateResponse>(
+    () =>
+      fetch("https://www.googleapis.com/youtube/v3/playlists?part=snippet", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authData.accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          snippet: {
+            title: name,
+            description: description || "",
+            privacyStatus: "private",
+          },
+        }),
+      }),
+    YOUTUBE_RETRY_OPTIONS
+  );
+  const playlistId = playlistData.id;
+
+  // Add tracks to the playlist in batches, using retryWithExponentialBackoff for each request
+  const result = await processInBatches(
+    async batch => {
+      await Promise.all(
+        batch
+          .filter(track => track.targetId)
+          .map(async track => {
+            // Use retryWithExponentialBackoff for each add-track request
+            const data = await retryWithExponentialBackoff<YouTubePlaylistItemInsertResponse>(
+              () =>
+                fetch("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet", {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${authData.accessToken}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    snippet: {
+                      playlistId,
+                      resourceId: {
+                        kind: "youtube#video",
+                        videoId: track.targetId,
+                      },
+                    },
+                  }),
+                }),
+              YOUTUBE_RETRY_OPTIONS
+            );
+            // If no data.id, treat as error
+            if (!data.id) {
+              throw new Error("Failed to add track to playlist: No item ID returned");
+            }
+          })
+      );
+    },
+    {
+      items: validTracks,
+      batchSize: 1,
+      delayBetweenBatches: 200,
+      onBatchStart: () => {},
+    }
+  );
+
+  return {
+    ...result,
+    playlistId,
+  };
 }
 
 /**
@@ -334,80 +330,76 @@ export async function fetchPlaylistTracks(
   playlistId: string,
   onProgress?: (tracks: ITrack[], progress: number) => void
 ): Promise<ITrack[]> {
-  try {
-    const authData = await getYouTubeAuthData("source");
-    if (!authData) throw new Error("Not authenticated with YouTube");
+  const authData = await getYouTubeAuthData("source");
+  if (!authData) throw new Error("Not authenticated with YouTube");
 
-    const tracks: ITrack[] = [];
-    let nextPageToken: string | undefined;
-    let total: number | undefined = undefined;
+  const tracks: ITrack[] = [];
+  let nextPageToken: string | undefined;
+  let total: number | undefined;
 
-    do {
-      const url = new URL("https://www.googleapis.com/youtube/v3/playlistItems");
-      url.searchParams.append("part", "snippet,status");
-      url.searchParams.append("playlistId", playlistId);
-      url.searchParams.append("maxResults", "50");
-      if (nextPageToken) {
-        url.searchParams.append("pageToken", nextPageToken);
-      }
+  do {
+    const url = new URL("https://www.googleapis.com/youtube/v3/playlistItems");
+    url.searchParams.append("part", "snippet,status");
+    url.searchParams.append("playlistId", playlistId);
+    url.searchParams.append("maxResults", "50");
+    if (nextPageToken) {
+      url.searchParams.append("pageToken", nextPageToken);
+    }
 
-      const response = await retryWithExponentialBackoff<
-        YouTubePlaylistItemsResponse & { pageInfo?: { totalResults?: number } }
-      >(
-        () =>
-          fetch(url.toString(), {
-            headers: {
-              Authorization: `Bearer ${authData.accessToken}`,
-            },
-          }),
-        YOUTUBE_RETRY_OPTIONS
-      );
+    const response = await retryWithExponentialBackoff<
+      YouTubePlaylistItemsResponse & { pageInfo?: { totalResults?: number } }
+    >(
+      () =>
+        fetch(url.toString(), {
+          headers: {
+            Authorization: `Bearer ${authData.accessToken}`,
+          },
+        }),
+      YOUTUBE_RETRY_OPTIONS
+    );
 
-      // Set total from the first response
-      if (total === undefined && response.pageInfo?.totalResults) {
-        total = response.pageInfo.totalResults;
-      }
+    // Set total from the first response
+    if (total === undefined && response.pageInfo?.totalResults) {
+      total = response.pageInfo.totalResults;
+    }
 
-      const data = response;
+    const data = response;
 
-      tracks.push(
-        ...(data.items || [])
-          .filter(item => {
-            // Only include tracks that have required data and are public
-            if (!item.snippet?.resourceId?.videoId || !item.snippet.title) {
-              return false;
-            }
-            return item.status?.privacyStatus === "public";
-          })
-          .map(item => {
-            const metadata = extractTrackMetadata(item);
-            return {
-              id: item.snippet.resourceId.videoId,
-              name: metadata.title,
-              artist: metadata.artist,
-              album: "YouTube Music",
-              videoId: item.snippet.resourceId.videoId,
-              artwork:
-                item.snippet.thumbnails?.high?.url ||
-                item.snippet.thumbnails?.medium?.url ||
-                item.snippet.thumbnails?.default?.url,
-            };
-          })
-      );
+    tracks.push(
+      ...(data.items || [])
+        .filter(item => {
+          // Only include tracks that have required data and are public
+          if (!item.snippet?.resourceId?.videoId || !item.snippet.title) {
+            return false;
+          }
+          return item.status?.privacyStatus === "public";
+        })
+        .map(item => {
+          const metadata = extractTrackMetadata(item);
+          return {
+            id: item.snippet.resourceId.videoId,
+            name: metadata.title,
+            artist: metadata.artist,
+            album: "YouTube Music",
+            videoId: item.snippet.resourceId.videoId,
+            artwork:
+              item.snippet.thumbnails?.high?.url ||
+              item.snippet.thumbnails?.medium?.url ||
+              item.snippet.thumbnails?.default?.url,
+          };
+        })
+    );
 
-      // Call onProgress after each page
-      if (onProgress && total) {
-        const progress = Math.min(tracks.length / total, 1);
-        onProgress([...tracks], progress);
-      }
+    // Call onProgress after each page
+    if (onProgress && total) {
+      const progress = Math.min(tracks.length / total, 1);
+      onProgress([...tracks], progress);
+    }
 
-      nextPageToken = data.nextPageToken;
-    } while (nextPageToken);
+    nextPageToken = data.nextPageToken;
+  } while (nextPageToken);
 
-    return tracks;
-  } catch (error) {
-    throw error;
-  }
+  return tracks;
 }
 
 /**
@@ -487,7 +479,7 @@ function cleanYouTubeTitle(title: string): string {
   title = title.replace(/\s+\d{1,2}:\d{2}\s*$/, "");
 
   // Remove channel/uploader attribution at the end
-  title = title.replace(/\s+by\s+[^()\[\]]+$/, "");
+  title = title.replace(/\s+by\s+[^()[\]]+$/, "");
 
   return (
     title
@@ -576,8 +568,8 @@ function cleanYouTubeArtist(artist: string): string {
       .replace(/\s+featuring\s+.*/i, "") // "featuring"
       .replace(/\s*\(feat\.?\s+[^)]*\)/gi, "") // (feat. ...)
       .replace(/\s*\(ft\.?\s+[^)]*\)/gi, "") // (ft. ...)
-      .replace(/\s*\[feat\.?\s+[^]]*\]/gi, "") // [feat. ...]
-      .replace(/\s*\[ft\.?\s+[^]]*\]/gi, "") // [ft. ...]
+      .replace(/\s*\[feat\.?\s+[^\]]*\]/gi, "") // [feat. ...]
+      .replace(/\s*\[ft\.?\s+[^\]]*\]/gi, "") // [ft. ...]
 
       // Remove "- Topic" suffix common in YouTube Music
       .replace(/\s*-\s*Topic$/i, "")
@@ -782,35 +774,31 @@ export async function searchAlbums(
  * Add tracks to YouTube Music library
  */
 export async function addTracksToLibrary(tracks: ITrack[]): Promise<TransferResult> {
-  try {
-    const authData = await getYouTubeAuthData("target");
-    if (!authData) {
-      throw new Error("Not authenticated with YouTube");
-    }
-
-    const validTracks = tracks.filter(track => track.targetId);
-    if (validTracks.length === 0) {
-      return {
-        added: 0,
-        failed: tracks.length,
-        total: tracks.length,
-        playlistId: null,
-      };
-    }
-
-    // Create a playlist for the tracks
-    const playlistName = `Imported from Nonna.fm - ${new Date().toLocaleDateString()}`;
-    const playlistId = await createPlaylistWithTracks(playlistName, validTracks);
-
-    return {
-      added: validTracks.length,
-      failed: tracks.length - validTracks.length,
-      total: tracks.length,
-      playlistId: playlistId.playlistId,
-    };
-  } catch (error) {
-    throw error;
+  const authData = await getYouTubeAuthData("target");
+  if (!authData) {
+    throw new Error("Not authenticated with YouTube");
   }
+
+  const validTracks = tracks.filter(track => track.targetId);
+  if (validTracks.length === 0) {
+    return {
+      added: 0,
+      failed: tracks.length,
+      total: tracks.length,
+      playlistId: null,
+    };
+  }
+
+  // Create a playlist for the tracks
+  const playlistName = `Imported from Nonna.fm - ${new Date().toLocaleDateString()}`;
+  const playlistId = await createPlaylistWithTracks(playlistName, validTracks);
+
+  return {
+    added: validTracks.length,
+    failed: tracks.length - validTracks.length,
+    total: tracks.length,
+    playlistId: playlistId.playlistId,
+  };
 }
 
 export async function addAlbumsToLibrary(_albums: Set<IAlbum>): Promise<TransferResult> {

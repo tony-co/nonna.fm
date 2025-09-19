@@ -28,14 +28,14 @@ if (!window.matchMedia) {
 
 // Setup mocks first
 import { vi } from "vitest";
-
 // Import and setup navigation mock
-import { mockNextNavigation } from "@/__tests__/testUtils";
-import { mockNavigationImplementation } from "@/__tests__/testUtils";
+import { mockNavigationImplementation, mockNextNavigation } from "@/__tests__/testUtils";
+
 mockNextNavigation();
 
 // Mock useMatching hook
-import { useMatching, resetMocks as resetMatchingMocks } from "@/__mocks__/hooks/useMatching";
+import { resetMocks as resetMatchingMocks, useMatching } from "@/__mocks__/hooks/useMatching";
+
 vi.mock("@/hooks/useMatching", () => ({ useMatching }));
 
 // Mock next/font/google for font imports (fixes Inter is not a function error)
@@ -43,19 +43,19 @@ vi.mock("next/font/google", () => ({
   Inter: () => ({ className: "font-inter" }),
 }));
 
+import { render, screen } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
 // Regular imports
 import React from "react";
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect, beforeEach } from "vitest";
-import { LibraryClientContent } from "@/app/[locale]/library/[source]/[target]/_components/LibraryClientContent";
-import { TestWrapper } from "@/__tests__/testUtils";
+import { beforeEach, describe, expect, it } from "vitest";
 import { mockLibraryState } from "@/__mocks__/contexts/LibraryContext";
+import { TestWrapper } from "@/__tests__/testUtils";
+import { LibraryClientContent } from "@/app/[locale]/library/[source]/[target]/_components/LibraryClientContent";
 import { Header } from "@/components/layout/Header";
 import { ItemTitleProvider, useItemTitle } from "@/contexts/ItemTitleContext";
 import { LibraryProvider } from "@/contexts/LibraryContext";
-import { TransferProvider } from "@/contexts/TransferContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { NextIntlClientProvider } from "next-intl";
+import { TransferProvider } from "@/contexts/TransferContext";
 import messages from "../../../../../../../messages/en.json";
 
 // Mock the children component
@@ -120,7 +120,7 @@ describe("LibraryClientContent", () => {
       </TestWrapper>
     );
 
-    expect(screen.getByRole("sidebar")).toBeInTheDocument();
+    expect(screen.getByTestId("sidebar")).toBeInTheDocument();
     expect(screen.getByRole("main")).toBeInTheDocument();
     expect(screen.getByTestId("mock-children")).toBeInTheDocument();
   });

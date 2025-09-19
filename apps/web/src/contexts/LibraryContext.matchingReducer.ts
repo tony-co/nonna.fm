@@ -1,4 +1,4 @@
-import type { MatchingState, LibraryAction } from "@/types";
+import type { LibraryAction, MatchingState } from "@/types";
 
 // Reducer for matching-related state
 export function matchingReducer(state: MatchingState, action: LibraryAction): MatchingState {
@@ -46,7 +46,6 @@ export function matchingReducer(state: MatchingState, action: LibraryAction): Ma
           ? `playlist:${action.payload.id}`
           : action.payload.type;
       // Remove the cancelled task's progress entry using destructuring
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [key]: _removed, ...rest } = state.progress;
 
       // Only clear isLoading/currentTask if the cancelled task is the current running task

@@ -1,9 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, ReactNode } from "react";
-import { useTransferLimits, TransferLimits } from "@/hooks/useTransferLimits";
-import { TransferLimitModal } from "@/components/shared/TransferLimitModal";
+import { createContext, type ReactNode, useContext } from "react";
 import Dialog from "@/components/shared/Dialog";
+import { TransferLimitModal } from "@/components/shared/TransferLimitModal";
+import { type TransferLimits, useTransferLimits } from "@/hooks/useTransferLimits";
 
 interface TransferContextProps {
   children: ReactNode;

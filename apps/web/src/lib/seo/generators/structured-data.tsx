@@ -4,15 +4,15 @@
  */
 
 import Script from "next/script";
+import type { Thing, WithContext } from "schema-dts";
 import type { Locale } from "../config/base";
-import type { WithContext, Thing } from "schema-dts";
 import {
-  getOrganizationSchema,
-  getSoftwareApplicationSchema,
-  getWebSiteSchema,
-  getServiceSchema,
   getBreadcrumbSchema,
   getFAQSchema,
+  getOrganizationSchema,
+  getServiceSchema,
+  getSoftwareApplicationSchema,
+  getWebSiteSchema,
 } from "../config/structured-data";
 
 export interface StructuredDataProps {
@@ -77,6 +77,7 @@ export function StructuredData({ locale, type, source, target, breadcrumbs }: St
           key={`structured-data-${key}`}
           id={`structured-data-${key}`}
           type="application/ld+json"
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: Safe usage with JSON.stringify for structured data
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(schema, null, 0),
           }}

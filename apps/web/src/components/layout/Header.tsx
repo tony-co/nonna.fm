@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
+import { Inter } from "next/font/google";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { usePathname, Link } from "@/i18n/navigation";
+import { useState } from "react";
+import { useItemTitle } from "@/contexts/ItemTitleContext";
+import { Link, usePathname } from "@/i18n/navigation";
+import { NonnaLogo } from "../icons/NonnaLogo";
 import { TransferUsageDisplay } from "../shared/TransferUsageDisplay";
-import { ThemeToggle } from "./header/ThemeToggle";
 import { LanguageSwitch } from "./header/LanguageSwitch";
 import { MobileMenu } from "./header/MobileMenu";
-import { NonnaLogo } from "../icons/NonnaLogo";
-import { Inter } from "next/font/google";
-import { useItemTitle } from "@/contexts/ItemTitleContext";
+import { ThemeToggle } from "./header/ThemeToggle";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -52,16 +53,7 @@ export const Header = () => {
                 aria-label={t("back")}
                 data-testid="back-to-library"
               >
-                <svg
-                  className="mr-2 size-6"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
+                <ArrowLeft className="mr-2 size-6" aria-hidden="true" />
                 <span className="sr-only">{t("back")}</span>
               </Link>
               <span

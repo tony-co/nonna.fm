@@ -76,10 +76,9 @@ const AudioEqualizerClient = ({ className = "" }: AudioEqualizerProps): React.Re
 
         // Create a smoother intensity curve
         const intensity = formatNumber(
-          Math.pow(
-            Math.sin(positionFactor * Math.PI) * Math.sin(positionFactor * Math.PI * 2) * 0.8 + 0.2,
+          (Math.sin(positionFactor * Math.PI) * Math.sin(positionFactor * Math.PI * 2) * 0.8 +
+            0.2) **
             1.2
-          )
         );
 
         // Use smoothed parameters for animations
@@ -102,7 +101,7 @@ const AudioEqualizerClient = ({ className = "" }: AudioEqualizerProps): React.Re
 
         return (
           <div
-            key={i}
+            key={`equalizer-bar-${i}-${totalBars}`}
             className="absolute bottom-0 w-[10px] transform-gpu opacity-80"
             style={{
               left,

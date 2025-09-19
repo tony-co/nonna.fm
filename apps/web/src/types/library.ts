@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { TrackSchema, ITrack } from "./track";
-import { AlbumSchema, IAlbum } from "./album";
-import { PlaylistSchema, IPlaylist } from "./playlist";
-import { MatchingState, QueueTask } from "./matching";
-import { MusicService } from "./music-service";
+import { AlbumSchema, type IAlbum } from "./album";
+import type { MatchingState, QueueTask } from "./matching";
+import type { MusicService } from "./music-service";
+import { type IPlaylist, PlaylistSchema } from "./playlist";
+import { type ITrack, TrackSchema } from "./track";
 
 export const LibraryDataSchema = z.object({
   likedSongs: z.array(TrackSchema),

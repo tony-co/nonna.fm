@@ -5,11 +5,11 @@
 
 import type { Locale } from "../config/base";
 import { SEO_CONFIG } from "../config/base";
-import { generateMetadata } from "../generators/metadata";
-import { validateHreflang } from "./hreflang";
-import { validateCanonicalImplementation } from "./canonical";
-import { getAllSitemapUrls } from "../generators/sitemaps";
 import { generateBreadcrumbs } from "../generators/breadcrumbs";
+import { generateMetadata } from "../generators/metadata";
+import { getAllSitemapUrls } from "../generators/sitemaps";
+import { validateCanonicalImplementation } from "./canonical";
+import { validateHreflang } from "./hreflang";
 
 interface ValidationParams {
   source?: string;
@@ -450,19 +450,25 @@ export function generateSEOReport(validation: SEOValidationResult): string {
 
   if (validation.errors.length > 0) {
     report.push(`## Errors (${validation.errors.length})`);
-    validation.errors.forEach(error => report.push(`- ❌ ${error}`));
+    validation.errors.forEach(error => {
+      report.push(`- ❌ ${error}`);
+    });
     report.push("");
   }
 
   if (validation.warnings.length > 0) {
     report.push(`## Warnings (${validation.warnings.length})`);
-    validation.warnings.forEach(warning => report.push(`- ⚠️ ${warning}`));
+    validation.warnings.forEach(warning => {
+      report.push(`- ⚠️ ${warning}`);
+    });
     report.push("");
   }
 
   if (validation.recommendations.length > 0) {
     report.push(`## Recommendations (${validation.recommendations.length})`);
-    validation.recommendations.forEach(rec => report.push(`- 💡 ${rec}`));
+    validation.recommendations.forEach(rec => {
+      report.push(`- 💡 ${rec}`);
+    });
     report.push("");
   }
 
@@ -471,10 +477,14 @@ export function generateSEOReport(validation: SEOValidationResult): string {
     report.push(`### ${section.charAt(0).toUpperCase() + section.slice(1)}`);
     report.push(`Score: ${result.score}/100 ${result.isValid ? "✅" : "❌"}`);
     if (result.errors.length > 0) {
-      result.errors.forEach(error => report.push(`  - ❌ ${error}`));
+      result.errors.forEach(error => {
+        report.push(`  - ❌ ${error}`);
+      });
     }
     if (result.warnings.length > 0) {
-      result.warnings.forEach(warning => report.push(`  - ⚠️ ${warning}`));
+      result.warnings.forEach(warning => {
+        report.push(`  - ⚠️ ${warning}`);
+      });
     }
     report.push("");
   });

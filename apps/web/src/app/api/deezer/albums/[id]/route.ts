@@ -1,5 +1,9 @@
-import { NextRequest } from "next/server";
-import { DEEZER_API_BASE, DeezerApiResponse, DeezerAlbum } from "@/lib/services/deezer/api";
+import type { NextRequest } from "next/server";
+import {
+  DEEZER_API_BASE,
+  type DeezerAlbum,
+  type DeezerApiResponse,
+} from "@/lib/services/deezer/api";
 
 export async function GET(
   request: NextRequest,

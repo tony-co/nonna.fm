@@ -3,11 +3,13 @@ import { vi } from "vitest";
 
 // Import and setup navigation mock
 import { mockNextNavigation, mockReactSuspense } from "@/__tests__/testUtils";
+
 mockNextNavigation();
 mockReactSuspense();
 
 // Mock useMatching hook
-import { useMatching, resetMocks as resetMatchingMocks } from "@/__mocks__/hooks/useMatching";
+import { resetMocks as resetMatchingMocks, useMatching } from "@/__mocks__/hooks/useMatching";
+
 vi.mock("@/hooks/useMatching", () => ({ useMatching }));
 
 // Mock PlayOnButton component to avoid dependency issues in tests
@@ -20,12 +22,10 @@ vi.mock("@/lib/auth/constants", () => ({
   getServiceType: () => "spotify",
 }));
 
-// Regular imports
-import React from "react";
 import { render, screen, within } from "@testing-library/react";
-import { describe, it, expect, beforeEach } from "vitest";
-import LikedSongsPage from "@/app/[locale]/library/[source]/[target]/liked/page";
+import { beforeEach, describe, expect, it } from "vitest";
 import { TestWrapper } from "@/__tests__/testUtils";
+import LikedSongsPage from "@/app/[locale]/library/[source]/[target]/liked/page";
 
 describe("LikedSongsPage", () => {
   beforeEach(() => {
@@ -40,7 +40,7 @@ describe("LikedSongsPage", () => {
       </TestWrapper>
     );
 
-    expect(screen.getByRole("loading")).toBeInTheDocument();
+    expect(screen.getByTestId("loading")).toBeInTheDocument();
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
 
@@ -73,8 +73,8 @@ describe("LikedSongsPage", () => {
       </TestWrapper>
     );
 
-    const trackList = screen.getByRole("tracklist");
-    const tracks = within(trackList).getAllByRole("track");
+    const trackList = screen.getByTestId("tracklist");
+    const tracks = within(trackList).getAllByTestId("track");
 
     expect(tracks).toHaveLength(5);
     expect(screen.getByText("Fortnight")).toBeInTheDocument();

@@ -1,8 +1,8 @@
 import { vi } from "vitest";
-import * as auth from "@/lib/services/spotify/auth";
-import { SpotifyTrackItem, SpotifyPlaylist } from "@/lib/services/spotify/types";
+import { mockAlbums, mockPlaylists, mockTracks } from "@/__mocks__/data/libraryData";
 import type { AuthData } from "@/lib/auth/constants";
-import { mockTracks, mockAlbums, mockPlaylists } from "@/__mocks__/data/libraryData";
+import * as auth from "@/lib/services/spotify/auth";
+import type { SpotifyPlaylist, SpotifyTrackItem } from "@/lib/services/spotify/types";
 
 // --- Type-safe mock AuthData ---
 export const mockSpotifyAuthData: AuthData = {

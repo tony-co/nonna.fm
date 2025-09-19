@@ -1,7 +1,8 @@
-import React, { useState, createContext, useContext } from "react";
+import type React from "react";
+import { createContext, useContext, useState } from "react";
 import { vi } from "vitest";
-import type { LibraryState } from "@/types";
 import { mockLibraryData } from "@/__mocks__/data/libraryData";
+import type { LibraryState } from "@/types";
 
 // Mock library state
 const initialMockState: LibraryState = {
@@ -101,7 +102,7 @@ export const LibraryProvider = ({
           ...prev,
           selectedItems: {
             ...prev.selectedItems,
-            tracks: new Set([...prev.likedSongs!].map(track => track.id)),
+            tracks: new Set([...(prev.likedSongs ?? [])].map(track => track.id)),
           },
         }));
       }),

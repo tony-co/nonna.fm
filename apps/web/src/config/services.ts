@@ -1,12 +1,12 @@
-import { z } from "zod";
-import { SpotifyLogo } from "@/components/icons/SpotifyLogo";
-import { YouTubeMusicLogo } from "@/components/icons/YouTubeMusicLogo";
-import { DeezerLogo } from "@/components/icons/DeezerLogo";
-import { AppleMusicLogo } from "@/components/icons/AppleMusicLogo";
+import type { FC } from "react";
+import { z } from "zod/v4";
 import { AmazonMusicLogo } from "@/components/icons/AmazonMusicLogo";
-import { TidalLogo } from "@/components/icons/TidalLogo";
+import { AppleMusicLogo } from "@/components/icons/AppleMusicLogo";
+import { DeezerLogo } from "@/components/icons/DeezerLogo";
 import { PandoraLogo } from "@/components/icons/PandoraLogo";
-import { FC } from "react";
+import { SpotifyLogo } from "@/components/icons/SpotifyLogo";
+import { TidalLogo } from "@/components/icons/TidalLogo";
+import { YouTubeMusicLogo } from "@/components/icons/YouTubeMusicLogo";
 
 // Status constants for service availability
 export const SERVICE_STATUS = {
@@ -90,7 +90,7 @@ const rawServices = {
     apiBaseUrl: "https://api.music.apple.com", // no version as Apple gives relative pagination urls
     getPlaylistUrl: (id: string) => {
       try {
-        if (typeof window !== "undefined" && window.MusicKit) {
+        if (window?.MusicKit) {
           const music = window.MusicKit.getInstance();
           const storefrontId = music?.storefrontId;
           if (storefrontId) {

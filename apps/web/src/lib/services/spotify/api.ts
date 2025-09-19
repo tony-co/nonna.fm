@@ -1,34 +1,34 @@
-import { getSpotifyAuthData } from "./auth";
+import { SERVICES } from "@/config/services";
+import type { AuthData } from "@/lib/auth/constants";
+import { processInBatches } from "@/lib/utils/batch-processor";
+import { logger } from "@/lib/utils/logger";
+import {
+  calculateAlbumMatchScore,
+  calculateTrackMatchScore,
+  cleanTrackTitle,
+  DEFAULT_ALBUM_CONFIG,
+  DEFAULT_TRACK_CONFIG,
+} from "@/lib/utils/matching";
+import { type RetryOptions, retryWithExponentialBackoff } from "@/lib/utils/retry";
 import type {
-  ITrack,
-  ILibraryData,
   IAlbum,
+  ILibraryData,
   IPlaylist,
+  ITrack,
   SearchResult,
   TransferResult,
 } from "@/types";
-import type { AuthData } from "@/lib/auth/constants";
-import { retryWithExponentialBackoff, type RetryOptions } from "@/lib/utils/retry";
-import { logger } from "@/lib/utils/logger";
+import { MATCHING_STATUS } from "@/types/matching-status";
+import { getSpotifyAuthData } from "./auth";
 import {
-  SpotifyTrackItem,
-  SpotifyTrack,
-  SpotifyAlbum,
-  SpotifyPlaylist,
-  transformSpotifyTrackToTrack,
+  type SpotifyAlbum,
+  type SpotifyPlaylist,
+  type SpotifyTrack,
+  type SpotifyTrackItem,
   transformSpotifyAlbumToAlbum,
   transformSpotifyPlaylistToPlaylist,
+  transformSpotifyTrackToTrack,
 } from "./types";
-import {
-  calculateTrackMatchScore,
-  calculateAlbumMatchScore,
-  DEFAULT_TRACK_CONFIG,
-  DEFAULT_ALBUM_CONFIG,
-  cleanTrackTitle,
-} from "@/lib/utils/matching";
-import { processInBatches } from "@/lib/utils/batch-processor";
-import { MATCHING_STATUS } from "@/types/matching-status";
-import { SERVICES } from "@/config/services";
 
 // Base URL for Spotify API from services configuration
 const BASE_URL = SERVICES.spotify.apiBaseUrl;
@@ -395,177 +395,165 @@ export async function createPlaylistWithTracks(
   tracks: Array<ITrack>,
   description?: string
 ): Promise<TransferResult> {
-  try {
-    const authData = await getSpotifyAuthData("target");
-    if (!authData) throw new Error("Not authenticated with Spotify");
+  const authData = await getSpotifyAuthData("target");
+  if (!authData) throw new Error("Not authenticated with Spotify");
 
-    // Create the playlist using retryWithExponentialBackoff
-    const playlistData = await retryWithExponentialBackoff<unknown>(
-      () =>
-        fetch(`${BASE_URL}/me/playlists`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${authData.accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name,
-            description: description || `Imported on ${new Date().toLocaleDateString()}`,
-          }),
+  // Create the playlist using retryWithExponentialBackoff
+  const playlistData = await retryWithExponentialBackoff<unknown>(
+    () =>
+      fetch(`${BASE_URL}/me/playlists`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authData.accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          description: description || `Imported on ${new Date().toLocaleDateString()}`,
         }),
-      SPOTIFY_RETRY_OPTIONS
-    );
+      }),
+    SPOTIFY_RETRY_OPTIONS
+  );
 
-    // The util parses JSON if available, so we can safely cast
-    const playlistId = (playlistData as { id?: string }).id;
-    if (!playlistId) {
-      throw new Error("Failed to create playlist - no ID returned");
-    }
+  // The util parses JSON if available, so we can safely cast
+  const playlistId = (playlistData as { id?: string }).id;
+  if (!playlistId) {
+    throw new Error("Failed to create playlist - no ID returned");
+  }
 
-    // Filter tracks with valid targetIds
-    const tracksWithIds = tracks.filter(
-      (track): track is ITrack & { targetId: string } => !!track.targetId
-    );
+  // Filter tracks with valid targetIds
+  const tracksWithIds = tracks.filter(
+    (track): track is ITrack & { targetId: string } => !!track.targetId
+  );
 
-    if (tracksWithIds.length === 0) {
-      return {
-        added: 0,
-        failed: tracks.length,
-        total: tracks.length,
-        playlistId,
-      };
-    }
-
-    // Add tracks to playlist in batches using retryWithExponentialBackoff
-    const result = await processInBatches(
-      async batch => {
-        const uris = batch.map(track => `spotify:track:${track.targetId}`);
-        await retryWithExponentialBackoff<unknown>(
-          () =>
-            fetch(`${BASE_URL}/playlists/${playlistId}/tracks`, {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${authData.accessToken}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ uris }),
-            }),
-          SPOTIFY_RETRY_OPTIONS
-        );
-      },
-      {
-        items: tracksWithIds,
-        batchSize: 100,
-        onBatchStart: () => {},
-      }
-    );
-
+  if (tracksWithIds.length === 0) {
     return {
-      ...result,
+      added: 0,
+      failed: tracks.length,
+      total: tracks.length,
       playlistId,
     };
-  } catch (error) {
-    throw error;
   }
+
+  // Add tracks to playlist in batches using retryWithExponentialBackoff
+  const result = await processInBatches(
+    async batch => {
+      const uris = batch.map(track => `spotify:track:${track.targetId}`);
+      await retryWithExponentialBackoff<unknown>(
+        () =>
+          fetch(`${BASE_URL}/playlists/${playlistId}/tracks`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${authData.accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ uris }),
+          }),
+        SPOTIFY_RETRY_OPTIONS
+      );
+    },
+    {
+      items: tracksWithIds,
+      batchSize: 100,
+      onBatchStart: () => {},
+    }
+  );
+
+  return {
+    ...result,
+    playlistId,
+  };
 }
 
 export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<TransferResult> {
-  try {
-    const authData = await getSpotifyAuthData("target");
-    if (!authData) throw new Error("Not authenticated with Spotify");
+  const authData = await getSpotifyAuthData("target");
+  if (!authData) throw new Error("Not authenticated with Spotify");
 
-    // Filter tracks with valid targetIds
-    const tracksWithIds = tracks.filter(
-      (track): track is ITrack & { targetId: string } => !!track.targetId
-    );
+  // Filter tracks with valid targetIds
+  const tracksWithIds = tracks.filter(
+    (track): track is ITrack & { targetId: string } => !!track.targetId
+  );
 
-    if (tracksWithIds.length === 0) {
-      return {
-        added: 0,
-        failed: tracks.length,
-        total: tracks.length,
-        playlistId: null,
-      };
-    }
-
-    // Add tracks to library in batches using retryWithExponentialBackoff
-    const result = await processInBatches(
-      async batch => {
-        const ids = batch.map(track => track.targetId);
-        await retryWithExponentialBackoff<unknown>(
-          () =>
-            fetch(`${BASE_URL}/me/tracks`, {
-              method: "PUT",
-              headers: {
-                Authorization: `Bearer ${authData.accessToken}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ ids }),
-            }),
-          SPOTIFY_RETRY_OPTIONS
-        );
-      },
-      {
-        items: tracksWithIds,
-        batchSize: 50,
-        onBatchStart: () => {},
-      }
-    );
-
+  if (tracksWithIds.length === 0) {
     return {
-      ...result,
+      added: 0,
+      failed: tracks.length,
+      total: tracks.length,
       playlistId: null,
     };
-  } catch (error) {
-    throw error;
   }
+
+  // Add tracks to library in batches using retryWithExponentialBackoff
+  const result = await processInBatches(
+    async batch => {
+      const ids = batch.map(track => track.targetId);
+      await retryWithExponentialBackoff<unknown>(
+        () =>
+          fetch(`${BASE_URL}/me/tracks`, {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${authData.accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ ids }),
+          }),
+        SPOTIFY_RETRY_OPTIONS
+      );
+    },
+    {
+      items: tracksWithIds,
+      batchSize: 50,
+      onBatchStart: () => {},
+    }
+  );
+
+  return {
+    ...result,
+    playlistId: null,
+  };
 }
 
 export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferResult> {
-  try {
-    const authData = await getSpotifyAuthData("target");
-    if (!authData) throw new Error("Not authenticated with Spotify");
+  const authData = await getSpotifyAuthData("target");
+  if (!authData) throw new Error("Not authenticated with Spotify");
 
-    // Convert Set/Array to Array and filter albums with valid targetIds
-    const albumsWithIds = (Array.isArray(albums) ? albums : Array.from(albums)).filter(
-      (album): album is IAlbum & { targetId: string } => !!album.targetId
-    );
+  // Convert Set/Array to Array and filter albums with valid targetIds
+  const albumsWithIds = (Array.isArray(albums) ? albums : Array.from(albums)).filter(
+    (album): album is IAlbum & { targetId: string } => !!album.targetId
+  );
 
-    if (albumsWithIds.length === 0) {
-      throw new Error("No albums with valid targetIds found");
-    }
-
-    // Add albums to library in batches using retryWithExponentialBackoff
-    const result = await processInBatches(
-      async batch => {
-        const ids = batch.map(album => album.targetId);
-        await retryWithExponentialBackoff<unknown>(
-          () =>
-            fetch(`${BASE_URL}/me/albums`, {
-              method: "PUT",
-              headers: {
-                Authorization: `Bearer ${authData.accessToken}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ ids }),
-            }),
-          SPOTIFY_RETRY_OPTIONS
-        );
-      },
-      {
-        items: albumsWithIds,
-        batchSize: 20,
-        onBatchStart: () => {},
-      }
-    );
-
-    return {
-      ...result,
-      playlistId: null,
-    };
-  } catch (error) {
-    throw error;
+  if (albumsWithIds.length === 0) {
+    throw new Error("No albums with valid targetIds found");
   }
+
+  // Add albums to library in batches using retryWithExponentialBackoff
+  const result = await processInBatches(
+    async batch => {
+      const ids = batch.map(album => album.targetId);
+      await retryWithExponentialBackoff<unknown>(
+        () =>
+          fetch(`${BASE_URL}/me/albums`, {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${authData.accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ ids }),
+          }),
+        SPOTIFY_RETRY_OPTIONS
+      );
+    },
+    {
+      items: albumsWithIds,
+      batchSize: 20,
+      onBatchStart: () => {},
+    }
+  );
+
+  return {
+    ...result,
+    playlistId: null,
+  };
 }
 
 async function findBestAlbumMatch(album: IAlbum, authData: AuthData): Promise<string | null> {
@@ -627,52 +615,48 @@ export async function searchAlbums(
   albums: Array<IAlbum>,
   onProgress: ((progress: number) => void) | undefined
 ): Promise<SearchResult> {
-  try {
-    const authData = await getSpotifyAuthData("target");
-    if (!authData) throw new Error("Not authenticated with Spotify");
+  const authData = await getSpotifyAuthData("target");
+  if (!authData) throw new Error("Not authenticated with Spotify");
 
-    const results: Array<IAlbum> = [];
-    let matched = 0;
-    let unmatched = 0;
-    let processedCount = 0;
+  const results: Array<IAlbum> = [];
+  let matched = 0;
+  let unmatched = 0;
+  let processedCount = 0;
 
-    // Process albums in batches
-    await processInBatches(
-      async batch => {
-        const albumResults = await Promise.all(
-          batch.map(async album => {
-            const spotifyId = await findBestAlbumMatch(album, authData);
-            processedCount++;
-            if (onProgress) {
-              onProgress(processedCount / albums.length);
-            }
-            return {
-              ...album,
-              targetId: spotifyId || undefined,
-              status: spotifyId ? MATCHING_STATUS.MATCHED : MATCHING_STATUS.UNMATCHED,
-            };
-          })
-        );
+  // Process albums in batches
+  await processInBatches(
+    async batch => {
+      const albumResults = await Promise.all(
+        batch.map(async album => {
+          const spotifyId = await findBestAlbumMatch(album, authData);
+          processedCount++;
+          if (onProgress) {
+            onProgress(processedCount / albums.length);
+          }
+          return {
+            ...album,
+            targetId: spotifyId || undefined,
+            status: spotifyId ? MATCHING_STATUS.MATCHED : MATCHING_STATUS.UNMATCHED,
+          };
+        })
+      );
 
-        results.push(...albumResults);
-        matched += albumResults.filter(r => r.targetId).length;
-        unmatched += albumResults.filter(r => !r.targetId).length;
-      },
-      {
-        items: albums,
-        batchSize: 4,
-        delayBetweenBatches: 200,
-        onBatchStart: () => {},
-      }
-    );
+      results.push(...albumResults);
+      matched += albumResults.filter(r => r.targetId).length;
+      unmatched += albumResults.filter(r => !r.targetId).length;
+    },
+    {
+      items: albums,
+      batchSize: 4,
+      delayBetweenBatches: 200,
+      onBatchStart: () => {},
+    }
+  );
 
-    return {
-      matched,
-      unmatched,
-      total: albums.length,
-      albums: results,
-    };
-  } catch (error) {
-    throw error;
-  }
+  return {
+    matched,
+    unmatched,
+    total: albums.length,
+    albums: results,
+  };
 }

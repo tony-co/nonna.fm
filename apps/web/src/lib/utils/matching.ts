@@ -1,4 +1,4 @@
-import { ITrack, IAlbum } from "@/types";
+import type { IAlbum, ITrack } from "@/types";
 
 // Types for matching configuration
 export interface MatchWeights {
@@ -59,7 +59,7 @@ export function normalizeString(str: string): string {
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
     .replace(/\s*-\s*/g, " ") // Convert all hyphens to spaces
-    .replace(/[.,\/#!$%\^&\*;:{}=_`~()[\]'"']/g, "") // Remove punctuation
+    .replace(/[.,/#!$%^&*;:{}=_`~()[\]'"']/g, "") // Remove punctuation
     .replace(/\s+/g, " ") // Normalize spaces
     .trim();
 
@@ -223,7 +223,7 @@ export function cleanSearchTerm(str: string): string {
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
     .replace(/\s*-\s*/g, " ") // Convert all hyphens to spaces
-    .replace(/[.,\/#!$%\^&\*;:{}=_`~()[\]'"']/g, "") // Remove punctuation
+    .replace(/[.,/#!$%^&*;:{}=_`~()[\]'"']/g, "") // Remove punctuation
     .replace(/\s+/g, " ") // Normalize spaces
     .trim();
 }
@@ -233,7 +233,7 @@ export function cleanTrackTitle(title: string): string {
   return (
     title
       // Remove all content in square brackets, parentheses, or curly braces
-      .replace(/[\[\(\{][^\]\)\}]*[\]\)\}]/g, "")
+      .replace(/[[({][^\])}]*[\])}]/g, "")
       // Remove featuring artist indicators
       .replace(/\s*\(feat\..*?\)/gi, "")
       .replace(/\s*\(ft\..*?\)/gi, "")

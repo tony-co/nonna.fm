@@ -1,8 +1,8 @@
 import {
-  AuthData,
-  setAuthData,
-  getAuthData,
+  type AuthData,
   clearAuthData,
+  getAuthData,
+  setAuthData,
   setServiceType,
 } from "@/lib/auth/constants";
 

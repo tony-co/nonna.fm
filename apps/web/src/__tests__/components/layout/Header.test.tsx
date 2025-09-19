@@ -1,11 +1,11 @@
-import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { mockNextNavigation } from "@/__tests__/testUtils";
 import { Header } from "@/components/layout/Header";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { TransferProvider } from "@/contexts/TransferContext";
-import { NextIntlClientProvider } from "next-intl";
 import messages from "../../../../messages/en.json";
-import { mockNextNavigation } from "@/__tests__/testUtils";
 
 // Setup navigation mocks
 mockNextNavigation();

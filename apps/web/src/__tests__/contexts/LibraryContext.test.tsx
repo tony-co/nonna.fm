@@ -1,11 +1,10 @@
-import React from "react";
-import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen, act } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   LibraryProvider,
+  mockLibraryState,
   useLibrary,
   useLibrarySelection,
-  mockLibraryState,
 } from "@/__mocks__/contexts/LibraryContext";
 
 // --- Test component to consume context ---
@@ -14,7 +13,9 @@ function TestConsumer() {
   return (
     <div>
       <div data-testid="is-loading">{String(state.status.isLoading)}</div>
-      <button onClick={() => actions.setLoading(true)}>Set Loading</button>
+      <button type="button" onClick={() => actions.setLoading(true)}>
+        Set Loading
+      </button>
     </div>
   );
 }
@@ -53,7 +54,9 @@ describe("LibraryContext", () => {
       return (
         <>
           <div data-testid="selected-tracks">{Array.from(selectedItems.tracks).join(",")}</div>
-          <button onClick={selectAllTracks}>Select All Tracks</button>
+          <button type="button" onClick={selectAllTracks}>
+            Select All Tracks
+          </button>
         </>
       );
     }

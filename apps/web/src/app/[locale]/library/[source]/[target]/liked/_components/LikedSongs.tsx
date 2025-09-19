@@ -1,11 +1,11 @@
 "use client";
 
-import { FC, useEffect } from "react";
-import { useLibrary } from "@/contexts/LibraryContext";
-import { TrackList } from "@/components/library/TrackList";
-import { useItemTitle } from "@/contexts/ItemTitleContext";
-import { PlayOnButton } from "@/components/shared/PlayOnButton";
+import { type FC, useEffect } from "react";
 import { LikedSongsIcon } from "@/components/icons/LikedSongsIcon";
+import { TrackList } from "@/components/library/TrackList";
+import { PlayOnButton } from "@/components/shared/PlayOnButton";
+import { useItemTitle } from "@/contexts/ItemTitleContext";
+import { useLibrary } from "@/contexts/LibraryContext";
 
 export const LikedSongs: FC = () => {
   const { state } = useLibrary();

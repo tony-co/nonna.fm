@@ -53,7 +53,7 @@ function getYouTubeApiUrl(path: string): string {
 
   const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   // Ensure no double slashes
-  return base.replace(/\/$/, "") + (path.startsWith("/") ? path : "/" + path);
+  return base.replace(/\/$/, "") + (path.startsWith("/") ? path : `/${path}`);
 }
 
 /**
@@ -62,8 +62,6 @@ function getYouTubeApiUrl(path: string): string {
 export class YTMusicAdapter {
   private initialized: boolean = false;
   private currentRole: "source" | "target" | null = null;
-
-  constructor() {}
 
   /**
    * Initialize connection to the YouTube Music API

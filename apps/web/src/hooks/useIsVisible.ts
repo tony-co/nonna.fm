@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * A hook that uses the Intersection Observer API to detect when an element becomes visible in the viewport.

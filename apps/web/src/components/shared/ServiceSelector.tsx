@@ -1,7 +1,8 @@
-import { FC, useState, useEffect } from "react";
+import { ChevronDown, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { getAvailableServices, getServiceById, ServiceConfig } from "@/config/services";
-import { MusicService } from "@/types";
+import { type FC, useEffect, useState } from "react";
+import { getAvailableServices, getServiceById, type ServiceConfig } from "@/config/services";
+import type { MusicService } from "@/types";
 
 interface ServiceSelectorProps {
   onTargetSelect: (serviceId: string) => void;
@@ -51,9 +52,9 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-8">
         {/* Source Service - Non-interactive */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <h3 className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
             {tServiceSelector("from")}
-          </label>
+          </h3>
           <div className="relative">
             <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-lg lg:gap-4 lg:p-4 dark:border-indigo-900 dark:bg-indigo-950/50">
               <div className="flex h-8 w-8 items-center justify-center lg:h-10 lg:w-10">
@@ -73,11 +74,12 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
 
         {/* Target Service (Selectable) */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <h3 className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
             {tServiceSelector("to")}
-          </label>
+          </h3>
           <div className="relative">
             <button
+              type="button"
               onClick={() => !isProcessing && setIsOpen(!isOpen)}
               className={`dark:bg-indigo-990 flex w-full items-center gap-3 rounded-xl border bg-white p-3 transition-all duration-200 lg:gap-4 lg:p-4 ${
                 !selectedService
@@ -103,38 +105,16 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
               ) : (
                 <>
                   <div className="flex h-8 w-8 items-center justify-center lg:h-10 lg:w-10">
-                    <svg
-                      className="h-5 w-5 text-indigo-500 lg:h-6 lg:w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                      />
-                    </svg>
+                    <Plus className="h-5 w-5 text-indigo-500 lg:h-6 lg:w-6" />
                   </div>
                   <span className="flex-1 text-left font-medium text-indigo-500">
                     {tServiceSelector("selectAService")}
                   </span>
                 </>
               )}
-              <svg
+              <ChevronDown
                 className={`ml-1 h-5 w-5 text-gray-400 transition-transform lg:ml-2 ${isOpen ? "rotate-180" : ""}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
+              />
             </button>
 
             {/* Dropdown */}
@@ -149,6 +129,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({
 
                     return (
                       <button
+                        type="button"
                         key={service.id}
                         onClick={() => handleServiceSelect(service)}
                         disabled={isDisabled}

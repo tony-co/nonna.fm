@@ -57,7 +57,7 @@ export function generateBreadcrumbs(options: BreadcrumbOptions): BreadcrumbItem[
 
   // Build breadcrumbs based on URL structure
   cleanSegments.forEach((segment, index) => {
-    const currentPath = "/" + cleanSegments.slice(0, index + 1).join("/");
+    const currentPath = `/${cleanSegments.slice(0, index + 1).join("/")}`;
     const localizedPath = generateLocalizedPath(currentPath, locale);
 
     let name = "";

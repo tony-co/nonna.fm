@@ -2,13 +2,13 @@
 
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
 import { useLibrary } from "@/contexts/LibraryContext";
+import { useTransfer } from "@/contexts/TransferContext";
 import { useMatching } from "@/hooks/useMatching";
 import { useTransfer as useTransferHook } from "@/hooks/useTransfer";
-import { useTransfer } from "@/contexts/TransferContext";
-import { useState } from "react";
+import type { MusicService } from "@/types";
 import { TransferSuccessModal } from "./TransferSuccessModal";
-import { MusicService } from "@/types";
 
 // Track playlists that are currently being fetched
 export const fetchingPlaylists = new Set<string>();
@@ -143,6 +143,8 @@ export function TransferButton() {
           </span>
         )}
         <button
+          type="button"
+          data-testid="transfer-button"
           className={`relative flex w-[240px] items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-full px-6 py-3 text-base font-medium transition-all duration-200 ${
             !isDisabled
               ? "transform cursor-pointer bg-gradient-to-r from-indigo-600 to-indigo-500 text-white hover:scale-[1.02] hover:shadow-lg hover:shadow-indigo-200/50 active:scale-[0.98] dark:hover:shadow-indigo-900/30"
@@ -151,7 +153,6 @@ export function TransferButton() {
           onClick={handleClick}
           disabled={isDisabled}
           aria-label={`${buttonText}${hasSelections ? ` - ${getSummaryText()}` : ""}`}
-          role="transfer-button"
           tabIndex={!isDisabled ? 0 : -1}
         >
           {/* Progress Overlay */}

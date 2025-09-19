@@ -1,21 +1,28 @@
-import { SearchResult, TransferResult, ITrack, ILibraryData, IAlbum, IPlaylist } from "@/types";
-import { getAppleAuthData } from "./auth";
+import { SERVICES } from "@/config/services";
+import { AUTH_STORAGE_KEYS, type AuthData, setServiceType } from "@/lib/auth/constants";
 import { processInBatches } from "@/lib/utils/batch-processor";
+import { logger } from "@/lib/utils/logger";
 import {
-  calculateTrackMatchScore,
   calculateAlbumMatchScore,
-  DEFAULT_TRACK_CONFIG,
-  DEFAULT_ALBUM_CONFIG,
+  calculateTrackMatchScore,
   cleanSearchTerm,
   cleanTrackTitle,
+  DEFAULT_ALBUM_CONFIG,
+  DEFAULT_TRACK_CONFIG,
 } from "@/lib/utils/matching";
-import { retryWithExponentialBackoff, type RetryOptions } from "@/lib/utils/retry";
-import { AUTH_STORAGE_KEYS, type AuthData, setServiceType } from "@/lib/auth/constants";
-import { logger } from "@/lib/utils/logger";
+import { type RetryOptions, retryWithExponentialBackoff } from "@/lib/utils/retry";
+import type {
+  IAlbum,
+  ILibraryData,
+  IPlaylist,
+  ITrack,
+  SearchResult,
+  TransferResult,
+} from "@/types";
 import { MATCHING_STATUS } from "@/types/matching-status";
-import { SERVICES } from "@/config/services";
+import { getAppleAuthData } from "./auth";
 
-const BASE_URL = SERVICES.apple.apiBaseUrl!;
+const BASE_URL = SERVICES.apple.apiBaseUrl || "https://api.music.apple.com";
 
 interface MusicKitInstance {
   authorize: () => Promise<string>;
@@ -283,34 +290,29 @@ export async function authorizeAppleMusic(
   if (typeof window === "undefined") {
     throw new Error("Apple Music authorization can only be performed in browser environment");
   }
+  const music = await initializeAppleMusic(injectedMusicKit);
+  const musicUserToken = await music.authorize();
 
-  try {
-    const music = await initializeAppleMusic(injectedMusicKit);
-    const musicUserToken = await music.authorize();
+  // Store auth data in localStorage
+  const authData: AuthData = {
+    accessToken: musicUserToken,
+    refreshToken: "", // MusicKit handles token refresh internally
+    expiresIn: 3600, // 1 hour default
+    timestamp: Date.now(),
+    userId: musicUserToken, // Use the user token as ID since it's unique per user
+    tokenType: "Bearer",
+    role,
+    serviceId: "apple",
+  };
 
-    // Store auth data in localStorage
-    const authData: AuthData = {
-      accessToken: musicUserToken,
-      refreshToken: "", // MusicKit handles token refresh internally
-      expiresIn: 3600, // 1 hour default
-      timestamp: Date.now(),
-      userId: musicUserToken, // Use the user token as ID since it's unique per user
-      tokenType: "Bearer",
-      role,
-      serviceId: "apple",
-    };
+  // Store in localStorage
+  localStorage.setItem(
+    role === "source" ? AUTH_STORAGE_KEYS.SOURCE.TOKEN : AUTH_STORAGE_KEYS.TARGET.TOKEN,
+    JSON.stringify(authData)
+  );
+  setServiceType(role, "apple");
 
-    // Store in localStorage
-    localStorage.setItem(
-      role === "source" ? AUTH_STORAGE_KEYS.SOURCE.TOKEN : AUTH_STORAGE_KEYS.TARGET.TOKEN,
-      JSON.stringify(authData)
-    );
-    setServiceType(role, "apple");
-
-    return musicUserToken;
-  } catch (error) {
-    throw error;
-  }
+  return musicUserToken;
 }
 
 // Helper function to perform the actual search and matching for Apple Music
@@ -399,55 +401,51 @@ export async function search(
   tracks: Array<ITrack>,
   onProgress: ((progress: number) => void) | undefined
 ): Promise<SearchResult> {
-  try {
-    const authData = await getAppleAuthData("target");
-    if (!authData) {
-      throw new Error("Not authenticated with Apple Music");
-    }
-
-    const results: Array<ITrack> = [];
-    let matched = 0;
-    let unmatched = 0;
-    let processedCount = 0;
-
-    await processInBatches(
-      async batch => {
-        const trackResults = await Promise.all(
-          batch.map(async track => {
-            const { songId, albumId } = await findBestMatch(track, authData);
-            processedCount++;
-            if (onProgress) {
-              onProgress(processedCount / tracks.length);
-            }
-            return {
-              ...track,
-              targetId: songId || undefined,
-              albumId: albumId || undefined,
-              status: songId ? MATCHING_STATUS.MATCHED : MATCHING_STATUS.UNMATCHED,
-            };
-          })
-        );
-
-        results.push(...trackResults);
-        matched += trackResults.filter(r => r.targetId).length;
-        unmatched += trackResults.filter(r => !r.targetId).length;
-      },
-      {
-        items: tracks,
-        batchSize: 10,
-        onBatchStart: () => {},
-      }
-    );
-
-    return {
-      matched,
-      unmatched,
-      total: tracks.length,
-      tracks: results,
-    };
-  } catch (error) {
-    throw error;
+  const authData = await getAppleAuthData("target");
+  if (!authData) {
+    throw new Error("Not authenticated with Apple Music");
   }
+
+  const results: Array<ITrack> = [];
+  let matched = 0;
+  let unmatched = 0;
+  let processedCount = 0;
+
+  await processInBatches(
+    async batch => {
+      const trackResults = await Promise.all(
+        batch.map(async track => {
+          const { songId, albumId } = await findBestMatch(track, authData);
+          processedCount++;
+          if (onProgress) {
+            onProgress(processedCount / tracks.length);
+          }
+          return {
+            ...track,
+            targetId: songId || undefined,
+            albumId: albumId || undefined,
+            status: songId ? MATCHING_STATUS.MATCHED : MATCHING_STATUS.UNMATCHED,
+          };
+        })
+      );
+
+      results.push(...trackResults);
+      matched += trackResults.filter(r => r.targetId).length;
+      unmatched += trackResults.filter(r => !r.targetId).length;
+    },
+    {
+      items: tracks,
+      batchSize: 10,
+      onBatchStart: () => {},
+    }
+  );
+
+  return {
+    matched,
+    unmatched,
+    total: tracks.length,
+    tracks: results,
+  };
 }
 
 export async function createPlaylistWithTracks(
@@ -455,188 +453,176 @@ export async function createPlaylistWithTracks(
   tracks: Array<ITrack>,
   description?: string
 ): Promise<TransferResult> {
-  try {
-    const authData = await getAppleAuthData("target");
-    if (!authData) {
-      throw new Error("Not authenticated with Apple Music");
-    }
+  const authData = await getAppleAuthData("target");
+  if (!authData) {
+    throw new Error("Not authenticated with Apple Music");
+  }
 
-    // Create the playlist with retry
-    const playlistData = await retryWithExponentialBackoff<{ data: Array<{ id: string }> }>(
-      () =>
-        fetchAppleMusic(
-          `${BASE_URL}/v1/me/library/playlists`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              attributes: {
-                name,
-                description: description || `Imported on ${new Date().toLocaleDateString()}`,
-              },
-            }),
+  // Create the playlist with retry
+  const playlistData = await retryWithExponentialBackoff<{ data: Array<{ id: string }> }>(
+    () =>
+      fetchAppleMusic(
+        `${BASE_URL}/v1/me/library/playlists`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-          authData
-        ),
-      APPLE_RETRY_OPTIONS
-    );
-
-    const playlistId = playlistData.data?.[0]?.id;
-
-    if (!playlistId) {
-      throw new Error("Failed to create playlist - no ID returned");
-    }
-
-    // Filter tracks with IDs
-    const tracksWithIds = tracks.filter(
-      (track): track is ITrack & { targetId: string } => !!track.targetId
-    );
-
-    if (tracksWithIds.length === 0) {
-      return {
-        added: 0,
-        failed: tracks.length,
-        total: tracks.length,
-        playlistId,
-      };
-    }
-
-    // Add tracks to playlist
-    await retryWithExponentialBackoff(
-      () =>
-        fetchAppleMusic(
-          `${BASE_URL}/v1/me/library/playlists/${playlistId}/tracks`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
+          body: JSON.stringify({
+            attributes: {
+              name,
+              description: description || `Imported on ${new Date().toLocaleDateString()}`,
             },
-            body: JSON.stringify({
-              data: tracksWithIds.map(track => ({
-                id: track.targetId,
-                type: "songs",
-              })),
-            }),
-          },
-          authData
-        ),
-      APPLE_RETRY_OPTIONS
-    );
+          }),
+        },
+        authData
+      ),
+    APPLE_RETRY_OPTIONS
+  );
 
+  const playlistId = playlistData.data?.[0]?.id;
+
+  if (!playlistId) {
+    throw new Error("Failed to create playlist - no ID returned");
+  }
+
+  // Filter tracks with IDs
+  const tracksWithIds = tracks.filter(
+    (track): track is ITrack & { targetId: string } => !!track.targetId
+  );
+
+  if (tracksWithIds.length === 0) {
     return {
-      added: tracksWithIds.length,
-      failed: tracks.length - tracksWithIds.length,
+      added: 0,
+      failed: tracks.length,
       total: tracks.length,
       playlistId,
     };
-  } catch (error) {
-    throw error;
   }
+
+  // Add tracks to playlist
+  await retryWithExponentialBackoff(
+    () =>
+      fetchAppleMusic(
+        `${BASE_URL}/v1/me/library/playlists/${playlistId}/tracks`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            data: tracksWithIds.map(track => ({
+              id: track.targetId,
+              type: "songs",
+            })),
+          }),
+        },
+        authData
+      ),
+    APPLE_RETRY_OPTIONS
+  );
+
+  return {
+    added: tracksWithIds.length,
+    failed: tracks.length - tracksWithIds.length,
+    total: tracks.length,
+    playlistId,
+  };
 }
 
 export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<TransferResult> {
-  try {
-    const authData = await getAppleAuthData("target");
-    if (!authData) {
-      throw new Error("Not authenticated with Apple Music");
-    }
+  const authData = await getAppleAuthData("target");
+  if (!authData) {
+    throw new Error("Not authenticated with Apple Music");
+  }
 
-    // Filter tracks with valid targetIds
-    const tracksWithIds = tracks.filter(
-      (track): track is ITrack & { targetId: string } => !!track.targetId
-    );
+  // Filter tracks with valid targetIds
+  const tracksWithIds = tracks.filter(
+    (track): track is ITrack & { targetId: string } => !!track.targetId
+  );
 
-    if (tracksWithIds.length === 0) {
-      return {
-        added: 0,
-        failed: tracks.length,
-        total: tracks.length,
-        playlistId: null,
-      };
-    }
-
-    // Add tracks to library with retry
-    await retryWithExponentialBackoff(
-      () =>
-        fetchAppleMusic(
-          `${BASE_URL}/v1/me/library`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              data: tracksWithIds.map(track => ({
-                id: track.targetId,
-                type: "songs",
-              })),
-            }),
-          },
-          authData
-        ),
-      APPLE_RETRY_OPTIONS
-    );
-
+  if (tracksWithIds.length === 0) {
     return {
-      added: tracksWithIds.length,
-      failed: tracks.length - tracksWithIds.length,
+      added: 0,
+      failed: tracks.length,
       total: tracks.length,
       playlistId: null,
     };
-  } catch (error) {
-    throw error;
   }
+
+  // Add tracks to library with retry
+  await retryWithExponentialBackoff(
+    () =>
+      fetchAppleMusic(
+        `${BASE_URL}/v1/me/library`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            data: tracksWithIds.map(track => ({
+              id: track.targetId,
+              type: "songs",
+            })),
+          }),
+        },
+        authData
+      ),
+    APPLE_RETRY_OPTIONS
+  );
+
+  return {
+    added: tracksWithIds.length,
+    failed: tracks.length - tracksWithIds.length,
+    total: tracks.length,
+    playlistId: null,
+  };
 }
 
 export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferResult> {
-  try {
-    const authData = await getAppleAuthData("target");
-    if (!authData) {
-      throw new Error("Not authenticated with Apple Music");
-    }
+  const authData = await getAppleAuthData("target");
+  if (!authData) {
+    throw new Error("Not authenticated with Apple Music");
+  }
 
-    if (albums.size === 0) {
-      return {
-        added: 0,
-        failed: albums.size,
-        total: albums.size,
-        playlistId: null,
-      };
-    }
-
-    // Construct the URL with comma-separated album IDs
-    const albumIds = Array.from(albums)
-      .map(album => album.targetId)
-      .join(",");
-    const url = `${BASE_URL}/v1/me/library?ids[albums]=${albumIds}`;
-
-    // Add albums to library with retry
-    await retryWithExponentialBackoff(
-      () =>
-        fetchAppleMusic(
-          url,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          },
-          authData
-        ),
-      APPLE_RETRY_OPTIONS
-    );
-
+  if (albums.size === 0) {
     return {
-      added: albums.size,
-      failed: 0, // All were added if no error
+      added: 0,
+      failed: albums.size,
       total: albums.size,
       playlistId: null,
     };
-  } catch (error) {
-    throw error;
   }
+
+  // Construct the URL with comma-separated album IDs
+  const albumIds = Array.from(albums)
+    .map(album => album.targetId)
+    .join(",");
+  const url = `${BASE_URL}/v1/me/library?ids[albums]=${albumIds}`;
+
+  // Add albums to library with retry
+  await retryWithExponentialBackoff(
+    () =>
+      fetchAppleMusic(
+        url,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+        authData
+      ),
+    APPLE_RETRY_OPTIONS
+  );
+
+  return {
+    added: albums.size,
+    failed: 0, // All were added if no error
+    total: albums.size,
+    playlistId: null,
+  };
 }
 
 async function findBestAlbumMatch(
@@ -706,54 +692,50 @@ export async function searchAlbums(
   albums: Array<IAlbum>,
   onProgress: ((progress: number) => void) | undefined
 ): Promise<SearchResult> {
-  try {
-    const authData = await getAppleAuthData("target");
-    if (!authData) {
-      throw new Error("Not authenticated with Apple Music");
-    }
-
-    const results: Array<IAlbum> = [];
-    let matched = 0;
-    let unmatched = 0;
-    let processedCount = 0;
-
-    await processInBatches(
-      async batch => {
-        const albumResults = await Promise.all(
-          batch.map(async album => {
-            const { albumId } = await findBestAlbumMatch(album, authData);
-            processedCount++;
-            if (onProgress) {
-              onProgress(processedCount / albums.length);
-            }
-            return {
-              ...album,
-              targetId: albumId || undefined,
-              status: albumId ? MATCHING_STATUS.MATCHED : MATCHING_STATUS.UNMATCHED,
-            };
-          })
-        );
-
-        results.push(...albumResults);
-        matched += albumResults.filter(r => r.targetId).length;
-        unmatched += albumResults.filter(r => !r.targetId).length;
-      },
-      {
-        items: albums,
-        batchSize: 10,
-        onBatchStart: () => {},
-      }
-    );
-
-    return {
-      matched,
-      unmatched,
-      total: albums.length,
-      albums: results,
-    };
-  } catch (error) {
-    throw error;
+  const authData = await getAppleAuthData("target");
+  if (!authData) {
+    throw new Error("Not authenticated with Apple Music");
   }
+
+  const results: Array<IAlbum> = [];
+  let matched = 0;
+  let unmatched = 0;
+  let processedCount = 0;
+
+  await processInBatches(
+    async batch => {
+      const albumResults = await Promise.all(
+        batch.map(async album => {
+          const { albumId } = await findBestAlbumMatch(album, authData);
+          processedCount++;
+          if (onProgress) {
+            onProgress(processedCount / albums.length);
+          }
+          return {
+            ...album,
+            targetId: albumId || undefined,
+            status: albumId ? MATCHING_STATUS.MATCHED : MATCHING_STATUS.UNMATCHED,
+          };
+        })
+      );
+
+      results.push(...albumResults);
+      matched += albumResults.filter(r => r.targetId).length;
+      unmatched += albumResults.filter(r => !r.targetId).length;
+    },
+    {
+      items: albums,
+      batchSize: 10,
+      onBatchStart: () => {},
+    }
+  );
+
+  return {
+    matched,
+    unmatched,
+    total: albums.length,
+    albums: results,
+  };
 }
 
 interface AppleResponse<T> {

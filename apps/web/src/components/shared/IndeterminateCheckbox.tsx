@@ -1,4 +1,4 @@
-import { FC, useRef, useEffect } from "react";
+import { type FC, useEffect, useRef } from "react";
 
 interface IndeterminateCheckboxProps {
   selectedCount: number;

@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 interface PandoraLogoProps {
   className?: string;
@@ -14,6 +14,8 @@ export const PandoraLogo: React.FC<PandoraLogoProps> = ({ className = "", size =
       xmlns="http://www.w3.org/2000/svg"
       preserveAspectRatio="xMidYMid"
       className={className}
+      role="img"
+      aria-label="Pandora logo"
     >
       <path
         fill="#f2494c"

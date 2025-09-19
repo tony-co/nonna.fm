@@ -1,18 +1,16 @@
-import React from "react";
-import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import React, { act } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  useMatching,
+  getMockCancelled,
+  getMockCompleted,
+  getMockQueue,
   mockFns,
   resetMocks,
   setMockMatchingState,
-  getMockQueue,
-  getMockCompleted,
-  getMockCancelled,
+  useMatching,
 } from "@/__mocks__/hooks/useMatching";
 import { TestWrapper } from "../testUtils";
-import { vi } from "vitest";
-import { act } from "react";
 
 // --- Test component to consume useMatching ---
 function MatchingConsumer() {
@@ -22,8 +20,12 @@ function MatchingConsumer() {
       <div data-testid="is-loading">{String(isLoading)}</div>
       <div data-testid="error">{error ?? ""}</div>
       <div data-testid="progress">{getProgress("likedSongs")}</div>
-      <button onClick={() => matchLikedSongs([], "spotify")}>Match Liked Songs</button>
-      <button onClick={() => cancelMatching("likedSongs")}>Cancel</button>
+      <button type="button" onClick={() => matchLikedSongs([], "spotify")}>
+        Match Liked Songs
+      </button>
+      <button type="button" onClick={() => cancelMatching("likedSongs")}>
+        Cancel
+      </button>
     </div>
   );
 }
@@ -36,6 +38,7 @@ function AdvancedMatchingConsumer() {
   return (
     <div>
       <button
+        type="button"
         onClick={() => {
           // Queue a new item and store its ID
           const id = matchLikedSongs([], "spotify");
@@ -45,7 +48,12 @@ function AdvancedMatchingConsumer() {
         Queue Item
       </button>
       {ids.map((id, idx) => (
-        <button key={id} data-testid={`cancel-${idx}`} onClick={() => cancelMatching(id)}>
+        <button
+          type="button"
+          key={id}
+          data-testid={`cancel-${idx}`}
+          onClick={() => cancelMatching(id)}
+        >
           Cancel {idx}
         </button>
       ))}
@@ -159,10 +167,10 @@ describe("useMatching", () => {
       const { matchLikedSongs } = useMatching();
       return (
         <div>
-          <button onClick={() => matchLikedSongs(playlist1.tracks, "spotify")}>
+          <button type="button" onClick={() => matchLikedSongs(playlist1.tracks, "spotify")}>
             Queue Playlist 1
           </button>
-          <button onClick={() => matchLikedSongs(playlist2.tracks, "spotify")}>
+          <button type="button" onClick={() => matchLikedSongs(playlist2.tracks, "spotify")}>
             Queue Playlist 2
           </button>
         </div>

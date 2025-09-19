@@ -1,4 +1,4 @@
-import { setServiceType, clearAuthData } from "@/lib/auth/constants";
+import { clearAuthData, setServiceType } from "@/lib/auth/constants";
 import type { IPlaylist } from "@/types";
 
 interface DeezerUser {

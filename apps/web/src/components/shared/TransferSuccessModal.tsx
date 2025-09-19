@@ -1,11 +1,11 @@
-import { FC, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { CheckCircle, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Dialog from "./Dialog";
+import { type FC, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { getServiceById } from "@/config/services";
-import { TransferResult } from "@/types";
+import type { IAlbum, IPlaylist, ITrack, TransferResult } from "@/types";
 import { ArtworkImage } from "./ArtworkImage";
-import { ITrack, IAlbum, IPlaylist } from "@/types";
+import Dialog from "./Dialog";
 
 interface TransferSuccessModalProps {
   isOpen: boolean;
@@ -61,8 +61,8 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
     return null;
   }
 
-  const hasLikedSongs = results.likedSongs && results.likedSongs.playlistId;
-  const hasAlbums = results.albums && results.albums.playlistId;
+  const hasLikedSongs = results.likedSongs?.playlistId;
+  const hasAlbums = results.albums?.playlistId;
   const successfulPlaylists = Array.from(results.playlists.entries()).filter(
     ([_, result]) => result.playlistId
   );
@@ -82,20 +82,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-4 rounded-lg bg-gradient-to-r from-indigo-500/10 to-indigo-600/5 p-6 text-indigo-600 dark:from-indigo-400/10 dark:to-indigo-500/5 dark:text-indigo-400">
           <div className="flex items-center gap-3">
-            <svg
-              className="h-8 w-8"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <CheckCircle className="h-8 w-8" />
             <div className="flex items-center gap-3">
               <span className="text-xl font-medium">
                 {tModals("transferSuccess.enjoyTracks", { totalTransferred })}
@@ -117,7 +104,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
           <div className="flex flex-col gap-3">
             {hasLikedSongs && selectedData.likedSongs.length > 0 && (
               <a
-                href={targetService.getPlaylistUrl(results.likedSongs!.playlistId!)}
+                href={targetService.getPlaylistUrl(results.likedSongs?.playlistId || "")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 transition-all duration-200 hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-gray-800 dark:bg-gray-900/50 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/50"
@@ -137,25 +124,13 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
                     </div>
                   </div>
                 </div>
-                <svg
-                  className="h-5 w-5 text-gray-400 transition-transform duration-200 group-hover:translate-x-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
+                <ChevronRight className="h-5 w-5 text-gray-400 transition-transform duration-200 group-hover:translate-x-1" />
               </a>
             )}
 
             {hasAlbums && selectedData.albums.length > 0 && (
               <a
-                href={targetService.getPlaylistUrl(results.albums!.playlistId!)}
+                href={targetService.getPlaylistUrl(results.albums?.playlistId || "")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 transition-all duration-200 hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-gray-800 dark:bg-gray-900/50 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/50"
@@ -175,19 +150,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
                     </div>
                   </div>
                 </div>
-                <svg
-                  className="h-5 w-5 text-gray-400 transition-transform duration-200 group-hover:translate-x-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
+                <ChevronRight className="h-5 w-5 text-gray-400 transition-transform duration-200 group-hover:translate-x-1" />
               </a>
             )}
 
@@ -221,19 +184,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
                       </div> */}
                     </div>
                   </div>
-                  <svg
-                    className="h-5 w-5 text-gray-400 transition-transform duration-200 group-hover:translate-x-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
+                  <ChevronRight className="h-5 w-5 text-gray-400 transition-transform duration-200 group-hover:translate-x-1" />
                 </a>
               );
             })}
@@ -242,6 +193,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
 
         <div className="flex justify-end">
           <button
+            type="button"
             onClick={onClose}
             className="rounded-lg bg-indigo-600 px-6 py-2.5 text-white transition-all duration-200 hover:bg-indigo-700 hover:shadow-md dark:bg-indigo-500 dark:hover:bg-indigo-600"
           >

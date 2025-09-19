@@ -1,7 +1,7 @@
-import { clearEncryption } from "./crypto";
+import { clearDeezerPlaylist, clearDeezerUserId } from "../services/deezer/auth";
 import { clearSpotifyAuth } from "../services/spotify/auth";
 import { clearYouTubeAuth } from "../services/youtube/auth";
-import { clearDeezerUserId, clearDeezerPlaylist } from "../services/deezer/auth";
+import { clearEncryption } from "./crypto";
 
 /**
  * Clears all authentication and service-related data from the application
@@ -31,6 +31,7 @@ export function clearAllServiceData(): void {
   const cookies = ["spotify_code_verifier", "youtube_code_verifier"];
 
   cookies.forEach(cookie => {
+    // biome-ignore lint/suspicious/noDocumentCookie: Required for clearing OAuth cookies
     document.cookie = `${cookie}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
   });
 }

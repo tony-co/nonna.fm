@@ -1,0 +1,19 @@
+pre-commit:
+  parallel: true
+  commands:
+    type-check:
+      glob: "{apps,packages}/**/*.{js,jsx,ts,tsx}"
+      run: pnpm run type-check
+    biome-check:
+      glob: "{apps,packages}/**/*.{js,jsx,ts,tsx,json}"
+      run: biome check --write {staged_files}
+      stage_fixed: true
+
+pre-push:
+  commands:
+    test:
+      run: pnpm run test
+
+commit-msg:
+  commands:
+    # Add any commit message validation if needed

@@ -1,5 +1,5 @@
-import { MusicService, ILibraryData } from "@/types";
 import { fetchUserLibrary } from "@/lib/musicApi";
+import type { ILibraryData, MusicService } from "@/types";
 
 interface InitialLibraryResult {
   initialData: ILibraryData | null;

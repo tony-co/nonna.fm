@@ -98,7 +98,7 @@ export async function retryWithExponentialBackoff<T>(
         }
         // Handle both JSON and text responses
         const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
+        if (contentType?.includes("application/json")) {
           return await response.json();
         }
         return (await response.text()) as T;
@@ -116,7 +116,7 @@ export async function retryWithExponentialBackoff<T>(
       if (response.status === 409) {
         try {
           const contentType = response.headers.get("content-type");
-          if (contentType && contentType.includes("application/json")) {
+          if (contentType?.includes("application/json")) {
             // Clone the response to read it twice (once here, once for the content)
             const clonedResponse = response.clone();
             const errorData = await clonedResponse.json();

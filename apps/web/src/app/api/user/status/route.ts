@@ -1,6 +1,6 @@
+import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { createUsageKey, getUsage } from "@/lib/redis";
-import crypto from "crypto";
 
 // Helper to hash platform user IDs
 const hashPlatformId = (platformId: string): string => {

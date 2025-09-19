@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { LikedSongs } from "./_components/LikedSongs";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { LikedSongs } from "./_components/LikedSongs";
 
 export default function LikedSongsPage() {
   return (
