@@ -1,6 +1,6 @@
+import { FileText, Shield } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type React from "react";
-import { Shield, FileText } from "lucide-react";
 
 const GITHUB_BASE_URL = "https://github.com/tony-co/nonna.fm/blob/main";
 const GITHUB_REPO = "https://github.com/tony-co/nonna.fm";

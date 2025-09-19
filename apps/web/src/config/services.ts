@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { AmazonMusicLogo } from "@/components/icons/AmazonMusicLogo";
 import { AppleMusicLogo } from "@/components/icons/AppleMusicLogo";
 import { DeezerLogo } from "@/components/icons/DeezerLogo";

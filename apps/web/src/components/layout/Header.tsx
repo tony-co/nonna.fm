@@ -1,10 +1,10 @@
 "use client";
 
+import { ArrowLeft } from "lucide-react";
 import { Inter } from "next/font/google";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { ArrowLeft } from "lucide-react";
 import { useItemTitle } from "@/contexts/ItemTitleContext";
 import { Link, usePathname } from "@/i18n/navigation";
 import { NonnaLogo } from "../icons/NonnaLogo";

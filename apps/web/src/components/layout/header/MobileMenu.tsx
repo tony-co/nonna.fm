@@ -1,7 +1,7 @@
+import { FileText, Languages, Menu, Shield, Sun } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { createPortal } from "react-dom";
-import { Menu, Languages, Sun, Shield, FileText } from "lucide-react";
 import Dialog from "@/components/shared/Dialog";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePathname, useRouter } from "@/i18n/navigation";

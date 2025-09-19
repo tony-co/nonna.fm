@@ -1,5 +1,5 @@
+import { Disc, Heart, List } from "lucide-react";
 import Image from "next/image";
-import { Heart, Disc, List } from "lucide-react";
 
 type ArtworkType = "liked" | "album" | "playlist";
 

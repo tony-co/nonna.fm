@@ -1,7 +1,7 @@
+import { CheckCircle, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type FC, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { CheckCircle, ChevronRight } from "lucide-react";
 import { getServiceById } from "@/config/services";
 import type { IAlbum, IPlaylist, ITrack, TransferResult } from "@/types";
 import { ArtworkImage } from "./ArtworkImage";

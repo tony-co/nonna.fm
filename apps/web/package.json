@@ -6,10 +6,6 @@
   "scripts": {
     "dev": "next dev --turbo --experimental-https --hostname nonnalocal.fm",
     "build": "next build",
-    "lint": "biome lint .",
-    "format": "biome format . --write",
-    "format:check": "biome format . --check",
-    "check": "biome check .",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest watch",

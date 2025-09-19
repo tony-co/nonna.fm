@@ -33,10 +33,7 @@ jobs:
       - name: Type check
         run: pnpm run type-check
 
-      - name: Lint
-        run: pnpm run lint
-
-      - name: Check formatting
+      - name: Lint, format and import sorting check
         run: pnpm run biome:ci
 
       - name: Run unit tests with coverage

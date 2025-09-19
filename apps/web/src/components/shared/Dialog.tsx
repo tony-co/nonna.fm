@@ -1,8 +1,8 @@
+import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type React from "react";
 import type { JSX } from "react";
 import { useEffect, useRef } from "react";
-import { X } from "lucide-react";
 
 interface DialogProps {
   isOpen: boolean;

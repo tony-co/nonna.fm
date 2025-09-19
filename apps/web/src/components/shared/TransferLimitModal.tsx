@@ -1,7 +1,7 @@
 "use client";
 
+import { Check, Heart, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Heart, Check, Sparkles } from "lucide-react";
 import type { TransferLimits } from "@/hooks/useTransferLimits";
 import { FREE_TIER_LIMIT, PREMIUM_TIER_LIMIT } from "@/lib/constants";
 

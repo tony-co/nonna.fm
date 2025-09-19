@@ -1,12 +1,12 @@
 "use client";
 
+import { Check, ChevronDown, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type React from "react";
-import { useEffect, useState, useId } from "react";
-import { ChevronDown, Check, X } from "lucide-react";
+import { useEffect, useId, useState } from "react";
 import { clearAllServiceData } from "@/lib/auth/utils";
 import { storeDeezerUserId, validateDeezerUser } from "@/lib/services/deezer/auth";
 

@@ -1,5 +1,5 @@
-import type { FC, SVGProps } from "react";
 import { Heart } from "lucide-react";
+import type { FC, SVGProps } from "react";
 
 /**
  * LikedSongsIcon renders a heart icon used for Liked Songs artwork and UI elements.

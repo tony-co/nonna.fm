@@ -1,6 +1,6 @@
+import { ChevronDown, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type FC, useEffect, useState } from "react";
-import { Plus, ChevronDown } from "lucide-react";
 import { getAvailableServices, getServiceById, type ServiceConfig } from "@/config/services";
 import type { MusicService } from "@/types";
 
