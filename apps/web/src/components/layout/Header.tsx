@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { Inter } from "next/font/google";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { usePathname, Link } from "@/i18n/navigation";
+import { useState } from "react";
+import { useItemTitle } from "@/contexts/ItemTitleContext";
+import { Link, usePathname } from "@/i18n/navigation";
+import { NonnaLogo } from "../icons/NonnaLogo";
 import { TransferUsageDisplay } from "../shared/TransferUsageDisplay";
-import { ThemeToggle } from "./header/ThemeToggle";
 import { LanguageSwitch } from "./header/LanguageSwitch";
 import { MobileMenu } from "./header/MobileMenu";
-import { NonnaLogo } from "../icons/NonnaLogo";
-import { Inter } from "next/font/google";
-import { useItemTitle } from "@/contexts/ItemTitleContext";
+import { ThemeToggle } from "./header/ThemeToggle";
 
 const inter = Inter({
   subsets: ["latin"],

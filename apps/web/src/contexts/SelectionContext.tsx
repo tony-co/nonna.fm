@@ -1,6 +1,6 @@
-import { createContext, useContext, ReactNode, FC, useState, useCallback } from "react";
-import { IAlbum, IPlaylist, ITrack, ISelectionState } from "@/types";
+import { createContext, type FC, type ReactNode, useCallback, useContext, useState } from "react";
 import { fetchPlaylistTracks } from "@/lib/musicApi";
+import type { IAlbum, IPlaylist, ISelectionState, ITrack } from "@/types";
 
 interface SelectionContextType {
   selection: ISelectionState;
@@ -51,7 +51,7 @@ export const SelectionProvider: FC<SelectionProviderProps> = ({
     id?: string;
   } | null>(null);
 
-  const isSelectionDisabled = mode == "matching" || mode == "transfer";
+  const isSelectionDisabled = mode === "matching" || mode === "transfer";
 
   // Toggle all liked songs
   const toggleLikedSongs = useCallback(() => {

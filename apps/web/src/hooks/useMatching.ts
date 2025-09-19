@@ -1,23 +1,23 @@
 import { useCallback, useRef } from "react";
-import {
-  UseMatchingReturn,
-  ITrack,
-  IAlbum,
-  IPlaylist,
-  QueueTask,
-  MATCHING_STATUS,
-  MusicService,
-} from "@/types";
 import { useLibrary } from "@/contexts/LibraryContext";
-import { musicServiceFactory } from "@/lib/services/factory";
 import {
-  matchingStart,
-  matchingProgress,
-  matchingError,
-  matchingComplete,
   matchingCancel,
+  matchingComplete,
+  matchingError,
+  matchingProgress,
+  matchingStart,
 } from "@/contexts/LibraryContext.matchingActions";
+import { musicServiceFactory } from "@/lib/services/factory";
 import { logger } from "@/lib/utils/logger";
+import {
+  type IAlbum,
+  type IPlaylist,
+  type ITrack,
+  MATCHING_STATUS,
+  type MusicService,
+  type QueueTask,
+  type UseMatchingReturn,
+} from "@/types";
 
 // This hook now uses global matching state from LibraryContext
 export const useMatching = (): UseMatchingReturn => {
@@ -28,10 +28,10 @@ export const useMatching = (): UseMatchingReturn => {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Helper to get a unique task key for progress tracking
-  const getTaskKey = (task: QueueTask): string => {
+  const getTaskKey = useCallback((task: QueueTask): string => {
     if (task.type === "playlist") return `playlist:${task.playlist.id}`;
     return task.type;
-  };
+  }, []);
 
   // Queue processor
   const processQueue = useCallback(async (): Promise<void> => {
@@ -220,7 +220,7 @@ export const useMatching = (): UseMatchingReturn => {
         setTimeout(() => processQueue(), 0);
       }
     }
-  }, [actions, state.likedSongs, state.albums, dispatch]);
+  }, [actions, state.likedSongs, state.albums, dispatch, getTaskKey]);
 
   // Public API
   const matchLikedSongs = useCallback(
@@ -251,9 +251,12 @@ export const useMatching = (): UseMatchingReturn => {
   );
 
   // Type guard for playlist tasks
-  function isPlaylistTask(task: QueueTask): task is Extract<QueueTask, { type: "playlist" }> {
-    return task.type === "playlist";
-  }
+  const isPlaylistTask = useCallback(
+    (task: QueueTask): task is Extract<QueueTask, { type: "playlist" }> => {
+      return task.type === "playlist";
+    },
+    []
+  );
 
   // Cancel a specific matching task (does not revert status)
   const cancelMatching = useCallback(
@@ -285,7 +288,7 @@ export const useMatching = (): UseMatchingReturn => {
       dispatch(matchingCancel(type, id));
       // Note: processQueue will be called in processQueue's finally block if there are more tasks
     },
-    [dispatch, state.matching.currentTask]
+    [dispatch, state.matching.currentTask, isPlaylistTask]
   );
 
   // Get progress for a given task type/id

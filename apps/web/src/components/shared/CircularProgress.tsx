@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 
 interface CircularProgressProps {
   progress: number; // 0 to 100

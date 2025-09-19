@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from "react";
-import { initializeAppleMusic, authorizeAppleMusic } from "@/lib/services/apple/api";
+import { useCallback, useEffect, useState } from "react";
+import { authorizeAppleMusic, initializeAppleMusic } from "@/lib/services/apple/api";
 
 interface UseAppleMusicReturn {
   isInitialized: boolean;

@@ -1,7 +1,7 @@
 import { vi } from "vitest";
-import * as auth from "@/lib/services/youtube/auth";
-import { mockTracks, mockAlbums, mockPlaylists } from "@/__mocks__/data/libraryData";
+import { mockAlbums, mockPlaylists, mockTracks } from "@/__mocks__/data/libraryData";
 import type { AuthData } from "@/lib/auth/constants";
+import * as auth from "@/lib/services/youtube/auth";
 
 // Type-safe mock AuthData for YouTube Music
 export const mockYouTubeAuthData: AuthData = {
@@ -371,7 +371,7 @@ export function setupYouTubeFetchMock(): void {
     if (url.includes("/api/auth/youtube/refresh")) {
       return new Response(
         JSON.stringify({
-          access_token: "new-" + mockYouTubeAuthData.accessToken,
+          access_token: `new-${mockYouTubeAuthData.accessToken}`,
           expires_in: mockYouTubeAuthData.expiresIn,
           token_type: mockYouTubeAuthData.tokenType,
         }),

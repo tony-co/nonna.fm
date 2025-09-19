@@ -2,6 +2,7 @@ import { vi } from "vitest";
 
 // Import and setup navigation mock
 import { mockNextNavigation, mockReactSuspense } from "@/__tests__/testUtils";
+
 mockNextNavigation();
 mockReactSuspense();
 
@@ -21,14 +22,12 @@ vi.mock("@/lib/auth/constants", () => ({
   getServiceType: () => "spotify",
 }));
 
-// Regular imports
-import React from "react";
 import { render, screen, within } from "@testing-library/react";
-import { describe, it, expect, beforeEach } from "vitest";
-import { Playlist } from "@/app/[locale]/library/[source]/[target]/playlist/[id]/_components/Playlist";
-import { TestWrapper } from "@/__tests__/testUtils";
+import { beforeEach, describe, expect, it } from "vitest";
 import { mockPlaylists } from "@/__mocks__/data/libraryData";
-import { MusicService } from "@/types";
+import { TestWrapper } from "@/__tests__/testUtils";
+import { Playlist } from "@/app/[locale]/library/[source]/[target]/playlist/[id]/_components/Playlist";
+import type { MusicService } from "@/types";
 
 // Mock useParams for route parameter extraction
 const mockParams = {
@@ -88,7 +87,7 @@ describe("Playlist", () => {
     const unmatched = mockPlaylists[0].tracks.filter(track => track.status === "unmatched").length;
     expect(
       screen.getByText((content, _element) => {
-        return content !== null && content.includes(`${count} tracks`);
+        return content?.includes(`${count} tracks`);
       })
     ).toBeInTheDocument();
     if (unmatched > 0) {

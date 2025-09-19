@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 interface TidalLogoProps {
   className?: string;
@@ -13,6 +13,8 @@ export const TidalLogo: React.FC<TidalLogoProps> = ({ className = "", size = 24 
       height={size}
       xmlns="http://www.w3.org/2000/svg"
       className={className}
+      role="img"
+      aria-label="TIDAL logo"
     >
       <path
         fill="currentColor"

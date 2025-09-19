@@ -1,5 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET, POST } from "@/app/api/apple/developer-token/route";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Mock the token manager module
 vi.mock("@/lib/services/apple/token-manager", () => ({

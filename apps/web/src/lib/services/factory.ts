@@ -1,8 +1,8 @@
-import { IMusicServiceProvider, MusicService, IServiceFactory } from "@/types";
+import type { IMusicServiceProvider, IServiceFactory, MusicService } from "@/types";
 import * as appleService from "./apple/api";
+import * as deezerService from "./deezer/api";
 import * as spotifyService from "./spotify/api";
 import * as youtubeService from "./youtube/api";
-import * as deezerService from "./deezer/api";
 
 class MusicServiceFactory implements IServiceFactory {
   private providers: Record<MusicService, IMusicServiceProvider> = {

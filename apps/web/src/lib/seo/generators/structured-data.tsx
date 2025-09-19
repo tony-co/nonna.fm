@@ -4,15 +4,15 @@
  */
 
 import Script from "next/script";
+import type { Thing, WithContext } from "schema-dts";
 import type { Locale } from "../config/base";
-import type { WithContext, Thing } from "schema-dts";
 import {
-  getOrganizationSchema,
-  getSoftwareApplicationSchema,
-  getWebSiteSchema,
-  getServiceSchema,
   getBreadcrumbSchema,
   getFAQSchema,
+  getOrganizationSchema,
+  getServiceSchema,
+  getSoftwareApplicationSchema,
+  getWebSiteSchema,
 } from "../config/structured-data";
 
 export interface StructuredDataProps {

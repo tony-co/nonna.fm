@@ -2,21 +2,23 @@ import { vi } from "vitest";
 
 // Mock the contexts first
 import * as LibraryContextMock from "@/__mocks__/contexts/LibraryContext";
-import { useMatching, resetMocks as resetMatchingMocks } from "@/__mocks__/hooks/useMatching";
-import { mockTracks, mockAlbums, mockPlaylists } from "@/__mocks__/data/libraryData";
+import { mockAlbums, mockPlaylists, mockTracks } from "@/__mocks__/data/libraryData";
+import { resetMocks as resetMatchingMocks, useMatching } from "@/__mocks__/hooks/useMatching";
 import { initialMatchingState } from "@/contexts/LibraryContext.matchingState";
+
 vi.mock("@/hooks/useMatching", () => ({ useMatching }));
 vi.mock("@/contexts/LibraryContext", () => LibraryContextMock);
 
 // Import and setup navigation mock
 import { mockNextNavigation } from "@/__tests__/testUtils";
+
 mockNextNavigation();
 
-// Regular imports
-import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { TransferButton } from "@/components/shared/TransferButton";
+// Regular imports
+import { beforeEach, describe, expect, it } from "vitest";
 import { TestWrapper } from "@/__tests__/testUtils";
+import { TransferButton } from "@/components/shared/TransferButton";
 
 describe("TransferButton", () => {
   beforeEach(() => {

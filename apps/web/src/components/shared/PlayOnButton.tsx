@@ -1,7 +1,7 @@
-import { FC } from "react";
 import { useTranslations } from "next-intl";
-import { getServiceType } from "@/lib/auth/constants";
+import type { FC } from "react";
 import { getServiceById } from "@/config/services";
+import { getServiceType } from "@/lib/auth/constants";
 
 // Supported types for PlayOnButton
 interface PlayOnButtonProps {

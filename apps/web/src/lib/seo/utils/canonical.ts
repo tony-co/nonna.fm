@@ -48,7 +48,7 @@ export function generateCanonicalUrl(
   let canonicalUrl = `${SEO_CONFIG.brand.url}${localizedPath}`;
 
   // Add search parameters if provided
-  if (searchParams && searchParams.toString()) {
+  if (searchParams?.toString()) {
     canonicalUrl += `?${searchParams.toString()}`;
   }
 
@@ -65,7 +65,7 @@ export function generateDefaultCanonicalUrl(
   const pathWithoutLocale = removeLocaleFromPath(pathname);
   let canonicalUrl = `${SEO_CONFIG.brand.url}${pathWithoutLocale || "/"}`;
 
-  if (searchParams && searchParams.toString()) {
+  if (searchParams?.toString()) {
     canonicalUrl += `?${searchParams.toString()}`;
   }
 
@@ -103,7 +103,7 @@ export function generateSelfCanonicalUrl(
   const localizedPath = generateLocalizedPath(pathname, locale);
   let canonicalUrl = `${SEO_CONFIG.brand.url}${localizedPath}`;
 
-  if (searchParams && searchParams.toString()) {
+  if (searchParams?.toString()) {
     canonicalUrl += `?${searchParams.toString()}`;
   }
 

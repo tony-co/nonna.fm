@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 interface DeezerLogoProps {
   className?: string;
@@ -14,6 +14,8 @@ export const DeezerLogo: React.FC<DeezerLogoProps> = ({ className = "", size = 2
       xmlns="http://www.w3.org/2000/svg"
       preserveAspectRatio="xMidYMid"
       className={className}
+      role="img"
+      aria-label="Deezer logo"
     >
       <path
         fillRule="evenodd"

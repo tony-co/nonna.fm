@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { validateDeezerUser, storeDeezerUserId } from "@/lib/services/deezer/auth";
+import type React from "react";
+import { useEffect, useState } from "react";
 import { clearAllServiceData } from "@/lib/auth/utils";
-import dynamic from "next/dynamic";
+import { storeDeezerUserId, validateDeezerUser } from "@/lib/services/deezer/auth";
 
 // Dynamically import Dialog component
 const DialogComponent = dynamic(() => import("@/components/shared/Dialog"), { ssr: false });

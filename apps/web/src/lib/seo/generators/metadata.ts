@@ -6,9 +6,9 @@
 import type { Metadata } from "next";
 import type { Locale } from "../config/base";
 import { SEO_CONFIG } from "../config/base";
-import { LOCALE_KEYWORDS, getServiceTransferKeywords } from "../config/keywords";
-import { generateHreflang } from "../utils/hreflang";
+import { getServiceTransferKeywords, LOCALE_KEYWORDS } from "../config/keywords";
 import { generateCanonicalUrl } from "../utils/canonical";
+import { generateHreflang } from "../utils/hreflang";
 
 // Helper function to safely get Google Site Verification
 function getGoogleSiteVerification(): string {

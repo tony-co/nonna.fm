@@ -1,9 +1,8 @@
 "use client";
 
-import React from "react";
-import { useTheme } from "@/contexts/ThemeContext";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
@@ -21,6 +20,7 @@ export function ThemeToggle() {
 
   return (
     <button
+      type="button"
       onClick={toggleTheme}
       data-testid="theme-toggle"
       className={`relative inline-flex h-[30px] w-[60px] items-center justify-between rounded-full p-0.5 ${
@@ -49,7 +49,9 @@ export function ThemeToggle() {
         strokeLinecap="round"
         strokeLinejoin="round"
         className={`relative z-10 ml-1.5 ${theme === "light" ? "text-gray-800" : "text-gray-500"} transition-colors duration-200`}
+        aria-hidden="true"
       >
+        <title>Light theme</title>
         <circle cx="12" cy="12" r="5" />
         <line x1="12" y1="1" x2="12" y2="3" />
         <line x1="12" y1="21" x2="12" y2="23" />
@@ -73,7 +75,9 @@ export function ThemeToggle() {
         strokeLinecap="round"
         strokeLinejoin="round"
         className={`relative z-10 mr-1.5 ${theme === "light" ? "text-gray-400" : "text-indigo-200"} transition-colors duration-200`}
+        aria-hidden="true"
       >
+        <title>Dark theme</title>
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
       </svg>
     </button>

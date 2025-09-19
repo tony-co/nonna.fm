@@ -23,7 +23,8 @@ const FALLBACK_CONFIGS = {
     bgColor: "bg-red-100 dark:bg-red-900/30",
     iconColor: "text-red-500",
     icon: (
-      <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+      <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <title>Liked songs</title>
         <path
           fillRule="evenodd"
           d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
@@ -36,7 +37,8 @@ const FALLBACK_CONFIGS = {
     bgColor: "bg-purple-100 dark:bg-purple-900/30",
     iconColor: "text-purple-500",
     icon: (
-      <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+      <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <title>Album</title>
         <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm4 3a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1z" />
       </svg>
     ),
@@ -78,10 +80,10 @@ export const ArtworkImage: React.FC<ArtworkImageProps> = ({
       >
         {Array.from({ length: images.length < 4 ? images.length : 4 }).map((_, i) =>
           images[i] ? (
-            <div key={i} className="relative h-full w-full">
+            <div key={`img-${i}-${images[i]?.slice(-20) || 'empty'}`} className="relative h-full w-full">
               <Image
                 src={images[i]}
-                alt={alt + ` ${i + 1}`}
+                alt={`${alt} ${i + 1}`}
                 fill
                 className={`object-${objectFit} rounded-[2px]`}
                 sizes={`${Math.floor(size / 2)}px`}
@@ -89,7 +91,7 @@ export const ArtworkImage: React.FC<ArtworkImageProps> = ({
             </div>
           ) : (
             <div
-              key={i}
+              key={`placeholder-${i}`}
               className="flex h-full w-full items-center justify-center rounded-[2px] bg-purple-100 dark:bg-purple-900/30"
             >
               <span className="text-purple-300">?</span>

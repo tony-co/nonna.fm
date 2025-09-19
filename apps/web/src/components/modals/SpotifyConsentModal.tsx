@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
-import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
+import type React from "react";
 
 // Dynamically import Dialog component
 const DialogComponent = dynamic(() => import("@/components/shared/Dialog"), { ssr: false });
@@ -27,7 +27,7 @@ export function SpotifyConsentModal({
           <p className="mb-2 font-semibold">{tSpotifyTerms("intro")}</p>
           <ul className="ml-4 list-disc space-y-1.5 text-sm">
             {tSpotifyTerms.raw("termsItems").map((item: string, index: number) => (
-              <li key={index}>{item}</li>
+              <li key={`terms-${index}-${item.slice(0, 20)}`}>{item}</li>
             ))}
           </ul>
         </div>
@@ -40,7 +40,7 @@ export function SpotifyConsentModal({
             <p className="mb-2">{tSpotifyTerms("privacyIntro")}</p>
             <ul className="ml-4 list-disc space-y-1.5">
               {tSpotifyTerms.raw("privacyItems").map((item: string, index: number) => (
-                <li key={index}>{item}</li>
+                <li key={`privacy-${index}-${item.slice(0, 20)}`}>{item}</li>
               ))}
             </ul>
           </div>

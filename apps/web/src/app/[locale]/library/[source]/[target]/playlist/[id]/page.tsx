@@ -1,7 +1,7 @@
 import { Suspense } from "react";
-import { MusicService } from "@/types";
-import { Playlist } from "./_components/Playlist";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import type { MusicService } from "@/types";
+import { Playlist } from "./_components/Playlist";
 
 interface PlaylistPageProps {
   params: Promise<{

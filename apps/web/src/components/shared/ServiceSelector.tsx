@@ -1,7 +1,7 @@
-import { FC, useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { getAvailableServices, getServiceById, ServiceConfig } from "@/config/services";
-import { MusicService } from "@/types";
+import { type FC, useEffect, useState } from "react";
+import { getAvailableServices, getServiceById, type ServiceConfig } from "@/config/services";
+import type { MusicService } from "@/types";
 
 interface ServiceSelectorProps {
   onTargetSelect: (serviceId: string) => void;

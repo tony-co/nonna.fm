@@ -1,7 +1,7 @@
-import { ITrack, ILibraryData, IAlbum, SearchResult, TransferResult } from "@/types";
-import { getDeezerUserId } from "./auth";
-import { retryWithExponentialBackoff, type RetryOptions } from "@/lib/utils/retry";
 import { SERVICES } from "@/config/services";
+import { type RetryOptions, retryWithExponentialBackoff } from "@/lib/utils/retry";
+import type { IAlbum, ILibraryData, ITrack, SearchResult, TransferResult } from "@/types";
+import { getDeezerUserId } from "./auth";
 
 // Base URL for Deezer API from services configuration
 const BASE_URL = SERVICES.deezer.apiBaseUrl;
@@ -165,7 +165,7 @@ export async function fetchPlaylistTracks(
 ): Promise<ITrack[]> {
   let allTracks: ITrack[] = [];
   let nextUrl: string | undefined = `/api/deezer/playlists/${playlistId}/tracks`;
-  let total: number | undefined = undefined;
+  let total: number | undefined;
 
   // Fetch all pages of tracks with retry logic
   while (nextUrl) {

@@ -1,11 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { useTranslations } from "next-intl";
 import { useTransfer } from "@/contexts/TransferContext";
-import { TransferLimitModal } from "./TransferLimitModal";
 import Dialog from "./Dialog";
+import { TransferLimitModal } from "./TransferLimitModal";
 
 export function TransferUsageDisplay() {
   const { userStatus: status, isLoading: loading, error } = useTransfer();

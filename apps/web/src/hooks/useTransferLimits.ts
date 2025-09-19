@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
-import { FREE_TIER_LIMIT, PREMIUM_TIER_LIMIT } from "@/lib/constants";
+import { useCallback, useEffect, useState } from "react";
 import { getAuthData } from "@/lib/auth/constants";
+import { FREE_TIER_LIMIT, PREMIUM_TIER_LIMIT } from "@/lib/constants";
 
 export interface UserStatus {
   isPremium: boolean;
@@ -34,23 +34,23 @@ export function useTransferLimits(): UseTransferLimitsReturn {
   const [selectedCountForModal, setSelectedCountForModal] = useState(0);
 
   // Helper function to calculate full status with limits
-  const calculateFullStatus = (baseStatus: UserStatus): TransferLimits => {
+  const calculateFullStatus = useCallback((baseStatus: UserStatus): TransferLimits => {
     const dailyLimit = baseStatus.isPremium ? PREMIUM_TIER_LIMIT : FREE_TIER_LIMIT;
     return {
       ...baseStatus,
       dailyLimit,
       availableToday: Math.max(0, dailyLimit - baseStatus.currentUsage),
     };
-  };
+  }, []);
 
   // Helper function to get the current user ID
-  const getCurrentUserId = (): string => {
+  const getCurrentUserId = useCallback((): string => {
     const targetAuth = getAuthData("target");
     if (!targetAuth) {
       throw new Error("No target service authentication found");
     }
     return `${targetAuth.serviceId}:${targetAuth.userId}`;
-  };
+  }, []);
 
   const fetchUserStatus = useCallback(async () => {
     try {
@@ -80,7 +80,7 @@ export function useTransferLimits(): UseTransferLimitsReturn {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [calculateFullStatus, getCurrentUserId]);
 
   useEffect(() => {
     fetchUserStatus();
@@ -127,7 +127,7 @@ export function useTransferLimits(): UseTransferLimitsReturn {
         return false;
       }
     },
-    [status]
+    [status, calculateFullStatus, getCurrentUserId]
   );
 
   const updateUsage = useCallback(
@@ -182,7 +182,7 @@ export function useTransferLimits(): UseTransferLimitsReturn {
         return false;
       }
     },
-    [status]
+    [status, calculateFullStatus, getCurrentUserId]
   );
 
   return {

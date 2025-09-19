@@ -1,12 +1,11 @@
 "use client";
 
-import { handleDeezerCallback } from "@/lib/services/deezer/auth";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { Suspense, useEffect } from "react";
 import { useRouter } from "@/i18n/navigation";
-import { useEffect } from "react";
 import { getServiceType } from "@/lib/auth/constants";
-import { Suspense } from "react";
+import { handleDeezerCallback } from "@/lib/services/deezer/auth";
 
 function DeezerCallbackContent() {
   const router = useRouter();

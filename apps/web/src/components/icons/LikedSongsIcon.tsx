@@ -1,4 +1,4 @@
-import { FC, SVGProps } from "react";
+import type { FC, SVGProps } from "react";
 
 /**
  * LikedSongsIcon renders a heart SVG used for Liked Songs artwork and UI elements.

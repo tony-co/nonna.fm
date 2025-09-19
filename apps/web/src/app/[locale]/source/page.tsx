@@ -2,16 +2,16 @@
 
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/navigation";
-import { Header } from "@/components/layout/Header";
+import { Suspense, useState } from "react";
 import { Footer } from "@/components/layout/Footer";
+import { Header } from "@/components/layout/Header";
+import { SpotifyConsentModal } from "@/components/modals/SpotifyConsentModal";
 import { ServiceSelector } from "@/components/shared/ServiceSelector";
 import { useAppleMusic } from "@/hooks/useAppleMusic";
+import { useRouter } from "@/i18n/navigation";
 import { initiateSpotifyAuth } from "@/lib/services/spotify/auth";
-import { useState, Suspense } from "react";
-import { MusicService } from "@/types";
 import { initiateYouTubeAuth } from "@/lib/services/youtube/auth";
-import { SpotifyConsentModal } from "@/components/modals/SpotifyConsentModal";
+import type { MusicService } from "@/types";
 
 function SourcePageContent() {
   const t = useTranslations("SourcePage");

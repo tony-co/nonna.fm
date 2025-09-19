@@ -1,7 +1,6 @@
-import { FC } from "react";
 import { useTranslations } from "next-intl";
-import type { IAlbum, ITrack, IPlaylist } from "@/types";
-import { MatchingStatus } from "@/types";
+import type { FC } from "react";
+import type { IAlbum, IPlaylist, ITrack, MatchingStatus } from "@/types";
 
 interface StatusIconProps {
   album?: IAlbum;

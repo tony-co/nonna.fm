@@ -1,6 +1,7 @@
-import React, { useRef, useEffect } from "react";
-import type { JSX } from "react";
 import { useTranslations } from "next-intl";
+import type React from "react";
+import type { JSX } from "react";
+import { useEffect, useRef } from "react";
 
 interface DialogProps {
   isOpen: boolean;

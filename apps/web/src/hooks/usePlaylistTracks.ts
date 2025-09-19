@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
-import { IPlaylist, ITrack } from "@/types";
-import { fetchPlaylistTracks } from "@/lib/musicApi";
+import { useEffect, useRef, useState } from "react";
 import { useLibrary } from "@/contexts/LibraryContext";
+import { fetchPlaylistTracks } from "@/lib/musicApi";
+import type { IPlaylist, ITrack } from "@/types";
 
 interface UsePlaylistTracksReturn {
   playlist: IPlaylist | undefined;

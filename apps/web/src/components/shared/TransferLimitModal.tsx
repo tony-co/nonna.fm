@@ -1,8 +1,7 @@
 "use client";
 
-import React from "react";
 import { useTranslations } from "next-intl";
-import { TransferLimits } from "@/hooks/useTransferLimits";
+import type { TransferLimits } from "@/hooks/useTransferLimits";
 import { FREE_TIER_LIMIT, PREMIUM_TIER_LIMIT } from "@/lib/constants";
 
 interface TransferLimitModalProps {

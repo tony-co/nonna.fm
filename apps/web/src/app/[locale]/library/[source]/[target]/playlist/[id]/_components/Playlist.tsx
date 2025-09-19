@@ -1,13 +1,13 @@
 "use client";
-import { FC, useEffect } from "react";
-import { useLibrarySelection } from "@/contexts/LibraryContext";
+import { useTranslations } from "next-intl";
+import { type FC, useEffect } from "react";
 import { TrackList } from "@/components/library/TrackList";
-import { usePlaylistTracks } from "@/hooks/usePlaylistTracks";
-import { PlayOnButton } from "@/components/shared/PlayOnButton";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PlayOnButton } from "@/components/shared/PlayOnButton";
 import { useItemTitle } from "@/contexts/ItemTitleContext";
-import { useTranslations } from "next-intl";
+import { useLibrarySelection } from "@/contexts/LibraryContext";
+import { usePlaylistTracks } from "@/hooks/usePlaylistTracks";
 
 interface PlaylistProps {
   playlistId: string;

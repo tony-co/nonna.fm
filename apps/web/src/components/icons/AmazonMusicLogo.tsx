@@ -1,4 +1,5 @@
-import React from "react";
+import type React from "react";
+import { useId } from "react";
 
 interface AmazonMusicLogoProps {
   className?: string;
@@ -6,6 +7,8 @@ interface AmazonMusicLogoProps {
 }
 
 export const AmazonMusicLogo: React.FC<AmazonMusicLogoProps> = ({ className = "", size = 24 }) => {
+  const gradientId = useId();
+
   return (
     <svg
       viewBox="0 0 89.016 52"
@@ -14,9 +17,11 @@ export const AmazonMusicLogo: React.FC<AmazonMusicLogoProps> = ({ className = ""
       xmlns="http://www.w3.org/2000/svg"
       preserveAspectRatio="xMidYMid"
       className={className}
+      role="img"
+      aria-label="Amazon Music logo"
     >
       <defs>
-        <linearGradient id="amazon-music-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0" stopColor="#0C6CB3" />
           <stop offset="0.2911" stopColor="#1E84C4" />
           <stop offset="0.8873" stopColor="#4CC0EF" />
@@ -24,35 +29,35 @@ export const AmazonMusicLogo: React.FC<AmazonMusicLogoProps> = ({ className = ""
         </linearGradient>
       </defs>
       <path
-        fill="url(#amazon-music-gradient)"
+        fill={`url(#${gradientId})`}
         d="m59.7 22.5c-.6.4-1.5.7-2.6.7-1.7 0-3.3-.2-4.9-.7-.4-.1-.7-.2-.9-.2-.3 0-.4.2-.4.6v1c0 .3.1.5.2.7.1.1.3.3.6.4 1.6.7 3.4 1 5.4 1 2.1 0 3.7-.5 5-1.5 1.3-1 1.9-2.3 1.9-4 0-1.2-.3-2.1-.9-2.9-.6-.7-1.6-1.4-3-1.9l-2.8-1.1c-1.1-.4-1.9-.8-2.2-1.2-.4-.4-.6-.8-.6-1.5 0-1.5 1.1-2.3 3.4-2.3 1.3 0 2.6.2 3.8.6.4.1.7.2.8.2.3 0 .5-.2.5-.6v-1c0-.3-.1-.5-.2-.7-.1-.2-.3-.3-.6-.4-1.5-.5-3-.8-4.5-.8-1.9 0-3.5.5-4.7 1.4-1.2.9-1.8 2.2-1.8 3.7 0 2.3 1.3 4 3.9 5l3 1.1c1 .4 1.6.7 2 1.1.4.4.5.8.5 1.4 0 .8-.3 1.5-.9 1.9z"
       />
       <path
-        fill="url(#amazon-music-gradient)"
+        fill={`url(#${gradientId})`}
         d="m44 8.1v13.3c-1.7 1.1-3.4 1.7-5.1 1.7-1.1 0-1.9-.3-2.4-.9-.5-.6-.7-1.5-.7-2.8V8.1c0-.5-.2-.7-.7-.7h-2.1c-.5 0-.7.2-.7.7v12.4c0 1.7.4 3.1 1.3 4 .9.9 2.2 1.4 3.9 1.4 2.3 0 4.6-.8 6.8-2.4l.2 1.2c0 .3.1.4.3.5.1.1.3.1.6.1h1.5c.5 0 .7-.2.7-.7V8.1c0-.5-.2-.7-.7-.7h-2.1c-.6 0-.8.3-.8.7z"
       />
       <path
-        fill="url(#amazon-music-gradient)"
+        fill={`url(#${gradientId})`}
         d="m25 25.4h2.1c.5 0 .7-.2.7-.7V12.2c0-1.7-.4-3-1.3-3.9-.9-.9-2.1-1.4-3.8-1.4-2.3 0-4.7.8-7 2.5-.8-1.7-2.3-2.5-4.5-2.5-2.2 0-4.4.8-6.6 2.3l-.2-.9c0-.3-.1-.4-.3-.5-.1-.1-.3-.1-.5-.1h-1.6c-.5 0-.7.2-.7.7v16.6c0 .5.2.7.7.7h2.1c.5 0 .7-.2.7-.7V11.3c1.7-1 3.4-1.6 5.2-1.6 1 0 1.7.3 2.1.9.4.6.7 1.4.7 2.6v11.5c0 .5.2.7.7.7h2.1c.5 0 .7-.2.7-.7V12.4 11.8c0-.2 0-.4 0-.5 1.8-1.1 3.5-1.6 5.2-1.6 1 0 1.7.3 2.1.9.4.6.7 1.4.7 2.6v11.5c0 .5.2.7.7.7z"
       />
       <path
-        fill="url(#amazon-music-gradient)"
+        fill={`url(#${gradientId})`}
         d="m79.5 38.7c-10.9 4.6-22.8 6.9-33.6 6.9-16 0-31.5-4.4-44-11.7-.2-.1-.4-.2-.6-.2-.7 0-1.1.8-.4 1.5 11.6 10.5 27 16.8 44 16.8 12.2 0 26.3-3.8 36-11 1.7-1.2.3-3-1.4-2.3z"
       />
       <path
-        fill="url(#amazon-music-gradient)"
+        fill={`url(#${gradientId})`}
         d="m79.2 11.4c.9-1 2.3-1.5 4.3-1.5 1 0 2 .1 2.9.4.3.1.4.1.6.1.3 0 .5-.2.5-.7v-1c0-.3-.1-.6-.2-.7-.1-.1-.3-.3-.5-.4-1.3-.3-2.6-.6-3.8-.6-2.8 0-4.9.8-6.5 2.5-1.5 1.6-2.3 4-2.3 7 0 3 .7 5.3 2.2 6.9 1.5 1.6 3.6 2.4 6.4 2.4 1.5 0 2.9-.2 4-.7.3-.1.5-.2.6-.4.1-.1.1-.4.1-.7v-1c0-.5-.2-.7-.5-.7-.1 0-.3 0-.5.1-1.1.3-2.2.5-3.2.5-1.9 0-3.3-.5-4.2-1.5-.9-1-1.3-2.6-1.3-4.7v-.5c.1-2.2.5-3.8 1.4-4.8z"
       />
       <path
-        fill="url(#amazon-music-gradient)"
+        fill={`url(#${gradientId})`}
         d="m83.7 48.1c5.2-4.4 6.6-13.5 5.5-14.9-.5-.6-2.9-1.2-5.9-1.2-3.2 0-7 .7-9.9 2.7-.9.6-.7 1.4.2 1.3 3.1-.4 10.1-1.2 11.4.4 1.2 1.6-1.4 8.2-2.6 11.1-.3.9.4 1.2 1.3.6z"
       />
       <path
-        fill="url(#amazon-music-gradient)"
+        fill={`url(#${gradientId})`}
         d="m69.8 7.4h-2.1c-.5 0-.7.2-.7.7v16.6c0 .5.2.7.7.7h2.1c.5 0 .7-.2.7-.7V8.1c0-.4-.2-.7-.7-.7z"
       />
       <path
-        fill="url(#amazon-music-gradient)"
+        fill={`url(#${gradientId})`}
         d="m70.4.6c-.4-.4-1-.6-1.7-.6-.7 0-1.2.2-1.6.6-.4.4-.6.9-.6 1.5 0 .6.2 1.2.6 1.5.4.4.9.6 1.6.6.7 0 1.2-.2 1.6-.6.4-.4.6-.9.6-1.5 0-.6-.1-1.2-.5-1.5z"
       />
     </svg>

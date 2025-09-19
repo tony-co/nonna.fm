@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useLocale, useTranslations } from "next-intl";
-import { useRouter, usePathname } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 
 export const LanguageSwitch = () => {
@@ -57,6 +57,7 @@ export const LanguageSwitch = () => {
   return (
     <div className="relative" ref={dropdownRef} style={{ zIndex: 100 }}>
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         data-testid="language-switch"
         className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-gray-800 transition-colors hover:text-gray-950 dark:text-indigo-300 dark:hover:text-indigo-200"
@@ -78,7 +79,9 @@ export const LanguageSwitch = () => {
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
+          aria-hidden="true"
         >
+          <title>Toggle dropdown</title>
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
@@ -90,6 +93,7 @@ export const LanguageSwitch = () => {
         >
           {routing.locales.map(locale => (
             <button
+              type="button"
               key={locale}
               onClick={() => handleLanguageSelect(locale)}
               className={`w-full px-4 py-2 text-left text-sm transition-colors ${

@@ -1,18 +1,18 @@
 import {
-  encrypt,
-  decrypt,
-  generateRandomString,
-  generateCodeChallenge,
-  initializeEncryption,
-} from "@/lib/auth/crypto";
-import {
   AUTH_STORAGE_KEYS,
-  AuthData,
-  setAuthData,
-  getAuthData,
+  type AuthData,
   clearAuthData,
+  getAuthData,
+  setAuthData,
   setServiceType,
 } from "@/lib/auth/constants";
+import {
+  decrypt,
+  encrypt,
+  generateCodeChallenge,
+  generateRandomString,
+  initializeEncryption,
+} from "@/lib/auth/crypto";
 
 const SOURCE_SPOTIFY_SCOPES = [
   "playlist-read-private",

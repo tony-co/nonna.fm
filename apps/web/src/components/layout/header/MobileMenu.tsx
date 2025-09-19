@@ -1,11 +1,10 @@
-import React from "react";
-import { useLocale, useTranslations } from "next-intl";
-import { useRouter, usePathname } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
-import { routing } from "@/i18n/routing";
-import { useTheme } from "@/contexts/ThemeContext";
-import Dialog from "@/components/shared/Dialog";
+import { useLocale, useTranslations } from "next-intl";
 import { createPortal } from "react-dom";
+import Dialog from "@/components/shared/Dialog";
+import { useTheme } from "@/contexts/ThemeContext";
+import { usePathname, useRouter } from "@/i18n/navigation";
+import { routing } from "@/i18n/routing";
 
 const GITHUB_BASE_URL = "https://github.com/tony-co/nonna.fm/blob/main";
 const GITHUB_REPO = "https://github.com/tony-co/nonna.fm";

@@ -1,21 +1,20 @@
 "use client";
 
-import React, { Suspense } from "react";
-import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useRouter } from "@/i18n/navigation";
-import { Header } from "@/components/layout/Header";
+import { useTranslations } from "next-intl";
+import { Suspense, useEffect, useState } from "react";
 import { Footer } from "@/components/layout/Footer";
-import { AudioEqualizer } from "@/components/shared/AudioEqualizer";
-import { initializeEncryption } from "@/lib/auth/crypto";
-import { clearAllServiceData } from "@/lib/auth/utils";
-import { initiateSpotifyAuth } from "@/lib/services/spotify/auth";
-import { initiateYouTubeAuth } from "@/lib/services/youtube/auth";
-import { authorizeAppleMusic } from "@/lib/services/apple/api";
-import { getAvailableServices } from "@/config/services";
+import { Header } from "@/components/layout/Header";
 import { DeezerConnectModal } from "@/components/modals/DeezerConnectModal";
 import { SpotifyConsentModal } from "@/components/modals/SpotifyConsentModal";
+import { AudioEqualizer } from "@/components/shared/AudioEqualizer";
+import { getAvailableServices } from "@/config/services";
+import { useRouter } from "@/i18n/navigation";
+import { initializeEncryption } from "@/lib/auth/crypto";
+import { clearAllServiceData } from "@/lib/auth/utils";
+import { authorizeAppleMusic } from "@/lib/services/apple/api";
+import { initiateSpotifyAuth } from "@/lib/services/spotify/auth";
+import { initiateYouTubeAuth } from "@/lib/services/youtube/auth";
 
 function HomePageContent() {
   const t = useTranslations("HomePage");
@@ -133,6 +132,7 @@ function HomePageContent() {
               <div className="mx-auto flex max-w-4xl flex-wrap items-stretch justify-center gap-4 py-4 pb-16">
                 {getAvailableServices().map(service => (
                   <button
+                    type="button"
                     key={service.id}
                     onClick={
                       service.id === "spotify"

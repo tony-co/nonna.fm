@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 interface YouTubeMusicLogoProps {
   className?: string;
@@ -16,6 +16,8 @@ export const YouTubeMusicLogo: React.FC<YouTubeMusicLogoProps> = ({
       height={size}
       xmlns="http://www.w3.org/2000/svg"
       className={className}
+      role="img"
+      aria-label="YouTube Music logo"
     >
       <g>
         <circle fill="#FF0000" cx="88" cy="88" r="88" />

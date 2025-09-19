@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getValidDeveloperToken, getTokenStatus } from "@/lib/services/apple/token-manager";
+import { getTokenStatus, getValidDeveloperToken } from "@/lib/services/apple/token-manager";
 
 /**
  * API endpoint to get a valid Apple Music developer token

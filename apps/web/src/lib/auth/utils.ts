@@ -1,7 +1,7 @@
-import { clearEncryption } from "./crypto";
+import { clearDeezerPlaylist, clearDeezerUserId } from "../services/deezer/auth";
 import { clearSpotifyAuth } from "../services/spotify/auth";
 import { clearYouTubeAuth } from "../services/youtube/auth";
-import { clearDeezerUserId, clearDeezerPlaylist } from "../services/deezer/auth";
+import { clearEncryption } from "./crypto";
 
 /**
  * Clears all authentication and service-related data from the application

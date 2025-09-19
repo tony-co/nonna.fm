@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import YTMusic from "ytmusic-api";
 
 // Create a map to store initialized YTMusic instances by token
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Call the requested method with the provided parameters
-    let result;
+    let result: unknown;
     switch (method) {
       case "search":
         result = await ytmusic.search(params.query);

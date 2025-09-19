@@ -1,4 +1,4 @@
-import type { ITrack, IAlbum, IPlaylist } from "@/types";
+import type { IAlbum, IPlaylist, ITrack } from "@/types";
 
 // Spotify API response types
 export interface SpotifyTrackItem {

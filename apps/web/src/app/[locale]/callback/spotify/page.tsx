@@ -1,12 +1,11 @@
 "use client";
 
-import { handleSpotifyCallback } from "@/lib/services/spotify/auth";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { Suspense, useEffect } from "react";
 import { useRouter } from "@/i18n/navigation";
-import { useEffect } from "react";
 import { getServiceType } from "@/lib/auth/constants";
-import { Suspense } from "react";
+import { handleSpotifyCallback } from "@/lib/services/spotify/auth";
 
 function SpotifyCallbackContent() {
   const router = useRouter();

@@ -2,13 +2,13 @@
 
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
 import { useLibrary } from "@/contexts/LibraryContext";
+import { useTransfer } from "@/contexts/TransferContext";
 import { useMatching } from "@/hooks/useMatching";
 import { useTransfer as useTransferHook } from "@/hooks/useTransfer";
-import { useTransfer } from "@/contexts/TransferContext";
-import { useState } from "react";
+import type { MusicService } from "@/types";
 import { TransferSuccessModal } from "./TransferSuccessModal";
-import { MusicService } from "@/types";
 
 // Track playlists that are currently being fetched
 export const fetchingPlaylists = new Set<string>();
@@ -151,7 +151,6 @@ export function TransferButton() {
           onClick={handleClick}
           disabled={isDisabled}
           aria-label={`${buttonText}${hasSelections ? ` - ${getSummaryText()}` : ""}`}
-          role="transfer-button"
           tabIndex={!isDisabled ? 0 : -1}
         >
           {/* Progress Overlay */}

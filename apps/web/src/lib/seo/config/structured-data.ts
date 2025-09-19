@@ -3,17 +3,17 @@
  * JSON-LD schema configurations for enhanced search results
  */
 
-import type { Locale } from "./base";
-import { SEO_CONFIG } from "./base";
 import type {
-  Organization,
-  SoftwareApplication,
-  WebSite,
-  Service,
   BreadcrumbList,
   FAQPage,
+  Organization,
+  Service,
+  SoftwareApplication,
+  WebSite,
   WithContext,
 } from "schema-dts";
+import type { Locale } from "./base";
+import { SEO_CONFIG } from "./base";
 
 // Organization Schema
 export const getOrganizationSchema = (locale: Locale): WithContext<Organization> => ({

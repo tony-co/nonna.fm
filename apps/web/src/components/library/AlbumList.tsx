@@ -1,13 +1,13 @@
 "use client";
-import { FC, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { useLibrary } from "@/contexts/LibraryContext";
+import { type FC, useEffect, useRef } from "react";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
-import { useIsVisible } from "@/hooks/useIsVisible";
-import { StatusIcon } from "@/components/shared/StatusIcon";
-import type { IAlbum } from "@/types";
-import { useItemTitle } from "@/contexts/ItemTitleContext";
 import { PlayOnButton } from "@/components/shared/PlayOnButton";
+import { StatusIcon } from "@/components/shared/StatusIcon";
+import { useItemTitle } from "@/contexts/ItemTitleContext";
+import { useLibrary } from "@/contexts/LibraryContext";
+import { useIsVisible } from "@/hooks/useIsVisible";
+import type { IAlbum } from "@/types";
 
 interface AlbumItemProps {
   album: IAlbum;
@@ -24,7 +24,6 @@ const AlbumItem: FC<AlbumItemProps> = ({ album }) => {
       className={
         "group grid grid-cols-[32px_1fr_32px] items-center gap-2 rounded-md bg-transparent p-1.5 transition-colors duration-200 hover:bg-indigo-50/70 dark:bg-transparent dark:hover:bg-indigo-950/20"
       }
-      role="album"
     >
       <div className="flex-shrink-0 rounded">
         {isVisible ? (
@@ -133,7 +132,7 @@ export const AlbumList: FC = () => {
         </div>
       </div>
       {/* Table header and album list */}
-      <div className="relative bg-transparent dark:bg-transparent" role="albumlist">
+      <div className="relative bg-transparent dark:bg-transparent">
         <div
           className="mb-4 grid grid-cols-[32px_1fr_32px] gap-2 border-b border-slate-200 bg-white/80 p-1.5 py-2 text-xs font-normal text-slate-500 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400"
           role="row"

@@ -1,7 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { mockAlbums, mockPlaylists, mockTracks } from "@/__mocks__/data/libraryData";
+import { mockAppleAuth, setupAppleFetchMock } from "@/__mocks__/services/apple/fetchMocks";
 import * as api from "@/lib/services/apple/api";
-import { mockTracks, mockAlbums, mockPlaylists } from "@/__mocks__/data/libraryData";
-import { describe, it, beforeEach, afterEach, expect, vi } from "vitest";
-import { setupAppleFetchMock, mockAppleAuth } from "@/__mocks__/services/apple/fetchMocks";
 
 beforeEach(() => {
   setupAppleFetchMock();

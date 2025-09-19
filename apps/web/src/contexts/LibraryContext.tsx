@@ -1,9 +1,9 @@
 "use client";
 
-import { createContext, useReducer, useContext, useMemo } from "react";
-import type { LibraryState, LibraryAction, ITrack, IAlbum, IPlaylist } from "@/types";
-import { initialMatchingState } from "./LibraryContext.matchingState";
+import { createContext, useContext, useMemo, useReducer } from "react";
+import type { IAlbum, IPlaylist, ITrack, LibraryAction, LibraryState } from "@/types";
 import { matchingReducer } from "./LibraryContext.matchingReducer";
+import { initialMatchingState } from "./LibraryContext.matchingState";
 
 // Initial state
 const initialLibraryState: LibraryState = {
@@ -209,7 +209,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
       setLoading: (isLoading: boolean) => dispatch({ type: "SET_LOADING", payload: isLoading }),
       setError: (error: string | null) => dispatch({ type: "SET_ERROR", payload: error }),
     }),
-    [dispatch]
+    []
   );
 
   return (

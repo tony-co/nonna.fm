@@ -3,11 +3,13 @@ import { vi } from "vitest";
 
 // Import and setup navigation mock
 import { mockNextNavigation, mockReactSuspense } from "@/__tests__/testUtils";
+
 mockNextNavigation();
 mockReactSuspense();
 
 // Mock useMatching hook
-import { useMatching, resetMocks as resetMatchingMocks } from "@/__mocks__/hooks/useMatching";
+import { resetMocks as resetMatchingMocks, useMatching } from "@/__mocks__/hooks/useMatching";
+
 vi.mock("@/hooks/useMatching", () => ({ useMatching }));
 
 // Mock PlayOnButton component to avoid dependency issues in tests
@@ -20,13 +22,11 @@ vi.mock("@/lib/auth/constants", () => ({
   getServiceType: () => "spotify",
 }));
 
-// Regular imports
-import React from "react";
 import { render, screen, within } from "@testing-library/react";
-import { describe, it, expect, beforeEach } from "vitest";
-import AlbumsPage from "@/app/[locale]/library/[source]/[target]/albums/page";
-import { TestWrapper } from "@/__tests__/testUtils";
+import { beforeEach, describe, expect, it } from "vitest";
 import { mockAlbums } from "@/__mocks__/data/libraryData";
+import { TestWrapper } from "@/__tests__/testUtils";
+import AlbumsPage from "@/app/[locale]/library/[source]/[target]/albums/page";
 
 describe("AlbumsPage", () => {
   beforeEach(() => {

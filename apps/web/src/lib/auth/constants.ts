@@ -47,7 +47,9 @@ export function clearAuthData(role: "source" | "target"): void {
     return;
   }
   const keys = role === "source" ? AUTH_STORAGE_KEYS.SOURCE : AUTH_STORAGE_KEYS.TARGET;
-  Object.values(keys).forEach(key => localStorage.removeItem(key));
+  Object.values(keys).forEach(key => {
+    localStorage.removeItem(key);
+  });
 }
 
 export function getServiceType(role: "source" | "target"): string {

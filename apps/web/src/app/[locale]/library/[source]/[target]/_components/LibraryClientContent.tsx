@@ -1,15 +1,14 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { LibrarySidebar } from "@/components/layout/Sidebar";
-import { useLibrary } from "@/contexts/LibraryContext";
-import type { IPlaylist } from "@/types";
-import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
-import { MusicService } from "@/types";
-import { authorizeAppleMusic } from "@/lib/services/apple/api";
-import { fetchInitialLibraryData } from "@/lib/server/library";
 import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { LibrarySidebar } from "@/components/layout/Sidebar";
+import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
 import { useItemTitle } from "@/contexts/ItemTitleContext";
+import { useLibrary } from "@/contexts/LibraryContext";
+import { fetchInitialLibraryData } from "@/lib/server/library";
+import { authorizeAppleMusic } from "@/lib/services/apple/api";
+import type { IPlaylist, MusicService } from "@/types";
 
 interface LibraryClientContentProps {
   source: MusicService;
@@ -168,7 +167,6 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
     // lg:grid-cols defines the two-column layout for desktop.
     <div className="container mx-auto grid h-full lg:grid-cols-[25rem_1fr]">
       <aside
-        role="sidebar"
         aria-label="Library Selection"
         className={`overflow-y-auto transition-transform duration-200 lg:h-full lg:translate-x-0 lg:border-r lg:border-indigo-100/10 lg:dark:bg-transparent ${
           isContentVisible
@@ -182,7 +180,6 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
       </aside>
       <main
         ref={mainRef}
-        role="main"
         aria-label="Selected Content"
         className={`z-40 h-full overflow-y-auto p-8 transition-transform duration-200 lg:translate-x-0 ${
           isContentVisible ? "translate-x-0" : "hidden lg:relative lg:block"

@@ -1,18 +1,17 @@
 "use client";
 
-import { FC } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useLibrary, useLibrarySelection } from "@/contexts/LibraryContext";
-import { useMatching } from "@/hooks/useMatching";
-import { IndeterminateCheckbox } from "@/components/shared/IndeterminateCheckbox";
+import React, { type FC } from "react";
+import { LikedSongsIcon } from "@/components/icons/LikedSongsIcon";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import { CircularProgress } from "@/components/shared/CircularProgress";
-import { useRouter, useParams } from "next/navigation";
-import { MusicService, IPlaylist } from "@/types";
-import { fetchPlaylistTracks } from "@/lib/musicApi";
-import React from "react";
+import { IndeterminateCheckbox } from "@/components/shared/IndeterminateCheckbox";
 import { fetchingPlaylists } from "@/components/shared/TransferButton";
-import { LikedSongsIcon } from "@/components/icons/LikedSongsIcon";
+import { useLibrary, useLibrarySelection } from "@/contexts/LibraryContext";
+import { useMatching } from "@/hooks/useMatching";
+import { fetchPlaylistTracks } from "@/lib/musicApi";
+import type { IPlaylist, MusicService } from "@/types";
 
 // Main component
 export const LibrarySidebar: FC = () => {
@@ -339,11 +338,12 @@ export const LibrarySidebar: FC = () => {
           <div className="min-w-0 flex-1">
             <p
               className={`truncate font-normal text-zinc-600 group-hover:text-zinc-950 dark:text-zinc-300 dark:group-hover:text-zinc-100 ${
-                (currentTask &&
-                  currentTask.type === "playlist" &&
-                  currentTask.playlist.id === playlist.id &&
-                  isMatching) ||
-                fetchingPlaylists.has(playlist.id)
+                (
+                  currentTask &&
+                    currentTask.type === "playlist" &&
+                    currentTask.playlist.id === playlist.id &&
+                    isMatching
+                ) || fetchingPlaylists.has(playlist.id)
                   ? "animate-pulse"
                   : ""
               }`}

@@ -4,26 +4,29 @@ import { vi } from "vitest";
 // Mock the contexts first
 import * as LibraryContextMock from "@/__mocks__/contexts/LibraryContext";
 import {
-  useMatching,
-  resetMocks as resetMatchingMocks,
   mockFns as matchingMockFns,
+  resetMocks as resetMatchingMocks,
+  useMatching,
 } from "@/__mocks__/hooks/useMatching";
+
 vi.mock("@/hooks/useMatching", () => ({ useMatching }));
 vi.mock("@/contexts/LibraryContext", () => LibraryContextMock);
 
 import * as SelectionContextMock from "@/__mocks__/contexts/SelectionContext";
+
 vi.mock("@/contexts/SelectionContext", () => SelectionContextMock);
 
 // Import and setup navigation mock
 import { mockNextNavigation } from "@/__tests__/testUtils";
+
 mockNextNavigation();
 
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 // Regular imports
-import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { LibrarySidebar } from "@/components/layout/Sidebar";
-import { TestWrapper, mockNavigationImplementation } from "@/__tests__/testUtils";
+import { beforeEach, describe, expect, it } from "vitest";
 import { mockLibraryState } from "@/__mocks__/contexts/LibraryContext";
+import { mockNavigationImplementation, TestWrapper } from "@/__tests__/testUtils";
+import { LibrarySidebar } from "@/components/layout/Sidebar";
 
 // Mock the fetchPlaylistTracks function
 const mockFetchPlaylistTracks = vi.hoisted(() =>
@@ -137,7 +140,7 @@ describe("LibrarySidebar", () => {
       );
 
       // Get first playlist from the mock data
-      const playlistId = Array.from(mockLibraryState.playlists!.values())[0].id;
+      const playlistId = Array.from(mockLibraryState.playlists?.values())[0].id;
       const playlistItem = screen.getByTestId(`playlist-item-${playlistId}`);
       expect(playlistItem).toBeInTheDocument();
 
@@ -168,7 +171,7 @@ describe("LibrarySidebar", () => {
       // Verify selection and matching were triggered
       expect(LibraryContextMock.mockActions.selectAllTracks).toHaveBeenCalled();
       expect(matchingMockFns.matchLikedSongs).toHaveBeenCalledWith(
-        Array.from(mockLibraryState.likedSongs!),
+        Array.from(mockLibraryState.likedSongs ?? []),
         "apple"
       );
     });
@@ -197,7 +200,7 @@ describe("LibrarySidebar", () => {
       const modifiedState = {
         ...mockLibraryState,
         playlists: new Map(
-          Array.from(mockLibraryState.playlists!.entries()).map(([id, playlist], index) => {
+          Array.from(mockLibraryState.playlists?.entries()).map(([id, playlist], index) => {
             if (index === 0) {
               return [id, { ...playlist, tracks: [] }];
             }

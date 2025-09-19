@@ -1,4 +1,4 @@
-import type { MatchingState, LibraryAction } from "@/types";
+import type { LibraryAction, MatchingState } from "@/types";
 
 // Reducer for matching-related state
 export function matchingReducer(state: MatchingState, action: LibraryAction): MatchingState {

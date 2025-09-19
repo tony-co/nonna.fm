@@ -1,7 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { mockAlbums, mockPlaylists, mockTracks } from "@/__mocks__/data/libraryData";
+import { mockSpotifyAuth, setupSpotifyFetchMock } from "@/__mocks__/services/spotify/fetchMocks";
 import * as api from "@/lib/services/spotify/api";
-import { mockTracks, mockAlbums, mockPlaylists } from "@/__mocks__/data/libraryData";
-import { describe, it, beforeEach, afterEach, expect, vi } from "vitest";
-import { setupSpotifyFetchMock, mockSpotifyAuth } from "@/__mocks__/services/spotify/fetchMocks";
 
 beforeEach(() => {
   setupSpotifyFetchMock();

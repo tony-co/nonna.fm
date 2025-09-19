@@ -1,13 +1,12 @@
 "use client";
 
-import { handleYouTubeCallback } from "@/lib/services/youtube/auth";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useRouter, Link } from "@/i18n/navigation";
-import { useEffect, useState } from "react";
-import { getServiceType } from "@/lib/auth/constants";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Dialog from "@/components/shared/Dialog";
+import { Link, useRouter } from "@/i18n/navigation";
+import { getServiceType } from "@/lib/auth/constants";
+import { handleYouTubeCallback } from "@/lib/services/youtube/auth";
 
 import "@/app/globals.css";
 
@@ -89,6 +88,8 @@ function YouTubeCallbackContent() {
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  role="img"
+                  aria-label="Warning icon"
                 >
                   <path
                     strokeLinecap="round"
@@ -107,12 +108,19 @@ function YouTubeCallbackContent() {
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 rounded-lg bg-red-600 px-5 py-3 font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
               >
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="h-5 w-5"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  role="img"
+                  aria-label="YouTube icon"
+                >
                   <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
                 </svg>
                 {tButtons("createYouTubeChannel")}
               </Link>
               <button
+                type="button"
                 onClick={handleCloseDialog}
                 className="rounded-lg border border-gray-300 bg-transparent px-5 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
               >

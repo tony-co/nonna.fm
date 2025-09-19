@@ -1,11 +1,10 @@
-import { FC, useEffect } from "react";
-import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
-import Dialog from "./Dialog";
+import { type FC, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { getServiceById } from "@/config/services";
-import { TransferResult } from "@/types";
+import type { IAlbum, IPlaylist, ITrack, TransferResult } from "@/types";
 import { ArtworkImage } from "./ArtworkImage";
-import { ITrack, IAlbum, IPlaylist } from "@/types";
+import Dialog from "./Dialog";
 
 interface TransferSuccessModalProps {
   isOpen: boolean;
@@ -61,8 +60,8 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
     return null;
   }
 
-  const hasLikedSongs = results.likedSongs && results.likedSongs.playlistId;
-  const hasAlbums = results.albums && results.albums.playlistId;
+  const hasLikedSongs = results.likedSongs?.playlistId;
+  const hasAlbums = results.albums?.playlistId;
   const successfulPlaylists = Array.from(results.playlists.entries()).filter(
     ([_, result]) => result.playlistId
   );
@@ -117,7 +116,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
           <div className="flex flex-col gap-3">
             {hasLikedSongs && selectedData.likedSongs.length > 0 && (
               <a
-                href={targetService.getPlaylistUrl(results.likedSongs!.playlistId!)}
+                href={targetService.getPlaylistUrl(results.likedSongs?.playlistId || '')}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 transition-all duration-200 hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-gray-800 dark:bg-gray-900/50 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/50"
@@ -155,7 +154,7 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
 
             {hasAlbums && selectedData.albums.length > 0 && (
               <a
-                href={targetService.getPlaylistUrl(results.albums!.playlistId!)}
+                href={targetService.getPlaylistUrl(results.albums?.playlistId || '')}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 transition-all duration-200 hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-gray-800 dark:bg-gray-900/50 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/50"
