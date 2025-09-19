@@ -144,6 +144,7 @@ export function TransferButton() {
         )}
         <button
           type="button"
+          data-testid="transfer-button"
           className={`relative flex w-[240px] items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-full px-6 py-3 text-base font-medium transition-all duration-200 ${
             !isDisabled
               ? "transform cursor-pointer bg-gradient-to-r from-indigo-600 to-indigo-500 text-white hover:scale-[1.02] hover:shadow-lg hover:shadow-indigo-200/50 active:scale-[0.98] dark:hover:shadow-indigo-900/30"

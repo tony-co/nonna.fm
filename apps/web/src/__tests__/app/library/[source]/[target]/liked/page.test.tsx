@@ -40,7 +40,7 @@ describe("LikedSongsPage", () => {
       </TestWrapper>
     );
 
-    expect(screen.getByRole("loading")).toBeInTheDocument();
+    expect(screen.getByTestId("loading")).toBeInTheDocument();
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
 
@@ -73,8 +73,8 @@ describe("LikedSongsPage", () => {
       </TestWrapper>
     );
 
-    const trackList = screen.getByRole("tracklist");
-    const tracks = within(trackList).getAllByRole("track");
+    const trackList = screen.getByTestId("tracklist");
+    const tracks = within(trackList).getAllByTestId("track");
 
     expect(tracks).toHaveLength(5);
     expect(screen.getByText("Fortnight")).toBeInTheDocument();

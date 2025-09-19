@@ -167,6 +167,7 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
     // lg:grid-cols defines the two-column layout for desktop.
     <div className="container mx-auto grid h-full lg:grid-cols-[25rem_1fr]">
       <aside
+        data-testid="sidebar"
         aria-label="Library Selection"
         className={`overflow-y-auto transition-transform duration-200 lg:h-full lg:translate-x-0 lg:border-r lg:border-indigo-100/10 lg:dark:bg-transparent ${
           isContentVisible

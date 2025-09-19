@@ -33,7 +33,7 @@ describe("TransferButton", () => {
       </TestWrapper>
     );
 
-    const transferButton = screen.getByRole("transfer-button");
+    const transferButton = screen.getByTestId("transfer-button");
     expect(transferButton).toBeInTheDocument();
   });
 
@@ -46,7 +46,7 @@ describe("TransferButton", () => {
       </TestWrapper>
     );
 
-    const transferButton = screen.getByRole("transfer-button");
+    const transferButton = screen.getByTestId("transfer-button");
     expect(transferButton).toBeDisabled();
   });
 
@@ -76,7 +76,7 @@ describe("TransferButton", () => {
       </TestWrapper>
     );
 
-    const transferButton = screen.getByRole("transfer-button");
+    const transferButton = screen.getByTestId("transfer-button");
     expect(transferButton).not.toBeDisabled();
 
     // Check the usage text shows correct counts

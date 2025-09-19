@@ -69,7 +69,7 @@ describe("Playlist", () => {
       </TestWrapper>
     );
 
-    expect(screen.getByRole("loading")).toBeInTheDocument();
+    expect(screen.getByTestId("loading")).toBeInTheDocument();
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
 
@@ -102,8 +102,8 @@ describe("Playlist", () => {
       </TestWrapper>
     );
 
-    const trackList = screen.getByRole("tracklist");
-    const tracks = within(trackList).getAllByRole("track");
+    const trackList = screen.getByTestId("tracklist");
+    const tracks = within(trackList).getAllByTestId("track");
 
     expect(tracks).toHaveLength(mockPlaylists[0].tracks.length);
 

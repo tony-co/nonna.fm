@@ -120,7 +120,7 @@ describe("LibraryClientContent", () => {
       </TestWrapper>
     );
 
-    expect(screen.getByRole("sidebar")).toBeInTheDocument();
+    expect(screen.getByTestId("sidebar")).toBeInTheDocument();
     expect(screen.getByRole("main")).toBeInTheDocument();
     expect(screen.getByTestId("mock-children")).toBeInTheDocument();
   });

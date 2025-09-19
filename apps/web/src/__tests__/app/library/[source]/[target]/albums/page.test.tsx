@@ -41,7 +41,7 @@ describe("AlbumsPage", () => {
       </TestWrapper>
     );
 
-    expect(screen.getByRole("loading")).toBeInTheDocument();
+    expect(screen.getByTestId("loading")).toBeInTheDocument();
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
 
@@ -74,8 +74,8 @@ describe("AlbumsPage", () => {
       </TestWrapper>
     );
 
-    const albumList = screen.getByRole("albumlist");
-    const albums = within(albumList).getAllByRole("album");
+    const albumList = screen.getByTestId("albumlist");
+    const albums = within(albumList).getAllByTestId("album");
 
     expect(albums).toHaveLength(mockAlbums.length);
 

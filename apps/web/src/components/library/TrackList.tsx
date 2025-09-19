@@ -27,6 +27,7 @@ const TrackRow: FC<{
   return (
     <div
       ref={ref}
+      data-testid="track"
       className={`group grid grid-cols-[32px_1fr_32px] items-center gap-2 rounded-md p-1.5 transition-colors duration-200 lg:grid-cols-[32px_32px_1fr_231px_32px] lg:gap-4 lg:p-2 ${
         isSelected
           ? "bg-indigo-50 dark:bg-indigo-950/30"
@@ -141,7 +142,7 @@ export const TrackList: FC<TrackListProps> = ({ tracks, selection = new Set(), p
       </div>
 
       {/* Tracks */}
-      <div className="space-y-2">
+      <div className="space-y-2" data-testid="tracklist">
         {tracks.map((track, index) => {
           const isSelected = Array.from(selection).some(
             selectedTrack => selectedTrack.id === track.id

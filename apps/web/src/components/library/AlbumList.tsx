@@ -21,6 +21,7 @@ const AlbumItem: FC<AlbumItemProps> = ({ album }) => {
   return (
     <div
       ref={ref}
+      data-testid="album"
       className={
         "group grid grid-cols-[32px_1fr_32px] items-center gap-2 rounded-md bg-transparent p-1.5 transition-colors duration-200 hover:bg-indigo-50/70 dark:bg-transparent dark:hover:bg-indigo-950/20"
       }
@@ -148,7 +149,7 @@ export const AlbumList: FC = () => {
             </thead>
           </table>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2" data-testid="albumlist">
           {albumsArray.map((album, index) => (
             <AlbumItem key={`${album.id}-${index}`} album={album} />
           ))}
