@@ -52,7 +52,14 @@ export const CircularProgress: FC<CircularProgressProps> = ({
       data-progress={Math.round(progress)}
     >
       <div className="rounded-full bg-black/30 p-1">
-        <svg width={size} height={size} className="rotate-[-90deg] transform">
+        <svg
+          width={size}
+          height={size}
+          className="rotate-[-90deg] transform"
+          role="img"
+          aria-label={`Progress ${Math.round(progress)}%`}
+        >
+          <title>Progress {Math.round(progress)}%</title>
           <circle
             className="text-zinc-600/30"
             strokeWidth={strokeWidth}

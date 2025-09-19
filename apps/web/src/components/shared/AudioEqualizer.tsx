@@ -101,7 +101,7 @@ const AudioEqualizerClient = ({ className = "" }: AudioEqualizerProps): React.Re
 
         return (
           <div
-            key={`equalizer-bar-${i}`}
+            key={`equalizer-bar-${i}-${totalBars}`}
             className="absolute bottom-0 w-[10px] transform-gpu opacity-80"
             style={{
               left,

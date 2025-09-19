@@ -5,7 +5,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useId } from "react";
+import { ChevronDown, Check, X } from "lucide-react";
 import { clearAllServiceData } from "@/lib/auth/utils";
 import { storeDeezerUserId, validateDeezerUser } from "@/lib/services/deezer/auth";
 
@@ -33,6 +34,7 @@ export function DeezerConnectModal({
   const [isValidating, setIsValidating] = useState(false);
   const [validationStatus, setValidationStatus] = useState<"success" | "error" | null>(null);
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
+  const inputId = useId();
 
   // Debounced validation function
   useEffect(() => {
@@ -94,23 +96,14 @@ export function DeezerConnectModal({
             <p className="text-base text-zinc-600 dark:text-stone-400">
               {t("whyNeedId.explanation")}{" "}
               <button
+                type="button"
                 onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
                 className="inline-flex items-center gap-1 text-indigo-600 hover:underline dark:text-indigo-400"
               >
                 {t("whyNeedId.seeMore")}
-                <svg
+                <ChevronDown
                   className={`h-4 w-4 transform transition-transform ${showTechnicalDetails ? "rotate-180" : ""}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
+                />
               </button>
             </p>
             {showTechnicalDetails && (
@@ -166,14 +159,14 @@ export function DeezerConnectModal({
 
         <div className="space-y-3">
           <label
-            htmlFor="deezer-id-modal"
+            htmlFor={inputId}
             className="block text-base font-medium text-zinc-800 dark:text-stone-200"
           >
             {t("form.label")}
           </label>
           <div className="relative">
             <input
-              id="deezer-id-modal"
+              id={inputId}
               type="text"
               value={deezerUserId}
               onChange={e => {
@@ -196,33 +189,9 @@ export function DeezerConnectModal({
               {isValidating ? (
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent dark:border-indigo-400" />
               ) : validationStatus === "success" ? (
-                <svg
-                  className="h-6 w-6 text-emerald-500 dark:text-emerald-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
+                <Check className="h-6 w-6 text-emerald-500 dark:text-emerald-400" />
               ) : validationStatus === "error" ? (
-                <svg
-                  className="h-6 w-6 text-red-500 dark:text-red-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <X className="h-6 w-6 text-red-500 dark:text-red-400" />
               ) : null}
             </div>
           </div>
@@ -238,12 +207,14 @@ export function DeezerConnectModal({
 
           <div className="flex shrink-0 gap-3">
             <button
+              type="button"
               onClick={onClose}
               className="rounded-xl border border-indigo-200 px-6 py-3 font-medium text-zinc-800 transition-colors hover:bg-indigo-50 dark:border-indigo-800/30 dark:text-stone-200 dark:hover:bg-indigo-950/50"
             >
               {tButtons("cancel")}
             </button>
             <button
+              type="button"
               onClick={handleDeezerConnect}
               disabled={!deezerUserId || isConnecting || validationStatus !== "success"}
               className="min-w-[100px] rounded-xl bg-indigo-600 px-6 py-3 font-semibold text-white transition-colors duration-200 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-600"

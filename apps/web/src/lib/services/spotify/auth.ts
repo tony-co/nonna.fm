@@ -88,6 +88,7 @@ export async function initiateSpotifyAuth(role: "source" | "target"): Promise<vo
 
   try {
     localStorage.setItem(stateKey, encrypt(JSON.stringify(state)));
+    // biome-ignore lint/suspicious/noDocumentCookie: Required for OAuth PKCE flow
     document.cookie = `${verifierKey}=${codeVerifier}; path=/; max-age=3600; SameSite=Lax`;
   } catch (error) {
     console.error("Failed to store auth data:", error);
@@ -336,7 +337,13 @@ export async function refreshSpotifyToken(
 
     console.log("Attempting to refresh token with refresh token length:", refreshToken?.length);
 
-    let responseData;
+    let responseData: {
+      access_token: string;
+      refresh_token?: string;
+      expires_in: number;
+      token_type: string;
+      scope?: string;
+    };
     // Get existing auth data to preserve user info
     const existingAuthData = getAuthData(role);
 

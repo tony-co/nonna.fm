@@ -57,6 +57,7 @@ export async function initiateYouTubeAuth(role: "source" | "target"): Promise<vo
 
   try {
     localStorage.setItem(stateKey, encrypt(JSON.stringify(state)));
+    // biome-ignore lint/suspicious/noDocumentCookie: Required for OAuth PKCE flow
     document.cookie = `${verifierKey}=${codeVerifier}; path=/; max-age=3600; SameSite=Lax`;
   } catch (error) {
     console.error("Failed to store auth data:", error);
@@ -254,7 +255,13 @@ export async function refreshYouTubeToken(
     // Get existing auth data to preserve user info
     const existingAuthData = getAuthData(role);
 
-    let responseData;
+    let responseData: {
+      access_token: string;
+      refresh_token?: string;
+      expires_in: number;
+      token_type: string;
+      scope?: string;
+    };
 
     if (directRequest) {
       const clientId = process.env.NEXT_PUBLIC_YOUTUBE_CLIENT_ID;

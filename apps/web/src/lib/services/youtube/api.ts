@@ -568,8 +568,8 @@ function cleanYouTubeArtist(artist: string): string {
       .replace(/\s+featuring\s+.*/i, "") // "featuring"
       .replace(/\s*\(feat\.?\s+[^)]*\)/gi, "") // (feat. ...)
       .replace(/\s*\(ft\.?\s+[^)]*\)/gi, "") // (ft. ...)
-      .replace(/\s*\[feat\.?\s+[^]]*\]/gi, "") // [feat. ...]
-      .replace(/\s*\[ft\.?\s+[^]]*\]/gi, "") // [ft. ...]
+      .replace(/\s*\[feat\.?\s+[^\]]*\]/gi, "") // [feat. ...]
+      .replace(/\s*\[ft\.?\s+[^\]]*\]/gi, "") // [ft. ...]
 
       // Remove "- Topic" suffix common in YouTube Music
       .replace(/\s*-\s*Topic$/i, "")

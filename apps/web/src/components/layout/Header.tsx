@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import { useItemTitle } from "@/contexts/ItemTitleContext";
 import { Link, usePathname } from "@/i18n/navigation";
 import { NonnaLogo } from "../icons/NonnaLogo";
@@ -52,16 +53,7 @@ export const Header = () => {
                 aria-label={t("back")}
                 data-testid="back-to-library"
               >
-                <svg
-                  className="mr-2 size-6"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
+                <ArrowLeft className="mr-2 size-6" aria-hidden="true" />
                 <span className="sr-only">{t("back")}</span>
               </Link>
               <span

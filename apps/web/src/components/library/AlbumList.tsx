@@ -133,17 +133,20 @@ export const AlbumList: FC = () => {
       </div>
       {/* Table header and album list */}
       <div className="relative bg-transparent dark:bg-transparent">
-        <div
-          className="mb-4 grid grid-cols-[32px_1fr_32px] gap-2 border-b border-slate-200 bg-white/80 p-1.5 py-2 text-xs font-normal text-slate-500 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400"
-          role="row"
-        >
-          <div className="flex items-center" role="columnheader">
-            Title
-          </div>
-          <div className="ml-4 flex items-center" role="columnheader"></div>
-          <div className="flex items-center justify-end" role="columnheader">
-            Status
-          </div>
+        <div className="mb-4">
+          <table className="w-full">
+            <thead>
+              <tr className="grid grid-cols-[32px_1fr_32px] gap-2 border-b border-slate-200 bg-white/80 p-1.5 py-2 text-xs font-normal text-slate-500 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400">
+                <th scope="col" className="flex items-center">
+                  Title
+                </th>
+                <th scope="col" className="ml-4 flex items-center"></th>
+                <th scope="col" className="flex items-center justify-end">
+                  Status
+                </th>
+              </tr>
+            </thead>
+          </table>
         </div>
         <div className="space-y-2">
           {albumsArray.map((album, index) => (

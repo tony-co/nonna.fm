@@ -42,7 +42,7 @@ vi.mock("@/lib/musicApi", () => ({
 
 // Mock components
 vi.mock("@/components/shared/ArtworkImage", () => ({
-  // eslint-disable-next-line @next/next/no-img-element
+  // biome-ignore lint/performance/noImgElement: Using img in test mock is appropriate
   ArtworkImage: ({ alt }: { alt: string }) => <img alt={alt} />,
 }));
 
@@ -140,7 +140,7 @@ describe("LibrarySidebar", () => {
       );
 
       // Get first playlist from the mock data
-      const playlistId = Array.from(mockLibraryState.playlists?.values())[0].id;
+      const playlistId = Array.from(mockLibraryState.playlists?.values() ?? [])[0].id;
       const playlistItem = screen.getByTestId(`playlist-item-${playlistId}`);
       expect(playlistItem).toBeInTheDocument();
 
@@ -200,7 +200,7 @@ describe("LibrarySidebar", () => {
       const modifiedState = {
         ...mockLibraryState,
         playlists: new Map(
-          Array.from(mockLibraryState.playlists?.entries()).map(([id, playlist], index) => {
+          Array.from(mockLibraryState.playlists?.entries() ?? []).map(([id, playlist], index) => {
             if (index === 0) {
               return [id, { ...playlist, tracks: [] }];
             }

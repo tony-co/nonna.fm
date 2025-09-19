@@ -77,6 +77,7 @@ export function StructuredData({ locale, type, source, target, breadcrumbs }: St
           key={`structured-data-${key}`}
           id={`structured-data-${key}`}
           type="application/ld+json"
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: Safe usage with JSON.stringify for structured data
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(schema, null, 0),
           }}

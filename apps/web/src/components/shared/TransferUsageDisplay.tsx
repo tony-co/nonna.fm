@@ -28,6 +28,7 @@ export function TransferUsageDisplay() {
   return (
     <>
       <button
+        type="button"
         onClick={() => setIsModalOpen(true)}
         className="group relative flex cursor-pointer flex-col items-center gap-1.5 rounded-full border border-indigo-100 bg-gradient-to-b from-white to-indigo-50/50 px-4 py-2.5 transition-all duration-300 hover:border-indigo-200 active:scale-[0.98] dark:border-indigo-500/20 dark:from-gray-900 dark:to-indigo-950/30 dark:hover:border-indigo-500/30"
       >

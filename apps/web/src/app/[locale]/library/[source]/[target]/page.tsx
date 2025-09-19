@@ -19,9 +19,8 @@ export default async function LibraryHomePage({ params }: LibraryHomePageProps) 
   const targetName = targetService?.name || target;
 
   return (
-    <div
+    <section
       className="animate-fade-in mx-auto hidden max-w-2xl flex-col items-center justify-center p-8 md:flex"
-      role="region"
       aria-label={t("transferGuide")}
       style={{
         animation: "fadeIn 0.5s ease-out",
@@ -85,6 +84,6 @@ export default async function LibraryHomePage({ params }: LibraryHomePageProps) 
       <p className="mt-8 text-sm text-indigo-600 dark:text-indigo-400/80">
         {t("disclaimer", { source: sourceName })}
       </p>
-    </div>
+    </section>
   );
 }
