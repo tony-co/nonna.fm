@@ -21,12 +21,10 @@
     "update-deps": "syncpack update",
     "check-deps": "syncpack list-mismatches",
     "fix-deps": "syncpack fix-mismatches",
-    "prepare": "husky"
+    "prepare": "lefthook install"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
-    "husky": "^9.1.7",
-    "lint-staged": "16.1.5",
     "syncpack": "^13.0.4",
     "turbo": "^2.5.6"
   },
