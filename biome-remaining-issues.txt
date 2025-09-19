@@ -1,0 +1,1974 @@
+apps/web/src/__tests__/components/layout/Sidebar.test.tsx:46:47 lint/performance/noImgElement ━━━━━━━━━━
+
+  ! Don't use <img> element.
+  
+    44 │ vi.mock("@/components/shared/ArtworkImage", () => ({
+    45 │   // eslint-disable-next-line @next/next/no-img-element
+  > 46 │   ArtworkImage: ({ alt }: { alt: string }) => <img alt={alt} />,
+       │                                               ^^^^^^^^^^^^^^^^^
+    47 │ }));
+    48 │ 
+  
+  i Using the <img> can lead to slower LCP and higher bandwidth. Consider using <Image /> from next/image to automatically optimize images.
+  
+
+apps/web/src/components/shared/TransferSuccessModal.tsx:119:52 lint/style/noNonNullAssertion ━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    117 │             {hasLikedSongs && selectedData.likedSongs.length > 0 && (
+    118 │               <a
+  > 119 │                 href={targetService.getPlaylistUrl(results.likedSongs?.playlistId!)}
+        │                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    120 │                 target="_blank"
+    121 │                 rel="noopener noreferrer"
+  
+
+apps/web/src/components/shared/TransferSuccessModal.tsx:157:52 lint/style/noNonNullAssertion ━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    155 │             {hasAlbums && selectedData.albums.length > 0 && (
+    156 │               <a
+  > 157 │                 href={targetService.getPlaylistUrl(results.albums?.playlistId!)}
+        │                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    158 │                 target="_blank"
+    159 │                 rel="noopener noreferrer"
+  
+
+apps/web/src/lib/auth/utils.ts:34:5 lint/suspicious/noDocumentCookie ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Direct assigning to document.cookie is not recommended.
+  
+    33 │   cookies.forEach(cookie => {
+  > 34 │     document.cookie = `${cookie}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+       │     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    35 │   });
+    36 │ }
+  
+  i Consider using the Cookie Store API.
+  
+
+apps/web/src/lib/services/apple/api.ts:25:18 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    23 │ import { getAppleAuthData } from "./auth";
+    24 │ 
+  > 25 │ const BASE_URL = SERVICES.apple.apiBaseUrl!;
+       │                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    26 │ 
+    27 │ interface MusicKitInstance {
+  
+
+apps/web/src/lib/services/spotify/auth.ts:91:5 lint/suspicious/noDocumentCookie ━━━━━━━━━━━━━━━━━━━━
+
+  ! Direct assigning to document.cookie is not recommended.
+  
+    89 │   try {
+    90 │     localStorage.setItem(stateKey, encrypt(JSON.stringify(state)));
+  > 91 │     document.cookie = `${verifierKey}=${codeVerifier}; path=/; max-age=3600; SameSite=Lax`;
+       │     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    92 │   } catch (error) {
+    93 │     console.error("Failed to store auth data:", error);
+  
+  i Consider using the Cookie Store API.
+  
+
+apps/web/src/lib/services/youtube/auth.ts:60:5 lint/suspicious/noDocumentCookie ━━━━━━━━━━━━━━━━━━━━
+
+  ! Direct assigning to document.cookie is not recommended.
+  
+    58 │   try {
+    59 │     localStorage.setItem(stateKey, encrypt(JSON.stringify(state)));
+  > 60 │     document.cookie = `${verifierKey}=${codeVerifier}; path=/; max-age=3600; SameSite=Lax`;
+       │     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    61 │   } catch (error) {
+    62 │     console.error("Failed to store auth data:", error);
+  
+  i Consider using the Cookie Store API.
+  
+
+apps/web/src/app/[locale]/layout.tsx:62:11 lint/security/noDangerouslySetInnerHtml ━━━━━━━━━━━━━━━━━
+
+  × Avoid passing content using the dangerouslySetInnerHTML prop.
+  
+    60 │         <Script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js" />
+    61 │         <script
+  > 62 │           dangerouslySetInnerHTML={{
+       │           ^^^^^^^^^^^^^^^^^^^^^^^
+    63 │             __html: `
+    64 │               (function() {
+  
+  ! Setting content using code can expose users to cross-site scripting (XSS) attacks
+  
+
+apps/web/src/app/[locale]/library/[source]/[target]/page.tsx:24:7 lint/a11y/useSemanticElements ━━━━━━━━━━
+
+  × The elements with this role can be changed to the following elements:
+    <section>
+  
+    22 │     <div
+    23 │       className="animate-fade-in mx-auto hidden max-w-2xl flex-col items-center justify-center p-8 md:flex"
+  > 24 │       role="region"
+       │       ^^^^^^^^^^^^^
+    25 │       aria-label={t("transferGuide")}
+    26 │       style={{
+  
+  i For examples and more information, see WAI-ARIA Roles
+  
+
+apps/web/src/components/layout/Sidebar.tsx:311:11 lint/a11y/useKeyWithClickEvents ━━━━━━━━━━━━━━━━━━
+
+  × Enforce to have the onClick mouse event with the onKeyUp, the onKeyDown, or the onKeyPress keyboard event.
+  
+    309 │           data-testid={`playlist-item-${playlist.id}`}
+    310 │         >
+  > 311 │           <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
+        │           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    312 │             <IndeterminateCheckbox
+    313 │               selectedCount={selectedItems.playlists.has(playlist.id) ? 1 : 0}
+  
+  i Actions triggered using mouse events should have corresponding keyboard events to account for keyboard-only navigation.
+  
+
+apps/web/src/components/layout/Sidebar.tsx:184:7 lint/a11y/useFocusableInteractive ━━━━━━━━━━━━━━━━━
+
+  × The HTML element with the interactive role "button" is not focusable.
+  
+    183 │       {/* Liked Songs Section */}
+  > 184 │       <div
+        │       ^^^^
+  > 185 │         // Add margin-bottom to separate from next item, and reduce vertical padding
+         ...
+  > 194 │         data-testid="liked-songs-section"
+  > 195 │       >
+        │       ^
+    196 │         <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
+    197 │           <IndeterminateCheckbox
+  
+  i A non-interactive HTML element that is not focusable may not be reachable for users that rely on keyboard navigation, even with an added role like "button".
+  
+  i Add a tabIndex attribute to make this element focusable.
+  
+
+apps/web/src/components/layout/Sidebar.tsx:192:9 lint/a11y/useSemanticElements ━━━━━━━━━━━━━━━━━━━━━
+
+  × The elements with this role can be changed to the following elements:
+    <button>
+  
+    190 │         }`}
+    191 │         onClick={handleLikedSongsClick}
+  > 192 │         role="button"
+        │         ^^^^^^^^^^^^^
+    193 │         aria-label={tAccessibility("viewLikedSongs")}
+    194 │         data-testid="liked-songs-section"
+  
+  i For examples and more information, see WAI-ARIA Roles
+  
+
+apps/web/src/components/layout/Sidebar.tsx:184:7 lint/a11y/useKeyWithClickEvents ━━━━━━━━━━━━━━━━━━━
+
+  × Enforce to have the onClick mouse event with the onKeyUp, the onKeyDown, or the onKeyPress keyboard event.
+  
+    183 │       {/* Liked Songs Section */}
+  > 184 │       <div
+        │       ^^^^
+  > 185 │         // Add margin-bottom to separate from next item, and reduce vertical padding
+         ...
+  > 194 │         data-testid="liked-songs-section"
+  > 195 │       >
+        │       ^
+    196 │         <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
+    197 │           <IndeterminateCheckbox
+  
+  i Actions triggered using mouse events should have corresponding keyboard events to account for keyboard-only navigation.
+  
+
+apps/web/src/components/layout/Sidebar.tsx:196:9 lint/a11y/useKeyWithClickEvents ━━━━━━━━━━━━━━━━━━━
+
+  × Enforce to have the onClick mouse event with the onKeyUp, the onKeyDown, or the onKeyPress keyboard event.
+  
+    194 │         data-testid="liked-songs-section"
+    195 │       >
+  > 196 │         <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
+        │         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    197 │           <IndeterminateCheckbox
+    198 │             selectedCount={selectedLikedSongsCount}
+  
+  i Actions triggered using mouse events should have corresponding keyboard events to account for keyboard-only navigation.
+  
+
+apps/web/src/components/layout/Sidebar.tsx:196:9 lint/a11y/noStaticElementInteractions ━━━━━━━━━━━━━
+
+  × Static Elements should not be interactive.
+  
+    194 │         data-testid="liked-songs-section"
+    195 │       >
+  > 196 │         <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
+        │         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    197 │           <IndeterminateCheckbox
+    198 │             selectedCount={selectedLikedSongsCount}
+  
+  i To add interactivity such as a mouse or key event listener to a static element, give the element an appropriate role value.
+  
+
+apps/web/src/components/layout/Sidebar.tsx:239:9 lint/a11y/useKeyWithClickEvents ━━━━━━━━━━━━━━━━━━━
+
+  × Enforce to have the onClick mouse event with the onKeyUp, the onKeyDown, or the onKeyPress keyboard event.
+  
+    237 │       {/* YouTube Music API does not support adding albums to the user library as source or target */}
+    238 │       {!isYouTubeService(source) && !isYouTubeService(target) && (
+  > 239 │         <div
+        │         ^^^^
+  > 240 │           // Add margin-bottom to separate from next item, and reduce vertical padding
+         ...
+  > 249 │           data-testid="albums-section"
+  > 250 │         >
+        │         ^
+    251 │           <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
+    252 │             <IndeterminateCheckbox
+  
+  i Actions triggered using mouse events should have corresponding keyboard events to account for keyboard-only navigation.
+  
+
+apps/web/src/components/layout/Sidebar.tsx:239:9 lint/a11y/useFocusableInteractive ━━━━━━━━━━━━━━━━━
+
+  × The HTML element with the interactive role "button" is not focusable.
+  
+    237 │       {/* YouTube Music API does not support adding albums to the user library as source or target */}
+    238 │       {!isYouTubeService(source) && !isYouTubeService(target) && (
+  > 239 │         <div
+        │         ^^^^
+  > 240 │           // Add margin-bottom to separate from next item, and reduce vertical padding
+         ...
+  > 249 │           data-testid="albums-section"
+  > 250 │         >
+        │         ^
+    251 │           <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
+    252 │             <IndeterminateCheckbox
+  
+  i A non-interactive HTML element that is not focusable may not be reachable for users that rely on keyboard navigation, even with an added role like "button".
+  
+  i Add a tabIndex attribute to make this element focusable.
+  
+
+apps/web/src/components/layout/Sidebar.tsx:247:11 lint/a11y/useSemanticElements ━━━━━━━━━━━━━━━━━━━━
+
+  × The elements with this role can be changed to the following elements:
+    <button>
+  
+    245 │           }`}
+    246 │           onClick={handleAlbumsClick}
+  > 247 │           role="button"
+        │           ^^^^^^^^^^^^^
+    248 │           aria-label={tAccessibility("viewAlbums")}
+    249 │           data-testid="albums-section"
+  
+  i For examples and more information, see WAI-ARIA Roles
+  
+
+apps/web/src/components/layout/Sidebar.tsx:251:11 lint/a11y/useKeyWithClickEvents ━━━━━━━━━━━━━━━━━━
+
+  × Enforce to have the onClick mouse event with the onKeyUp, the onKeyDown, or the onKeyPress keyboard event.
+  
+    249 │           data-testid="albums-section"
+    250 │         >
+  > 251 │           <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
+        │           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    252 │             <IndeterminateCheckbox
+    253 │               selectedCount={selectedAlbumsCount}
+  
+  i Actions triggered using mouse events should have corresponding keyboard events to account for keyboard-only navigation.
+  
+
+apps/web/src/components/layout/Sidebar.tsx:251:11 lint/a11y/noStaticElementInteractions ━━━━━━━━━━━━
+
+  × Static Elements should not be interactive.
+  
+    249 │           data-testid="albums-section"
+    250 │         >
+  > 251 │           <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
+        │           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    252 │             <IndeterminateCheckbox
+    253 │               selectedCount={selectedAlbumsCount}
+  
+  i To add interactivity such as a mouse or key event listener to a static element, give the element an appropriate role value.
+  
+
+apps/web/src/components/layout/Sidebar.tsx:300:9 lint/a11y/noStaticElementInteractions ━━━━━━━━━━━━━
+
+  × Static Elements should not be interactive.
+  
+    298 │       {/* Playlists Section */}
+    299 │       {Array.from(state.playlists?.values() ?? []).map((playlist, idx, arr) => (
+  > 300 │         <div
+        │         ^^^^
+  > 301 │           key={playlist.id}
+         ...
+  > 309 │           data-testid={`playlist-item-${playlist.id}`}
+  > 310 │         >
+        │         ^
+    311 │           <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
+    312 │             <IndeterminateCheckbox
+  
+  i To add interactivity such as a mouse or key event listener to a static element, give the element an appropriate role value.
+  
+
+apps/web/src/components/layout/Sidebar.tsx:300:9 lint/a11y/useKeyWithClickEvents ━━━━━━━━━━━━━━━━━━━
+
+  × Enforce to have the onClick mouse event with the onKeyUp, the onKeyDown, or the onKeyPress keyboard event.
+  
+    298 │       {/* Playlists Section */}
+    299 │       {Array.from(state.playlists?.values() ?? []).map((playlist, idx, arr) => (
+  > 300 │         <div
+        │         ^^^^
+  > 301 │           key={playlist.id}
+         ...
+  > 309 │           data-testid={`playlist-item-${playlist.id}`}
+  > 310 │         >
+        │         ^
+    311 │           <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
+    312 │             <IndeterminateCheckbox
+  
+  i Actions triggered using mouse events should have corresponding keyboard events to account for keyboard-only navigation.
+  
+
+apps/web/src/components/layout/Sidebar.tsx:311:11 lint/a11y/noStaticElementInteractions ━━━━━━━━━━━━
+
+  × Static Elements should not be interactive.
+  
+    309 │           data-testid={`playlist-item-${playlist.id}`}
+    310 │         >
+  > 311 │           <div onClick={e => e.stopPropagation()} className="pl-2 lg:pl-0">
+        │           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    312 │             <IndeterminateCheckbox
+    313 │               selectedCount={selectedItems.playlists.has(playlist.id) ? 1 : 0}
+  
+  i To add interactivity such as a mouse or key event listener to a static element, give the element an appropriate role value.
+  
+
+apps/web/src/components/layout/header/LanguageSwitch.tsx:77:9 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    75 │           <path d="M272,320c-.25-.19-20.59-15.77-45.42-42.67,39.58-53.64,62-114.61,71.15-143.33H352V90H214V48H170V90H32v44H251.25c-9.52,26.95-27.05,69.5-53.79,108.36-32.68-43.44-47.14-75.88-47.33-76.22L143,152l-38,22,6.87,13.86c.89,1.56,17.19,37.9,54.71,86.57.92,1.21,1.85,2.39,2.78,3.57-49.72,56.86-89.15,79.09-89.66,79.47L64,368l23,36,19.3-11.47c2.2-1.67,41.33-24,92-80.78,24.52,26.28,43.22,40.83,44.3,41.67L255,362Z"></path>
+    76 │         </svg>
+  > 77 │         <svg
+       │         ^^^^
+  > 78 │           className={`h-4 w-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+  > 79 │           fill="none"
+  > 80 │           stroke="currentColor"
+  > 81 │           viewBox="0 0 24 24"
+  > 82 │         >
+       │         ^
+    83 │           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    84 │         </svg>
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/layout/header/MobileMenu.tsx:222:19 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    220 │                   className="group flex flex-col items-center rounded-lg px-3 py-2 text-zinc-600 transition-all hover:bg-indigo-50/50 hover:text-indigo-600 dark:text-stone-400 dark:hover:bg-indigo-950/30 dark:hover:text-indigo-400"
+    221 │                 >
+  > 222 │                   <svg
+        │                   ^^^^
+  > 223 │                     className="mb-1.5 h-5 w-5 opacity-70 transition-opacity group-hover:opacity-100"
+  > 224 │                     xmlns="http://www.w3.org/2000/svg"
+  > 225 │                     fill="currentColor"
+  > 226 │                     viewBox="0 0 24 24"
+  > 227 │                   >
+        │                   ^
+    228 │                     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+    229 │                   </svg>
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/layout/header/MobileMenu.tsx:54:7 lint/a11y/useButtonType ━━━━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    52 │     <>
+    53 │       {/* Menu button: opens the dialog */}
+  > 54 │       <button
+       │       ^^^^^^^
+  > 55 │         onClick={() => onOpenChange(true)}
+  > 56 │         className="rounded-full p-2 transition-colors duration-200 hover:bg-gray-100 dark:text-white dark:hover:bg-white/10"
+  > 57 │         aria-label={tAccessibility("openMenu")}
+  > 58 │       >
+       │       ^
+    59 │         <svg
+    60 │           className="size-6"
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+apps/web/src/components/layout/header/MobileMenu.tsx:124:19 lint/a11y/useButtonType ━━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    123 │                 <div className="grid grid-cols-2 gap-3">
+  > 124 │                   <button
+        │                   ^^^^^^^
+  > 125 │                     onClick={() => theme !== "light" && toggleTheme()}
+         ...
+  > 130 │                     }`}
+  > 131 │                   >
+        │                   ^
+    132 │                     <div className="flex aspect-[4/3] items-center justify-center rounded-lg bg-white">
+    133 │                       <span className="text-2xl font-medium text-gray-900">Aa</span>
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+apps/web/src/components/layout/header/MobileMenu.tsx:140:19 lint/a11y/useButtonType ━━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    138 │                   </button>
+    139 │ 
+  > 140 │                   <button
+        │                   ^^^^^^^
+  > 141 │                     onClick={() => theme !== "dark" && toggleTheme()}
+         ...
+  > 146 │                     }`}
+  > 147 │                   >
+        │                   ^
+    148 │                     <div className="flex aspect-[4/3] items-center justify-center rounded-lg bg-[#1c1c1c]">
+    149 │                       <span className="text-2xl font-medium text-white">Aa</span>
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+apps/web/src/components/layout/header/MobileMenu.tsx:161:15 lint/a11y/useButtonType ━━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    159 │             {/* Close Button */}
+    160 │             <div className="p-8">
+  > 161 │               <button
+        │               ^^^^^^^
+  > 162 │                 className="w-full rounded-full bg-indigo-600 py-3.5 text-center text-[17px] font-medium text-white transition-colors duration-200 hover:bg-indigo-700"
+  > 163 │                 onClick={() => onOpenChange(false)}
+  > 164 │               >
+        │               ^
+    165 │                 {tUI("close")}
+    166 │               </button>
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+apps/web/src/components/layout/header/MobileMenu.tsx:59:9 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    57 │         aria-label={tAccessibility("openMenu")}
+    58 │       >
+  > 59 │         <svg
+       │         ^^^^
+  > 60 │           className="size-6"
+        ...
+  > 66 │           stroke="currentColor"
+  > 67 │         >
+       │         ^
+    68 │           <path d="M4 6h16M4 12h16M4 18h16" />
+    69 │         </svg>
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/layout/header/MobileMenu.tsx:81:19 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    79 │               <div className="my-1 rounded-lg px-2 py-4">
+    80 │                 <div className="mb-2 flex items-center gap-3 text-gray-900 dark:text-white">
+  > 81 │                   <svg className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+       │                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    82 │                     <path
+    83 │                       strokeLinecap="round"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/layout/header/MobileMenu.tsx:112:19 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    110 │               <div className="my-1 rounded-lg px-2 py-4">
+    111 │                 <div className="mb-4 flex items-center gap-3 text-gray-900 dark:text-white">
+  > 112 │                   <svg className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        │                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    113 │                     <path
+    114 │                       strokeLinecap="round"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/layout/header/MobileMenu.tsx:178:19 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    176 │                   className="group flex flex-col items-center rounded-lg px-3 py-2 text-zinc-600 transition-all hover:bg-indigo-50/50 hover:text-indigo-600 dark:text-stone-400 dark:hover:bg-indigo-950/30 dark:hover:text-indigo-400"
+    177 │                 >
+  > 178 │                   <svg
+        │                   ^^^^
+  > 179 │                     className="mb-1.5 h-5 w-5 opacity-70 transition-opacity group-hover:opacity-100"
+         ...
+  > 184 │                     stroke="currentColor"
+  > 185 │                   >
+        │                   ^
+    186 │                     <path
+    187 │                       strokeLinecap="round"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/layout/header/MobileMenu.tsx:200:19 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    198 │                   className="group flex flex-col items-center rounded-lg px-3 py-2 text-zinc-600 transition-all hover:bg-indigo-50/50 hover:text-indigo-600 dark:text-stone-400 dark:hover:bg-indigo-950/30 dark:hover:text-indigo-400"
+    199 │                 >
+  > 200 │                   <svg
+        │                   ^^^^
+  > 201 │                     className="mb-1.5 h-5 w-5 opacity-70 transition-opacity group-hover:opacity-100"
+         ...
+  > 206 │                     stroke="currentColor"
+  > 207 │                   >
+        │                   ^
+    208 │                     <path
+    209 │                       strokeLinecap="round"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/layout/header/ThemeToggle.tsx:41:7 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    40 │       {/* Sun icon - left side */}
+  > 41 │       <svg
+       │       ^^^^
+  > 42 │         xmlns="http://www.w3.org/2000/svg"
+        ...
+  > 51 │         className={`relative z-10 ml-1.5 ${theme === "light" ? "text-gray-800" : "text-gray-500"} transition-colors duration-200`}
+  > 52 │       >
+       │       ^
+    53 │         <circle cx="12" cy="12" r="5" />
+    54 │         <line x1="12" y1="1" x2="12" y2="3" />
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/layout/header/ThemeToggle.tsx:65:7 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    64 │       {/* Moon icon - right side */}
+  > 65 │       <svg
+       │       ^^^^
+  > 66 │         xmlns="http://www.w3.org/2000/svg"
+        ...
+  > 75 │         className={`relative z-10 mr-1.5 ${theme === "light" ? "text-gray-400" : "text-indigo-200"} transition-colors duration-200`}
+  > 76 │       >
+       │       ^
+    77 │         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    78 │       </svg>
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/library/AlbumList.tsx:136:9 lint/a11y/useFocusableInteractive ━━━━━━━━━━━━━━
+
+  × The HTML element with the interactive role "row" is not focusable.
+  
+    134 │       {/* Table header and album list */}
+    135 │       <div className="relative bg-transparent dark:bg-transparent">
+  > 136 │         <div
+        │         ^^^^
+  > 137 │           className="mb-4 grid grid-cols-[32px_1fr_32px] gap-2 border-b border-slate-200 bg-white/80 p-1.5 py-2 text-xs font-normal text-slate-500 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400"
+  > 138 │           role="row"
+  > 139 │         >
+        │         ^
+    140 │           <div className="flex items-center" role="columnheader">
+    141 │             Title
+  
+  i A non-interactive HTML element that is not focusable may not be reachable for users that rely on keyboard navigation, even with an added role like "row".
+  
+  i Add a tabIndex attribute to make this element focusable.
+  
+
+apps/web/src/components/library/AlbumList.tsx:144:11 lint/a11y/useFocusableInteractive ━━━━━━━━━━━━━
+
+  × The HTML element with the interactive role "columnheader" is not focusable.
+  
+    142 │           </div>
+    143 │           <div className="ml-4 flex items-center" role="columnheader"></div>
+  > 144 │           <div className="flex items-center justify-end" role="columnheader">
+        │           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    145 │             Status
+    146 │           </div>
+  
+  i A non-interactive HTML element that is not focusable may not be reachable for users that rely on keyboard navigation, even with an added role like "columnheader".
+  
+  i Add a tabIndex attribute to make this element focusable.
+  
+
+apps/web/src/components/library/AlbumList.tsx:138:11 lint/a11y/useSemanticElements ━━━━━━━━━━━━━━━━━
+
+  × The elements with this role can be changed to the following elements:
+    <tr>
+  
+    136 │         <div
+    137 │           className="mb-4 grid grid-cols-[32px_1fr_32px] gap-2 border-b border-slate-200 bg-white/80 p-1.5 py-2 text-xs font-normal text-slate-500 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400"
+  > 138 │           role="row"
+        │           ^^^^^^^^^^
+    139 │         >
+    140 │           <div className="flex items-center" role="columnheader">
+  
+  i For examples and more information, see WAI-ARIA Roles
+  
+
+apps/web/src/components/library/AlbumList.tsx:140:11 lint/a11y/useFocusableInteractive ━━━━━━━━━━━━━
+
+  × The HTML element with the interactive role "columnheader" is not focusable.
+  
+    138 │           role="row"
+    139 │         >
+  > 140 │           <div className="flex items-center" role="columnheader">
+        │           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    141 │             Title
+    142 │           </div>
+  
+  i A non-interactive HTML element that is not focusable may not be reachable for users that rely on keyboard navigation, even with an added role like "columnheader".
+  
+  i Add a tabIndex attribute to make this element focusable.
+  
+
+apps/web/src/components/library/AlbumList.tsx:140:46 lint/a11y/useSemanticElements ━━━━━━━━━━━━━━━━━
+
+  × The elements with this role can be changed to the following elements:
+    <th scope="col">
+  
+    138 │           role="row"
+    139 │         >
+  > 140 │           <div className="flex items-center" role="columnheader">
+        │                                              ^^^^^^^^^^^^^^^^^^^
+    141 │             Title
+    142 │           </div>
+  
+  i For examples and more information, see WAI-ARIA Roles
+  
+
+apps/web/src/components/library/AlbumList.tsx:143:51 lint/a11y/useSemanticElements ━━━━━━━━━━━━━━━━━
+
+  × The elements with this role can be changed to the following elements:
+    <th scope="col">
+  
+    141 │             Title
+    142 │           </div>
+  > 143 │           <div className="ml-4 flex items-center" role="columnheader"></div>
+        │                                                   ^^^^^^^^^^^^^^^^^^^
+    144 │           <div className="flex items-center justify-end" role="columnheader">
+    145 │             Status
+  
+  i For examples and more information, see WAI-ARIA Roles
+  
+
+apps/web/src/components/library/AlbumList.tsx:143:11 lint/a11y/useFocusableInteractive ━━━━━━━━━━━━━
+
+  × The HTML element with the interactive role "columnheader" is not focusable.
+  
+    141 │             Title
+    142 │           </div>
+  > 143 │           <div className="ml-4 flex items-center" role="columnheader"></div>
+        │           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    144 │           <div className="flex items-center justify-end" role="columnheader">
+    145 │             Status
+  
+  i A non-interactive HTML element that is not focusable may not be reachable for users that rely on keyboard navigation, even with an added role like "columnheader".
+  
+  i Add a tabIndex attribute to make this element focusable.
+  
+
+apps/web/src/components/library/AlbumList.tsx:144:58 lint/a11y/useSemanticElements ━━━━━━━━━━━━━━━━━
+
+  × The elements with this role can be changed to the following elements:
+    <th scope="col">
+  
+    142 │           </div>
+    143 │           <div className="ml-4 flex items-center" role="columnheader"></div>
+  > 144 │           <div className="flex items-center justify-end" role="columnheader">
+        │                                                          ^^^^^^^^^^^^^^^^^^^
+    145 │             Status
+    146 │           </div>
+  
+  i For examples and more information, see WAI-ARIA Roles
+  
+
+apps/web/src/components/library/TrackList.tsx:125:54 lint/a11y/useSemanticElements ━━━━━━━━━━━━━━━━━
+
+  × The elements with this role can be changed to the following elements:
+    <th scope="col">
+  
+    123 │         role="row"
+    124 │       >
+  > 125 │         <div className="hidden items-center lg:flex" role="columnheader">
+        │                                                      ^^^^^^^^^^^^^^^^^^^
+    126 │           {tTableHeaders("number")}
+    127 │         </div>
+  
+  i For examples and more information, see WAI-ARIA Roles
+  
+
+apps/web/src/components/library/TrackList.tsx:128:44 lint/a11y/useSemanticElements ━━━━━━━━━━━━━━━━━
+
+  × The elements with this role can be changed to the following elements:
+    <th scope="col">
+  
+    126 │           {tTableHeaders("number")}
+    127 │         </div>
+  > 128 │         <div className="flex items-center" role="columnheader">
+        │                                            ^^^^^^^^^^^^^^^^^^^
+    129 │           {tTableHeaders("title")}
+    130 │         </div>
+  
+  i For examples and more information, see WAI-ARIA Roles
+  
+
+apps/web/src/components/library/TrackList.tsx:128:9 lint/a11y/useFocusableInteractive ━━━━━━━━━━━━━━
+
+  × The HTML element with the interactive role "columnheader" is not focusable.
+  
+    126 │           {tTableHeaders("number")}
+    127 │         </div>
+  > 128 │         <div className="flex items-center" role="columnheader">
+        │         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    129 │           {tTableHeaders("title")}
+    130 │         </div>
+  
+  i A non-interactive HTML element that is not focusable may not be reachable for users that rely on keyboard navigation, even with an added role like "columnheader".
+  
+  i Add a tabIndex attribute to make this element focusable.
+  
+
+apps/web/src/components/library/TrackList.tsx:131:9 lint/a11y/useFocusableInteractive ━━━━━━━━━━━━━━
+
+  × The HTML element with the interactive role "columnheader" is not focusable.
+  
+    129 │           {tTableHeaders("title")}
+    130 │         </div>
+  > 131 │         <div className="flex items-center" role="columnheader"></div>
+        │         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    132 │         <div className="hidden items-center lg:flex" role="columnheader">
+    133 │           {tTableHeaders("album")}
+  
+  i A non-interactive HTML element that is not focusable may not be reachable for users that rely on keyboard navigation, even with an added role like "columnheader".
+  
+  i Add a tabIndex attribute to make this element focusable.
+  
+
+apps/web/src/components/library/TrackList.tsx:131:44 lint/a11y/useSemanticElements ━━━━━━━━━━━━━━━━━
+
+  × The elements with this role can be changed to the following elements:
+    <th scope="col">
+  
+    129 │           {tTableHeaders("title")}
+    130 │         </div>
+  > 131 │         <div className="flex items-center" role="columnheader"></div>
+        │                                            ^^^^^^^^^^^^^^^^^^^
+    132 │         <div className="hidden items-center lg:flex" role="columnheader">
+    133 │           {tTableHeaders("album")}
+  
+  i For examples and more information, see WAI-ARIA Roles
+  
+
+apps/web/src/components/library/TrackList.tsx:132:9 lint/a11y/useFocusableInteractive ━━━━━━━━━━━━━━
+
+  × The HTML element with the interactive role "columnheader" is not focusable.
+  
+    130 │         </div>
+    131 │         <div className="flex items-center" role="columnheader"></div>
+  > 132 │         <div className="hidden items-center lg:flex" role="columnheader">
+        │         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    133 │           {tTableHeaders("album")}
+    134 │         </div>
+  
+  i A non-interactive HTML element that is not focusable may not be reachable for users that rely on keyboard navigation, even with an added role like "columnheader".
+  
+  i Add a tabIndex attribute to make this element focusable.
+  
+
+apps/web/src/components/library/TrackList.tsx:132:54 lint/a11y/useSemanticElements ━━━━━━━━━━━━━━━━━
+
+  × The elements with this role can be changed to the following elements:
+    <th scope="col">
+  
+    130 │         </div>
+    131 │         <div className="flex items-center" role="columnheader"></div>
+  > 132 │         <div className="hidden items-center lg:flex" role="columnheader">
+        │                                                      ^^^^^^^^^^^^^^^^^^^
+    133 │           {tTableHeaders("album")}
+    134 │         </div>
+  
+  i For examples and more information, see WAI-ARIA Roles
+  
+
+apps/web/src/components/library/TrackList.tsx:135:56 lint/a11y/useSemanticElements ━━━━━━━━━━━━━━━━━
+
+  × The elements with this role can be changed to the following elements:
+    <th scope="col">
+  
+    133 │           {tTableHeaders("album")}
+    134 │         </div>
+  > 135 │         <div className="flex items-center justify-end" role="columnheader">
+        │                                                        ^^^^^^^^^^^^^^^^^^^
+    136 │           {tTableHeaders("status")}
+    137 │         </div>
+  
+  i For examples and more information, see WAI-ARIA Roles
+  
+
+apps/web/src/components/library/TrackList.tsx:135:9 lint/a11y/useFocusableInteractive ━━━━━━━━━━━━━━
+
+  × The HTML element with the interactive role "columnheader" is not focusable.
+  
+    133 │           {tTableHeaders("album")}
+    134 │         </div>
+  > 135 │         <div className="flex items-center justify-end" role="columnheader">
+        │         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    136 │           {tTableHeaders("status")}
+    137 │         </div>
+  
+  i A non-interactive HTML element that is not focusable may not be reachable for users that rely on keyboard navigation, even with an added role like "columnheader".
+  
+  i Add a tabIndex attribute to make this element focusable.
+  
+
+apps/web/src/components/library/TrackList.tsx:125:9 lint/a11y/useFocusableInteractive ━━━━━━━━━━━━━━
+
+  × The HTML element with the interactive role "columnheader" is not focusable.
+  
+    123 │         role="row"
+    124 │       >
+  > 125 │         <div className="hidden items-center lg:flex" role="columnheader">
+        │         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    126 │           {tTableHeaders("number")}
+    127 │         </div>
+  
+  i A non-interactive HTML element that is not focusable may not be reachable for users that rely on keyboard navigation, even with an added role like "columnheader".
+  
+  i Add a tabIndex attribute to make this element focusable.
+  
+
+apps/web/src/components/library/TrackList.tsx:123:9 lint/a11y/useSemanticElements ━━━━━━━━━━━━━━━━━━
+
+  × The elements with this role can be changed to the following elements:
+    <tr>
+  
+    121 │       <div
+    122 │         className="mb-4 grid grid-cols-[32px_1fr_32px] gap-2 border-b border-slate-200 bg-white/80 p-1.5 py-2 text-xs font-normal text-slate-500 backdrop-blur-sm lg:grid-cols-[32px_32px_1fr_231px_32px] lg:gap-4 lg:p-2 lg:text-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400"
+  > 123 │         role="row"
+        │         ^^^^^^^^^^
+    124 │       >
+    125 │         <div className="hidden items-center lg:flex" role="columnheader">
+  
+  i For examples and more information, see WAI-ARIA Roles
+  
+
+apps/web/src/components/library/TrackList.tsx:121:7 lint/a11y/useFocusableInteractive ━━━━━━━━━━━━━━
+
+  × The HTML element with the interactive role "row" is not focusable.
+  
+    119 │     <div className="relative bg-transparent dark:bg-transparent">
+    120 │       {/* Header */}
+  > 121 │       <div
+        │       ^^^^
+  > 122 │         className="mb-4 grid grid-cols-[32px_1fr_32px] gap-2 border-b border-slate-200 bg-white/80 p-1.5 py-2 text-xs font-normal text-slate-500 backdrop-blur-sm lg:grid-cols-[32px_32px_1fr_231px_32px] lg:gap-4 lg:p-2 lg:text-sm dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-400"
+  > 123 │         role="row"
+  > 124 │       >
+        │       ^
+    125 │         <div className="hidden items-center lg:flex" role="columnheader">
+    126 │           {tTableHeaders("number")}
+  
+  i A non-interactive HTML element that is not focusable may not be reachable for users that rely on keyboard navigation, even with an added role like "row".
+  
+  i Add a tabIndex attribute to make this element focusable.
+  
+
+apps/web/src/components/modals/DeezerConnectModal.tsx:101:17 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+     99 │               >
+    100 │                 {t("whyNeedId.seeMore")}
+  > 101 │                 <svg
+        │                 ^^^^
+  > 102 │                   className={`h-4 w-4 transform transition-transform ${showTechnicalDetails ? "rotate-180" : ""}`}
+  > 103 │                   fill="none"
+  > 104 │                   stroke="currentColor"
+  > 105 │                   viewBox="0 0 24 24"
+  > 106 │                 >
+        │                 ^
+    107 │                   <path
+    108 │                     strokeLinecap="round"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/modals/DeezerConnectModal.tsx:199:17 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    197 │                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent dark:border-indigo-400" />
+    198 │               ) : validationStatus === "success" ? (
+  > 199 │                 <svg
+        │                 ^^^^
+  > 200 │                   className="h-6 w-6 text-emerald-500 dark:text-emerald-400"
+  > 201 │                   fill="none"
+  > 202 │                   stroke="currentColor"
+  > 203 │                   viewBox="0 0 24 24"
+  > 204 │                 >
+        │                 ^
+    205 │                   <path
+    206 │                     strokeLinecap="round"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/modals/DeezerConnectModal.tsx:213:17 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    211 │                 </svg>
+    212 │               ) : validationStatus === "error" ? (
+  > 213 │                 <svg
+        │                 ^^^^
+  > 214 │                   className="h-6 w-6 text-red-500 dark:text-red-400"
+  > 215 │                   fill="none"
+  > 216 │                   stroke="currentColor"
+  > 217 │                   viewBox="0 0 24 24"
+  > 218 │                 >
+        │                 ^
+    219 │                   <path
+    220 │                     strokeLinecap="round"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/modals/DeezerConnectModal.tsx:96:15 lint/a11y/useButtonType ━━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+     94 │             <p className="text-base text-zinc-600 dark:text-stone-400">
+     95 │               {t("whyNeedId.explanation")}{" "}
+   > 96 │               <button
+        │               ^^^^^^^
+   > 97 │                 onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+   > 98 │                 className="inline-flex items-center gap-1 text-indigo-600 hover:underline dark:text-indigo-400"
+   > 99 │               >
+        │               ^
+    100 │                 {t("whyNeedId.seeMore")}
+    101 │                 <svg
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+apps/web/src/components/modals/DeezerConnectModal.tsx:175:13 lint/correctness/useUniqueElementIds ━━━━━━━━━━
+
+  × id attribute should not be a static string literal. Generate unique IDs using useId().
+  
+    173 │           </label>
+    174 │           <div className="relative">
+  > 175 │             <input
+        │             ^^^^^^
+  > 176 │               id="deezer-id-modal"
+         ...
+  > 193 │               } rounded-xl pr-10 text-lg text-zinc-800 placeholder-zinc-400 focus:border-transparent focus:ring-2 focus:ring-indigo-500 dark:text-stone-200 dark:placeholder-stone-500 dark:focus:ring-indigo-400`}
+  > 194 │             />
+        │             ^^
+    195 │             <div className="absolute right-3 top-1/2 -translate-y-1/2">
+    196 │               {isValidating ? (
+  
+  i In React, if you hardcode IDs and use the component multiple times, it can lead to duplicate IDs in the DOM. Instead, generate unique IDs using useId().
+  
+
+apps/web/src/components/modals/DeezerConnectModal.tsx:240:13 lint/a11y/useButtonType ━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    239 │           <div className="flex shrink-0 gap-3">
+  > 240 │             <button
+        │             ^^^^^^^
+  > 241 │               onClick={onClose}
+  > 242 │               className="rounded-xl border border-indigo-200 px-6 py-3 font-medium text-zinc-800 transition-colors hover:bg-indigo-50 dark:border-indigo-800/30 dark:text-stone-200 dark:hover:bg-indigo-950/50"
+  > 243 │             >
+        │             ^
+    244 │               {tButtons("cancel")}
+    245 │             </button>
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+apps/web/src/components/modals/DeezerConnectModal.tsx:246:13 lint/a11y/useButtonType ━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    244 │               {tButtons("cancel")}
+    245 │             </button>
+  > 246 │             <button
+        │             ^^^^^^^
+  > 247 │               onClick={handleDeezerConnect}
+  > 248 │               disabled={!deezerUserId || isConnecting || validationStatus !== "success"}
+  > 249 │               className="min-w-[100px] rounded-xl bg-indigo-600 px-6 py-3 font-semibold text-white transition-colors duration-200 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+  > 250 │             >
+        │             ^
+    251 │               {isConnecting ? tUI("connecting") : tButtons("connect")}
+    252 │             </button>
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+apps/web/src/components/modals/SpotifyConsentModal.tsx:56:11 lint/a11y/useButtonType ━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    54 │             {tSpotifyTerms("decline")}
+    55 │           </button>
+  > 56 │           <button
+       │           ^^^^^^^
+  > 57 │             onClick={onAgree}
+  > 58 │             className="cursor-pointer rounded-xl bg-indigo-600 px-6 py-3 font-semibold text-white transition-colors duration-200 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+  > 59 │           >
+       │           ^
+    60 │             {tSpotifyTerms("agree")}
+    61 │           </button>
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+apps/web/src/components/modals/SpotifyConsentModal.tsx:30:24 lint/suspicious/noArrayIndexKey ━━━━━━━━━━
+
+  × Avoid using the index of an array as key property in an element.
+  
+    28 │           <ul className="ml-4 list-disc space-y-1.5 text-sm">
+    29 │             {tSpotifyTerms.raw("termsItems").map((item: string, index: number) => (
+  > 30 │               <li key={index}>{item}</li>
+       │                        ^^^^^
+    31 │             ))}
+    32 │           </ul>
+  
+  i This is the source of the key value.
+  
+    27 │           <p className="mb-2 font-semibold">{tSpotifyTerms("intro")}</p>
+    28 │           <ul className="ml-4 list-disc space-y-1.5 text-sm">
+  > 29 │             {tSpotifyTerms.raw("termsItems").map((item: string, index: number) => (
+       │                                                                 ^^^^^
+    30 │               <li key={index}>{item}</li>
+    31 │             ))}
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+apps/web/src/components/modals/SpotifyConsentModal.tsx:43:26 lint/suspicious/noArrayIndexKey ━━━━━━━━━━
+
+  × Avoid using the index of an array as key property in an element.
+  
+    41 │             <ul className="ml-4 list-disc space-y-1.5">
+    42 │               {tSpotifyTerms.raw("privacyItems").map((item: string, index: number) => (
+  > 43 │                 <li key={index}>{item}</li>
+       │                          ^^^^^
+    44 │               ))}
+    45 │             </ul>
+  
+  i This is the source of the key value.
+  
+    40 │             <p className="mb-2">{tSpotifyTerms("privacyIntro")}</p>
+    41 │             <ul className="ml-4 list-disc space-y-1.5">
+  > 42 │               {tSpotifyTerms.raw("privacyItems").map((item: string, index: number) => (
+       │                                                                     ^^^^^
+    43 │                 <li key={index}>{item}</li>
+    44 │               ))}
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+apps/web/src/components/modals/SpotifyConsentModal.tsx:50:11 lint/a11y/useButtonType ━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    49 │         <div className="flex items-center justify-end gap-4 pt-4">
+  > 50 │           <button
+       │           ^^^^^^^
+  > 51 │             onClick={onClose}
+  > 52 │             className="cursor-pointer rounded-xl border border-indigo-200 px-6 py-3 font-medium text-zinc-800 transition-colors hover:bg-indigo-50 dark:border-indigo-800/30 dark:text-stone-200 dark:hover:bg-indigo-950/50"
+  > 53 │           >
+       │           ^
+    54 │             {tSpotifyTerms("decline")}
+    55 │           </button>
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+apps/web/src/components/shared/ArtworkImage.tsx:26:7 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    24 │     iconColor: "text-red-500",
+    25 │     icon: (
+  > 26 │       <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+       │       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    27 │         <path
+    28 │           fillRule="evenodd"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/shared/ArtworkImage.tsx:39:7 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    37 │     iconColor: "text-purple-500",
+    38 │     icon: (
+  > 39 │       <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+       │       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    40 │         <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm4 3a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1z" />
+    41 │       </svg>
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/shared/ArtworkImage.tsx:48:7 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    46 │     iconColor: "text-indigo-500",
+    47 │     icon: (
+  > 48 │       <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+       │       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    49 │         <path d="M2 4a1 1 0 011-1h14a1 1 0 110 2H3a1 1 0 01-1-1zm0 4a1 1 0 011-1h14a1 1 0 110 2H3a1 1 0 01-1-1zm1 3a1 1 0 100 2h14a1 1 0 100-2H3z" />
+    50 │       </svg>
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/shared/ArtworkImage.tsx:81:23 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━━━━
+
+  × Avoid using the index of an array as key property in an element.
+  
+    79 │         {Array.from({ length: images.length < 4 ? images.length : 4 }).map((_, i) =>
+    80 │           images[i] ? (
+  > 81 │             <div key={i} className="relative h-full w-full">
+       │                       ^
+    82 │               <Image
+    83 │                 src={images[i]}
+  
+  i This is the source of the key value.
+  
+    77 │         className={`grid ${images.length > 2 ? "grid-cols-2 grid-rows-2" : "grid-cols-2 grid-rows-1"} gap-0.5 rounded-md bg-purple-100 dark:bg-purple-900/30 ${finalClassName}`}
+    78 │       >
+  > 79 │         {Array.from({ length: images.length < 4 ? images.length : 4 }).map((_, i) =>
+       │                                                                                ^
+    80 │           images[i] ? (
+    81 │             <div key={i} className="relative h-full w-full">
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+apps/web/src/components/shared/ArtworkImage.tsx:92:20 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━━━━
+
+  × Avoid using the index of an array as key property in an element.
+  
+    90 │           ) : (
+    91 │             <div
+  > 92 │               key={i}
+       │                    ^
+    93 │               className="flex h-full w-full items-center justify-center rounded-[2px] bg-purple-100 dark:bg-purple-900/30"
+    94 │             >
+  
+  i This is the source of the key value.
+  
+    77 │         className={`grid ${images.length > 2 ? "grid-cols-2 grid-rows-2" : "grid-cols-2 grid-rows-1"} gap-0.5 rounded-md bg-purple-100 dark:bg-purple-900/30 ${finalClassName}`}
+    78 │       >
+  > 79 │         {Array.from({ length: images.length < 4 ? images.length : 4 }).map((_, i) =>
+       │                                                                                ^
+    80 │           images[i] ? (
+    81 │             <div key={i} className="relative h-full w-full">
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+apps/web/src/components/shared/AudioEqualizer.tsx:104:18 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━
+
+  × Avoid using the index of an array as key property in an element.
+  
+    102 │         return (
+    103 │           <div
+  > 104 │             key={i}
+        │                  ^
+    105 │             className="absolute bottom-0 w-[10px] transform-gpu opacity-80"
+    106 │             style={{
+  
+  i This is the source of the key value.
+  
+    72 │     >
+    73 │       {/* Generate bars using Array.from */}
+  > 74 │       {Array.from({ length: totalBars }).map((_, i) => {
+       │                                                  ^
+    75 │         const positionFactor = formatNumber(i / totalBars);
+    76 │ 
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+apps/web/src/components/shared/CircularProgress.tsx:55:9 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    53 │     >
+    54 │       <div className="rounded-full bg-black/30 p-1">
+  > 55 │         <svg width={size} height={size} className="rotate-[-90deg] transform">
+       │         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    56 │           <circle
+    57 │             className="text-zinc-600/30"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/shared/Dialog.tsx:105:13 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    103 │             aria-label={tAccessibility("closeDialog")}
+    104 │           >
+  > 105 │             <svg
+        │             ^^^^
+  > 106 │               xmlns="http://www.w3.org/2000/svg"
+         ...
+  > 110 │               stroke="currentColor"
+  > 111 │             >
+        │             ^
+    112 │               <path
+    113 │                 strokeLinecap="round"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/shared/Dialog.tsx:99:11 lint/a11y/useButtonType ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+     97 │             {title}
+     98 │           </h2>
+   > 99 │           <button
+        │           ^^^^^^^
+  > 100 │             onClick={onClose}
+  > 101 │             // On mobile: match menu button (rounded-full, p-2, size-6). On desktop: original style.
+  > 102 │             className="rounded-full p-0 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 lg:rounded-lg lg:p-1 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 dark:focus:ring-indigo-400"
+  > 103 │             aria-label={tAccessibility("closeDialog")}
+  > 104 │           >
+        │           ^
+    105 │             <svg
+    106 │               xmlns="http://www.w3.org/2000/svg"
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+apps/web/src/components/shared/ServiceSelector.tsx:80:13 lint/a11y/useButtonType ━━━━━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    78 │           </label>
+    79 │           <div className="relative">
+  > 80 │             <button
+       │             ^^^^^^^
+  > 81 │               onClick={() => !isProcessing && setIsOpen(!isOpen)}
+        ...
+  > 87 │               disabled={isProcessing}
+  > 88 │             >
+       │             ^
+    89 │               {selectedService ? (
+    90 │                 <>
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+apps/web/src/components/shared/ServiceSelector.tsx:151:23 lint/a11y/useButtonType ━━━━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    150 │                     return (
+  > 151 │                       <button
+        │                       ^^^^^^^
+  > 152 │                         key={service.id}
+  > 153 │                         onClick={() => handleServiceSelect(service)}
+  > 154 │                         disabled={isDisabled}
+  > 155 │                         className={`flex w-full items-center gap-3 p-3 transition-all duration-200 lg:gap-4 lg:p-4 ${!isDisabled ? "dark:hover:bg-indigo-970 cursor-pointer hover:bg-gray-50" : "cursor-not-allowed opacity-50"} ${selectedService?.id === service.id ? "bg-gray-50 dark:bg-gray-800" : ""} group relative`}
+  > 156 │                       >
+        │                       ^
+    157 │                         <div className="flex h-8 w-8 items-center justify-center lg:h-10 lg:w-10">
+    158 │                           <service.image className="h-6 w-6" size={24} />
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+apps/web/src/components/shared/ServiceSelector.tsx:54:11 lint/a11y/noLabelWithoutControl ━━━━━━━━━━━
+
+  × A form label must be associated with an input.
+  
+    52 │         {/* Source Service - Non-interactive */}
+    53 │         <div>
+  > 54 │           <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+       │           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  > 55 │             {tServiceSelector("from")}
+  > 56 │           </label>
+       │           ^^^^^^^^
+    57 │           <div className="relative">
+    58 │             <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-lg lg:gap-4 lg:p-4 dark:border-indigo-900 dark:bg-indigo-950/50">
+  
+  i Consider adding a `for` or `htmlFor` attribute to the label element or moving the input element to inside the label element.
+  
+
+apps/web/src/components/shared/ServiceSelector.tsx:76:11 lint/a11y/noLabelWithoutControl ━━━━━━━━━━━
+
+  × A form label must be associated with an input.
+  
+    74 │         {/* Target Service (Selectable) */}
+    75 │         <div>
+  > 76 │           <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+       │           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  > 77 │             {tServiceSelector("to")}
+  > 78 │           </label>
+       │           ^^^^^^^^
+    79 │           <div className="relative">
+    80 │             <button
+  
+  i Consider adding a `for` or `htmlFor` attribute to the label element or moving the input element to inside the label element.
+  
+
+apps/web/src/components/shared/ServiceSelector.tsx:106:21 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    104 │                 <>
+    105 │                   <div className="flex h-8 w-8 items-center justify-center lg:h-10 lg:w-10">
+  > 106 │                     <svg
+        │                     ^^^^
+  > 107 │                       className="h-5 w-5 text-indigo-500 lg:h-6 lg:w-6"
+  > 108 │                       fill="none"
+  > 109 │                       viewBox="0 0 24 24"
+  > 110 │                       stroke="currentColor"
+  > 111 │                     >
+        │                     ^
+    112 │                       <path
+    113 │                         strokeLinecap="round"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/shared/ServiceSelector.tsx:125:15 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    123 │                 </>
+    124 │               )}
+  > 125 │               <svg
+        │               ^^^^
+  > 126 │                 className={`ml-1 h-5 w-5 text-gray-400 transition-transform lg:ml-2 ${isOpen ? "rotate-180" : ""}`}
+  > 127 │                 fill="none"
+  > 128 │                 stroke="currentColor"
+  > 129 │                 viewBox="0 0 24 24"
+  > 130 │               >
+        │               ^
+    131 │                 <path
+    132 │                   strokeLinecap="round"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/shared/TransferButton.tsx:145:9 lint/a11y/useButtonType ━━━━━━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    143 │           </span>
+    144 │         )}
+  > 145 │         <button
+        │         ^^^^^^^
+  > 146 │           className={`relative flex w-[240px] items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-full px-6 py-3 text-base font-medium transition-all duration-200 ${
+         ...
+  > 154 │           tabIndex={!isDisabled ? 0 : -1}
+  > 155 │         >
+        │         ^
+    156 │           {/* Progress Overlay */}
+    157 │           {(isMatching || isTransferring || isFetchingPlaylists) && (
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+apps/web/src/components/shared/TransferLimitModal.tsx:81:13 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    79 │         <div className="flex items-center gap-4">
+    80 │           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-900/50">
+  > 81 │             <svg
+       │             ^^^^
+  > 82 │               className="mt-1 h-5 w-5 text-gray-600 dark:text-gray-400"
+  > 83 │               fill="none"
+  > 84 │               stroke="currentColor"
+  > 85 │               viewBox="0 0 24 24"
+  > 86 │             >
+       │             ^
+    87 │               <path
+    88 │                 strokeLinecap="round"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/shared/TransferLimitModal.tsx:107:15 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    105 │           <li className="flex items-center gap-2.5">
+    106 │             <div className="flex h-5 w-5 items-center justify-center">
+  > 107 │               <svg className="h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+        │               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    108 │                 <path
+    109 │                   fillRule="evenodd"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/shared/TransferLimitModal.tsx:124:13 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    122 │         <div className="flex items-center gap-4">
+    123 │           <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/50">
+  > 124 │             <svg
+        │             ^^^^
+  > 125 │               className="h-5 w-5 text-indigo-600 dark:text-indigo-400"
+  > 126 │               fill="none"
+  > 127 │               stroke="currentColor"
+  > 128 │               viewBox="0 0 24 24"
+  > 129 │             >
+        │             ^
+    130 │               <path
+    131 │                 strokeLinecap="round"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/shared/TransferLimitModal.tsx:153:15 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    151 │           <li className="flex items-center gap-2.5">
+    152 │             <div className="flex h-5 w-5 items-center justify-center">
+  > 153 │               <svg className="h-4 w-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+        │               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    154 │                 <path
+    155 │                   fillRule="evenodd"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/shared/TransferLimitModal.tsx:168:9 lint/a11y/useButtonType ━━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    166 │           </li>
+    167 │         </ul>
+  > 168 │         <button
+        │         ^^^^^^^
+  > 169 │           disabled
+  > 170 │           className="w-full cursor-not-allowed rounded-lg bg-gray-100 px-6 py-2.5 text-center font-medium text-gray-400 dark:bg-gray-800 dark:text-gray-500"
+  > 171 │         >
+        │         ^
+    172 │           {tModals("transferLimit.comingSoonButton")}
+    173 │         </button>
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+apps/web/src/components/shared/TransferSuccessModal.tsx:84:13 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    82 │         <div className="flex items-center gap-4 rounded-lg bg-gradient-to-r from-indigo-500/10 to-indigo-600/5 p-6 text-indigo-600 dark:from-indigo-400/10 dark:to-indigo-500/5 dark:text-indigo-400">
+    83 │           <div className="flex items-center gap-3">
+  > 84 │             <svg
+       │             ^^^^
+  > 85 │               className="h-8 w-8"
+        ...
+  > 89 │               xmlns="http://www.w3.org/2000/svg"
+  > 90 │             >
+       │             ^
+    91 │               <path
+    92 │                 strokeLinecap="round"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/shared/TransferSuccessModal.tsx:139:17 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    137 │                   </div>
+    138 │                 </div>
+  > 139 │                 <svg
+        │                 ^^^^
+  > 140 │                   className="h-5 w-5 text-gray-400 transition-transform duration-200 group-hover:translate-x-1"
+  > 141 │                   fill="none"
+  > 142 │                   stroke="currentColor"
+  > 143 │                   viewBox="0 0 24 24"
+  > 144 │                 >
+        │                 ^
+    145 │                   <path
+    146 │                     strokeLinecap="round"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/shared/TransferSuccessModal.tsx:177:17 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    175 │                   </div>
+    176 │                 </div>
+  > 177 │                 <svg
+        │                 ^^^^
+  > 178 │                   className="h-5 w-5 text-gray-400 transition-transform duration-200 group-hover:translate-x-1"
+  > 179 │                   fill="none"
+  > 180 │                   stroke="currentColor"
+  > 181 │                   viewBox="0 0 24 24"
+  > 182 │                 >
+        │                 ^
+    183 │                   <path
+    184 │                     strokeLinecap="round"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/shared/TransferSuccessModal.tsx:223:19 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    221 │                     </div>
+    222 │                   </div>
+  > 223 │                   <svg
+        │                   ^^^^
+  > 224 │                     className="h-5 w-5 text-gray-400 transition-transform duration-200 group-hover:translate-x-1"
+  > 225 │                     fill="none"
+  > 226 │                     stroke="currentColor"
+  > 227 │                     viewBox="0 0 24 24"
+  > 228 │                   >
+        │                   ^
+    229 │                     <path
+    230 │                       strokeLinecap="round"
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+apps/web/src/components/shared/TransferSuccessModal.tsx:243:11 lint/a11y/useButtonType ━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    242 │         <div className="flex justify-end">
+  > 243 │           <button
+        │           ^^^^^^^
+  > 244 │             onClick={onClose}
+  > 245 │             className="rounded-lg bg-indigo-600 px-6 py-2.5 text-white transition-all duration-200 hover:bg-indigo-700 hover:shadow-md dark:bg-indigo-500 dark:hover:bg-indigo-600"
+  > 246 │           >
+        │           ^
+    247 │             {tButtons("close")}
+    248 │           </button>
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+apps/web/src/components/shared/TransferUsageDisplay.tsx:30:7 lint/a11y/useButtonType ━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    28 │   return (
+    29 │     <>
+  > 30 │       <button
+       │       ^^^^^^^
+  > 31 │         onClick={() => setIsModalOpen(true)}
+  > 32 │         className="group relative flex cursor-pointer flex-col items-center gap-1.5 rounded-full border border-indigo-100 bg-gradient-to-b from-white to-indigo-50/50 px-4 py-2.5 transition-all duration-300 hover:border-indigo-200 active:scale-[0.98] dark:border-indigo-500/20 dark:from-gray-900 dark:to-indigo-950/30 dark:hover:border-indigo-500/30"
+  > 33 │       >
+       │       ^
+    34 │         <span className="bg-gradient-to-r from-indigo-600 to-indigo-500 bg-clip-text text-sm font-semibold text-transparent transition-colors group-hover:from-indigo-500 group-hover:to-indigo-400 dark:from-indigo-400 dark:to-indigo-300">
+    35 │           {tPlans("goPremium")}
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+apps/web/src/hooks/useMatching.ts:223:58 lint/correctness/useExhaustiveDependencies ━━━━━━━━━━━━━━━━
+
+  × getTaskKey changes on every re-render and should not be used as a hook dependency.
+  
+    221 │       }
+    222 │     }
+  > 223 │   }, [actions, state.likedSongs, state.albums, dispatch, getTaskKey]);
+        │                                                          ^^^^^^^^^^
+    224 │ 
+    225 │   // Public API
+  
+  i To fix this, wrap the definition of getTaskKey in its own useCallback() hook.
+  
+
+apps/web/src/hooks/useMatching.ts:288:44 lint/correctness/useExhaustiveDependencies ━━━━━━━━━━━━━━━━
+
+  × isPlaylistTask changes on every re-render and should not be used as a hook dependency.
+  
+    286 │       // Note: processQueue will be called in processQueue's finally block if there are more tasks
+    287 │     },
+  > 288 │     [dispatch, state.matching.currentTask, isPlaylistTask]
+        │                                            ^^^^^^^^^^^^^^
+    289 │   );
+    290 │ 
+  
+  i To fix this, wrap the definition of isPlaylistTask in its own useCallback() hook.
+  
+
+apps/web/src/hooks/useTransferLimits.ts:83:7 lint/correctness/useExhaustiveDependencies ━━━━━━━━━━━━
+
+  × calculateFullStatus changes on every re-render and should not be used as a hook dependency.
+  
+    81 │       setLoading(false);
+    82 │     }
+  > 83 │   }, [calculateFullStatus, getCurrentUserId]);
+       │       ^^^^^^^^^^^^^^^^^^^
+    84 │ 
+    85 │   useEffect(() => {
+  
+  i To fix this, wrap the definition of calculateFullStatus in its own useCallback() hook.
+  
+
+apps/web/src/hooks/useTransferLimits.ts:83:28 lint/correctness/useExhaustiveDependencies ━━━━━━━━━━━
+
+  × getCurrentUserId changes on every re-render and should not be used as a hook dependency.
+  
+    81 │       setLoading(false);
+    82 │     }
+  > 83 │   }, [calculateFullStatus, getCurrentUserId]);
+       │                            ^^^^^^^^^^^^^^^^
+    84 │ 
+    85 │   useEffect(() => {
+  
+  i To fix this, wrap the definition of getCurrentUserId in its own useCallback() hook.
+  
+
+apps/web/src/hooks/useTransferLimits.ts:130:14 lint/correctness/useExhaustiveDependencies ━━━━━━━━━━
+
+  × calculateFullStatus changes on every re-render and should not be used as a hook dependency.
+  
+    128 │       }
+    129 │     },
+  > 130 │     [status, calculateFullStatus, getCurrentUserId]
+        │              ^^^^^^^^^^^^^^^^^^^
+    131 │   );
+    132 │ 
+  
+  i To fix this, wrap the definition of calculateFullStatus in its own useCallback() hook.
+  
+
+apps/web/src/hooks/useTransferLimits.ts:130:35 lint/correctness/useExhaustiveDependencies ━━━━━━━━━━
+
+  × getCurrentUserId changes on every re-render and should not be used as a hook dependency.
+  
+    128 │       }
+    129 │     },
+  > 130 │     [status, calculateFullStatus, getCurrentUserId]
+        │                                   ^^^^^^^^^^^^^^^^
+    131 │   );
+    132 │ 
+  
+  i To fix this, wrap the definition of getCurrentUserId in its own useCallback() hook.
+  
+
+apps/web/src/hooks/useTransferLimits.ts:185:14 lint/correctness/useExhaustiveDependencies ━━━━━━━━━━
+
+  × calculateFullStatus changes on every re-render and should not be used as a hook dependency.
+  
+    183 │       }
+    184 │     },
+  > 185 │     [status, calculateFullStatus, getCurrentUserId]
+        │              ^^^^^^^^^^^^^^^^^^^
+    186 │   );
+    187 │ 
+  
+  i To fix this, wrap the definition of calculateFullStatus in its own useCallback() hook.
+  
+
+apps/web/src/hooks/useTransferLimits.ts:185:35 lint/correctness/useExhaustiveDependencies ━━━━━━━━━━
+
+  × getCurrentUserId changes on every re-render and should not be used as a hook dependency.
+  
+    183 │       }
+    184 │     },
+  > 185 │     [status, calculateFullStatus, getCurrentUserId]
+        │                                   ^^^^^^^^^^^^^^^^
+    186 │   );
+    187 │ 
+  
+  i To fix this, wrap the definition of getCurrentUserId in its own useCallback() hook.
+  
+
+apps/web/src/lib/auth/constants.ts:50:23 lint/suspicious/useIterableCallbackReturn ━━━━━━━━━━━━━━━━━
+
+  × This callback passed to forEach() iterable method should not return a value.
+  
+    48 │   }
+    49 │   const keys = role === "source" ? AUTH_STORAGE_KEYS.SOURCE : AUTH_STORAGE_KEYS.TARGET;
+  > 50 │   Object.values(keys).forEach(key => localStorage.removeItem(key));
+       │                       ^^^^^^^
+    51 │ }
+    52 │ 
+  
+  i Either remove this return or remove the returned value.
+  
+    48 │   }
+    49 │   const keys = role === "source" ? AUTH_STORAGE_KEYS.SOURCE : AUTH_STORAGE_KEYS.TARGET;
+  > 50 │   Object.values(keys).forEach(key => localStorage.removeItem(key));
+       │                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    51 │ }
+    52 │ 
+  
+
+apps/web/src/lib/seo/generators/structured-data.tsx:80:11 lint/security/noDangerouslySetInnerHtml ━━━━━━━━━━
+
+  × Avoid passing content using the dangerouslySetInnerHTML prop.
+  
+    78 │           id={`structured-data-${key}`}
+    79 │           type="application/ld+json"
+  > 80 │           dangerouslySetInnerHTML={{
+       │           ^^^^^^^^^^^^^^^^^^^^^^^
+    81 │             __html: JSON.stringify(schema, null, 0),
+    82 │           }}
+  
+  ! Setting content using code can expose users to cross-site scripting (XSS) attacks
+  
+
+apps/web/src/lib/seo/utils/validation.ts:453:23 lint/suspicious/useIterableCallbackReturn ━━━━━━━━━━
+
+  × This callback passed to forEach() iterable method should not return a value.
+  
+    451 │   if (validation.errors.length > 0) {
+    452 │     report.push(`## Errors (${validation.errors.length})`);
+  > 453 │     validation.errors.forEach(error => report.push(`- ❌ ${error}`));
+        │                       ^^^^^^^
+    454 │     report.push("");
+    455 │   }
+  
+  i Either remove this return or remove the returned value.
+  
+    451 │   if (validation.errors.length > 0) {
+    452 │     report.push(`## Errors (${validation.errors.length})`);
+  > 453 │     validation.errors.forEach(error => report.push(`- ❌ ${error}`));
+        │                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    454 │     report.push("");
+    455 │   }
+  
+
+apps/web/src/lib/seo/utils/validation.ts:459:25 lint/suspicious/useIterableCallbackReturn ━━━━━━━━━━
+
+  × This callback passed to forEach() iterable method should not return a value.
+  
+    457 │   if (validation.warnings.length > 0) {
+    458 │     report.push(`## Warnings (${validation.warnings.length})`);
+  > 459 │     validation.warnings.forEach(warning => report.push(`- !� ${warning}`));
+        │                         ^^^^^^^
+    460 │     report.push("");
+    461 │   }
+  
+  i Either remove this return or remove the returned value.
+  
+    457 │   if (validation.warnings.length > 0) {
+    458 │     report.push(`## Warnings (${validation.warnings.length})`);
+  > 459 │     validation.warnings.forEach(warning => report.push(`- !� ${warning}`));
+        │                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    460 │     report.push("");
+    461 │   }
+  
+
+apps/web/src/lib/seo/utils/validation.ts:465:32 lint/suspicious/useIterableCallbackReturn ━━━━━━━━━━
+
+  × This callback passed to forEach() iterable method should not return a value.
+  
+    463 │   if (validation.recommendations.length > 0) {
+    464 │     report.push(`## Recommendations (${validation.recommendations.length})`);
+  > 465 │     validation.recommendations.forEach(rec => report.push(`- 💡 ${rec}`));
+        │                                ^^^^^^^
+    466 │     report.push("");
+    467 │   }
+  
+  i Either remove this return or remove the returned value.
+  
+    463 │   if (validation.recommendations.length > 0) {
+    464 │     report.push(`## Recommendations (${validation.recommendations.length})`);
+  > 465 │     validation.recommendations.forEach(rec => report.push(`- 💡 ${rec}`));
+        │                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    466 │     report.push("");
+    467 │   }
+  
+
+apps/web/src/lib/seo/utils/validation.ts:474:21 lint/suspicious/useIterableCallbackReturn ━━━━━━━━━━
+
+  × This callback passed to forEach() iterable method should not return a value.
+  
+    472 │     report.push(`Score: ${result.score}/100 ${result.isValid ? "✅" : "❌"}`);
+    473 │     if (result.errors.length > 0) {
+  > 474 │       result.errors.forEach(error => report.push(`  - ❌ ${error}`));
+        │                     ^^^^^^^
+    475 │     }
+    476 │     if (result.warnings.length > 0) {
+  
+  i Either remove this return or remove the returned value.
+  
+    472 │     report.push(`Score: ${result.score}/100 ${result.isValid ? "✅" : "❌"}`);
+    473 │     if (result.errors.length > 0) {
+  > 474 │       result.errors.forEach(error => report.push(`  - ❌ ${error}`));
+        │                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    475 │     }
+    476 │     if (result.warnings.length > 0) {
+  
+
+apps/web/src/lib/seo/utils/validation.ts:477:23 lint/suspicious/useIterableCallbackReturn ━━━━━━━━━━
+
+  × This callback passed to forEach() iterable method should not return a value.
+  
+    475 │     }
+    476 │     if (result.warnings.length > 0) {
+  > 477 │       result.warnings.forEach(warning => report.push(`  - !� ${warning}`));
+        │                       ^^^^^^^
+    478 │     }
+    479 │     report.push("");
+  
+  i Either remove this return or remove the returned value.
+  
+    475 │     }
+    476 │     if (result.warnings.length > 0) {
+  > 477 │       result.warnings.forEach(warning => report.push(`  - !� ${warning}`));
+        │                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    478 │     }
+    479 │     report.push("");
+  
+
+apps/web/src/lib/services/spotify/auth.ts:339:9 lint/suspicious/noImplicitAnyLet ━━━━━━━━━━━━━━━━━━━
+
+  × This variable implicitly has the any type.
+  
+    337 │     console.log("Attempting to refresh token with refresh token length:", refreshToken?.length);
+    338 │ 
+  > 339 │     let responseData;
+        │         ^^^^^^^^^^^^
+    340 │     // Get existing auth data to preserve user info
+    341 │     const existingAuthData = getAuthData(role);
+  
+  i Variable declarations without type annotation and initialization implicitly have the any type. Declare a type or initialize the variable with some value.
+  
+
+apps/web/src/lib/services/youtube/api.ts:571:32 lint/correctness/noEmptyCharacterClassInRegex ━━━━━━━━━━
+
+  × The regular expression includes this negated empty character class.
+  
+    569 │       .replace(/\s*\(feat\.?\s+[^)]*\)/gi, "") // (feat. ...)
+    570 │       .replace(/\s*\(ft\.?\s+[^)]*\)/gi, "") // (ft. ...)
+  > 571 │       .replace(/\s*\[feat\.?\s+[^]]*\]/gi, "") // [feat. ...]
+        │                                ^^^
+    572 │       .replace(/\s*\[ft\.?\s+[^]]*\]/gi, "") // [ft. ...]
+    573 │ 
+  
+  i Negated empty character classes match anything.
+    If you want to match against [, escape it \[.
+    Otherwise, remove the character class or fill it.
+  
+
+apps/web/src/lib/services/youtube/api.ts:572:30 lint/correctness/noEmptyCharacterClassInRegex ━━━━━━━━━━
+
+  × The regular expression includes this negated empty character class.
+  
+    570 │       .replace(/\s*\(ft\.?\s+[^)]*\)/gi, "") // (ft. ...)
+    571 │       .replace(/\s*\[feat\.?\s+[^]]*\]/gi, "") // [feat. ...]
+  > 572 │       .replace(/\s*\[ft\.?\s+[^]]*\]/gi, "") // [ft. ...]
+        │                              ^^^
+    573 │ 
+    574 │       // Remove "- Topic" suffix common in YouTube Music
+  
+  i Negated empty character classes match anything.
+    If you want to match against [, escape it \[.
+    Otherwise, remove the character class or fill it.
+  
+
+apps/web/src/lib/services/youtube/auth.ts:257:9 lint/suspicious/noImplicitAnyLet ━━━━━━━━━━━━━━━━━━━
+
+  × This variable implicitly has the any type.
+  
+    255 │     const existingAuthData = getAuthData(role);
+    256 │ 
+  > 257 │     let responseData;
+        │         ^^^^^^^^^^^^
+    258 │ 
+    259 │     if (directRequest) {
+  
+  i Variable declarations without type annotation and initialization implicitly have the any type. Declare a type or initialize the variable with some value.
+  
+
+Checked 164 files in 58ms. No fixes applied.
+Found 106 errors.
+Found 7 warnings.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+

@@ -1,4 +1,3 @@
-import js from "@eslint/js";
 import { FlatCompat } from "@eslint/eslintrc";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -8,35 +7,24 @@ const __dirname = path.dirname(__filename);
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
 });
 
+// Minimal ESLint config focused only on Next.js specific rules
+// General TypeScript/JavaScript linting and formatting handled by Biome
 const config = [
   ...compat.config({
-    extends: ["next/core-web-vitals", "next/typescript", "prettier"],
+    extends: ["next/core-web-vitals", "next/typescript"],
     settings: {
       next: {
         rootDir: "./",
       },
     },
-    overrides: [
-      {
-        files: ["**/*.ts"],
-        rules: {
-          "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
-          "@typescript-eslint/no-explicit-any": "error",
-          "@typescript-eslint/explicit-function-return-type": ["error", { allowExpressions: true }],
-        },
-      },
-      {
-        files: ["**/*.tsx"],
-        rules: {
-          "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
-          "@typescript-eslint/no-explicit-any": "error",
-          "@typescript-eslint/explicit-function-return-type": "off",
-        },
-      },
-    ],
+    rules: {
+      // Disable rules that conflict with Biome or are handled by Biome
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/explicit-function-return-type": "off",
+    },
   }),
 ];
 
