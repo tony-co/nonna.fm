@@ -2,10 +2,10 @@ pre-commit:
   parallel: true
   commands:
     type-check:
-      glob: "*.{js,jsx,ts,tsx}"
+      glob: "{apps,packages}/**/*.{js,jsx,ts,tsx}"
       run: pnpm run type-check
     biome-check:
-      glob: "*.{js,jsx,ts,tsx,json}"
+      glob: "{apps,packages}/**/*.{js,jsx,ts,tsx,json}"
       run: biome check --write {staged_files}
       stage_fixed: true
 

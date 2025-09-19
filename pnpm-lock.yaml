@@ -11,6 +11,9 @@ importers:
       '@biomejs/biome':
         specifier: ^2.2.4
         version: 2.2.4
+      lefthook:
+        specifier: ^1.10.0
+        version: 1.13.1
       syncpack:
         specifier: ^13.0.4
         version: 13.0.4(typescript@5.9.2)
