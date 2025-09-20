@@ -238,7 +238,8 @@ export async function search(
 export async function createPlaylistWithTracks(
   name: string,
   tracks: ITrack[],
-  description?: string
+  description?: string,
+  onProgress?: (completed: number, total: number) => void
 ): Promise<TransferResult> {
   const authData = await getYouTubeAuthData("target");
   if (!authData) throw new Error("Not authenticated with YouTube");
@@ -275,6 +276,9 @@ export async function createPlaylistWithTracks(
   const playlistId = playlistData.id;
 
   // Add tracks to the playlist in batches, using retryWithExponentialBackoff for each request
+  let completedTracks = 0;
+  const total = validTracks.length;
+
   const result = await processInBatches(
     async batch => {
       await Promise.all(
@@ -308,10 +312,16 @@ export async function createPlaylistWithTracks(
             }
           })
       );
+
+      // Update progress after each batch
+      completedTracks += batch.length;
+      if (onProgress) {
+        onProgress(completedTracks, total);
+      }
     },
     {
       items: validTracks,
-      batchSize: 1,
+      batchSize: 2, // Small batches for granular progress
       delayBetweenBatches: 200,
       onBatchStart: () => {},
     }
@@ -773,7 +783,10 @@ export async function searchAlbums(
 /**
  * Add tracks to YouTube Music library
  */
-export async function addTracksToLibrary(tracks: ITrack[]): Promise<TransferResult> {
+export async function addTracksToLibrary(
+  tracks: ITrack[],
+  onProgress?: (completed: number, total: number) => void
+): Promise<TransferResult> {
   const authData = await getYouTubeAuthData("target");
   if (!authData) {
     throw new Error("Not authenticated with YouTube");
@@ -791,7 +804,12 @@ export async function addTracksToLibrary(tracks: ITrack[]): Promise<TransferResu
 
   // Create a playlist for the tracks
   const playlistName = `Imported from Nonna.fm - ${new Date().toLocaleDateString()}`;
-  const playlistId = await createPlaylistWithTracks(playlistName, validTracks);
+  const playlistId = await createPlaylistWithTracks(
+    playlistName,
+    validTracks,
+    undefined,
+    onProgress
+  );
 
   return {
     added: validTracks.length,
@@ -801,7 +819,10 @@ export async function addTracksToLibrary(tracks: ITrack[]): Promise<TransferResu
   };
 }
 
-export async function addAlbumsToLibrary(_albums: Set<IAlbum>): Promise<TransferResult> {
+export async function addAlbumsToLibrary(
+  _albums: Set<IAlbum>,
+  _onProgress?: (completed: number, total: number) => void
+): Promise<TransferResult> {
   // no way to add albums to YouTube Music library yet
   return {
     added: 0,

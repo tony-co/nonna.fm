@@ -451,7 +451,8 @@ export async function search(
 export async function createPlaylistWithTracks(
   name: string,
   tracks: Array<ITrack>,
-  description?: string
+  description?: string,
+  onProgress?: (completed: number, total: number) => void
 ): Promise<TransferResult> {
   const authData = await getAppleAuthData("target");
   if (!authData) {
@@ -500,26 +501,44 @@ export async function createPlaylistWithTracks(
     };
   }
 
-  // Add tracks to playlist
-  await retryWithExponentialBackoff(
-    () =>
-      fetchAppleMusic(
-        `${BASE_URL}/v1/me/library/playlists/${playlistId}/tracks`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            data: tracksWithIds.map(track => ({
-              id: track.targetId,
-              type: "songs",
-            })),
-          }),
-        },
-        authData
-      ),
-    APPLE_RETRY_OPTIONS
+  // Add tracks to playlist in batches for progress tracking
+  let completedTracks = 0;
+  const total = tracksWithIds.length;
+
+  await processInBatches(
+    async batch => {
+      await retryWithExponentialBackoff(
+        () =>
+          fetchAppleMusic(
+            `${BASE_URL}/v1/me/library/playlists/${playlistId}/tracks`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                data: batch.map(track => ({
+                  id: track.targetId,
+                  type: "songs",
+                })),
+              }),
+            },
+            authData
+          ),
+        APPLE_RETRY_OPTIONS
+      );
+
+      // Update progress after each batch
+      completedTracks += batch.length;
+      if (onProgress) {
+        onProgress(completedTracks, total);
+      }
+    },
+    {
+      items: tracksWithIds,
+      batchSize: 5, // Small batches for granular progress
+      onBatchStart: () => {},
+    }
   );
 
   return {
@@ -530,7 +549,10 @@ export async function createPlaylistWithTracks(
   };
 }
 
-export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<TransferResult> {
+export async function addTracksToLibrary(
+  tracks: Array<ITrack>,
+  onProgress?: (completed: number, total: number) => void
+): Promise<TransferResult> {
   const authData = await getAppleAuthData("target");
   if (!authData) {
     throw new Error("Not authenticated with Apple Music");
@@ -550,26 +572,44 @@ export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<Transfe
     };
   }
 
-  // Add tracks to library with retry
-  await retryWithExponentialBackoff(
-    () =>
-      fetchAppleMusic(
-        `${BASE_URL}/v1/me/library`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            data: tracksWithIds.map(track => ({
-              id: track.targetId,
-              type: "songs",
-            })),
-          }),
-        },
-        authData
-      ),
-    APPLE_RETRY_OPTIONS
+  // Add tracks to library in batches for progress tracking
+  let completedTracks = 0;
+  const total = tracksWithIds.length;
+
+  await processInBatches(
+    async batch => {
+      await retryWithExponentialBackoff(
+        () =>
+          fetchAppleMusic(
+            `${BASE_URL}/v1/me/library`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                data: batch.map(track => ({
+                  id: track.targetId,
+                  type: "songs",
+                })),
+              }),
+            },
+            authData
+          ),
+        APPLE_RETRY_OPTIONS
+      );
+
+      // Update progress after each batch
+      completedTracks += batch.length;
+      if (onProgress) {
+        onProgress(completedTracks, total);
+      }
+    },
+    {
+      items: tracksWithIds,
+      batchSize: 5, // Small batches for granular progress
+      onBatchStart: () => {},
+    }
   );
 
   return {
@@ -580,7 +620,10 @@ export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<Transfe
   };
 }
 
-export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferResult> {
+export async function addAlbumsToLibrary(
+  albums: Set<IAlbum>,
+  onProgress?: (completed: number, total: number) => void
+): Promise<TransferResult> {
   const authData = await getAppleAuthData("target");
   if (!authData) {
     throw new Error("Not authenticated with Apple Music");
@@ -595,27 +638,72 @@ export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferR
     };
   }
 
-  // Construct the URL with comma-separated album IDs
-  const albumIds = Array.from(albums)
-    .map(album => album.targetId)
-    .join(",");
-  const url = `${BASE_URL}/v1/me/library?ids[albums]=${albumIds}`;
+  // Add albums to library in batches for progress tracking
+  const albumsWithIds = Array.from(albums).filter(album => album.targetId);
 
-  // Add albums to library with retry
-  await retryWithExponentialBackoff(
-    () =>
-      fetchAppleMusic(
-        url,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+  let completedAlbums = 0;
+  const total = albumsWithIds.length;
+
+  // Process each album individually for progress tracking
+  for (let i = 0; i < albumsWithIds.length; i++) {
+    const album = albumsWithIds[i];
+    const url = `${BASE_URL}/v1/me/library?ids[albums]=${album.targetId}`;
+
+    // Handle Apple Music's empty 202 responses manually to avoid JSON parsing errors
+    let attempt = 0;
+    const maxRetries = APPLE_RETRY_OPTIONS.maxRetries || 3;
+
+    while (attempt <= maxRetries) {
+      try {
+        const response = await fetchAppleMusic(
+          url,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
           },
-        },
-        authData
-      ),
-    APPLE_RETRY_OPTIONS
-  );
+          authData
+        );
+
+        // Apple Music returns empty 202 responses for successful album additions
+        if (response.ok) {
+          break; // Success - exit the retry loop
+        } else if (response.status === 429 || response.status >= 500) {
+          // Retryable error
+          if (attempt === maxRetries) {
+            throw new Error(
+              `Apple Music API error after ${maxRetries} retries: ${response.status} ${response.statusText}`
+            );
+          }
+          const delay = Math.min(1000 * 2 ** attempt, 16000);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          attempt++;
+        } else {
+          // Non-retryable error
+          throw new Error(`Apple Music API error: ${response.status} ${response.statusText}`);
+        }
+      } catch (error) {
+        if (attempt === maxRetries) {
+          throw error;
+        }
+        const delay = Math.min(1000 * 2 ** attempt, 16000);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        attempt++;
+      }
+    }
+
+    // Update progress after each album
+    completedAlbums++;
+    if (onProgress) {
+      onProgress(completedAlbums, total);
+    }
+
+    // Small delay between requests to avoid rate limiting
+    if (i < albumsWithIds.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+  }
 
   return {
     added: albums.size,

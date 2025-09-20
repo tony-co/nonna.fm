@@ -306,9 +306,9 @@
     "close": "Fermer"
   },
   "TransferButton": {
-    "findingMatches": "Recherche de correspondances...",
+    "findingMatches": "Correspondances...",
     "transferring": "Transfert en cours...",
-    "startTransfer": "Commencer le transfert",
+    "startTransfer": "Lancer le transfert",
     "likedTracks": "titres aimés",
     "albums": "albums",
     "playlists": "playlists",

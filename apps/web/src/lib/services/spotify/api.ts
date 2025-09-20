@@ -187,7 +187,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
     },
     {
       items: Array.from({ length: batchCount }, (_, i) => i),
-      batchSize: 3, // Process 5 API requests in parallel at a time
+      batchSize: 5, // Process 5 API requests in parallel at a time
       onBatchStart: () => {},
     }
   );
@@ -236,7 +236,7 @@ export async function fetchUserLibrary(): Promise<ILibraryData> {
     },
     {
       items: Array.from({ length: albumBatchCount }, (_, i) => i),
-      batchSize: 3, // Process 3 API requests in parallel at a time
+      batchSize: 5, // Process 3 API requests in parallel at a time
       onBatchStart: () => {},
     }
   );
@@ -393,7 +393,8 @@ export async function search(
 export async function createPlaylistWithTracks(
   name: string,
   tracks: Array<ITrack>,
-  description?: string
+  description?: string,
+  onProgress?: (completed: number, total: number) => void
 ): Promise<TransferResult> {
   const authData = await getSpotifyAuthData("target");
   if (!authData) throw new Error("Not authenticated with Spotify");
@@ -435,7 +436,10 @@ export async function createPlaylistWithTracks(
     };
   }
 
-  // Add tracks to playlist in batches using retryWithExponentialBackoff
+  // Add tracks to playlist in small batches for individual track progress
+  let completedTracks = 0;
+  const total = tracksWithIds.length;
+
   const result = await processInBatches(
     async batch => {
       const uris = batch.map(track => `spotify:track:${track.targetId}`);
@@ -451,10 +455,16 @@ export async function createPlaylistWithTracks(
           }),
         SPOTIFY_RETRY_OPTIONS
       );
+
+      // Update progress after each batch
+      completedTracks += batch.length;
+      if (onProgress) {
+        onProgress(completedTracks, total);
+      }
     },
     {
       items: tracksWithIds,
-      batchSize: 100,
+      batchSize: 5, // Small batches for granular progress
       onBatchStart: () => {},
     }
   );
@@ -465,7 +475,10 @@ export async function createPlaylistWithTracks(
   };
 }
 
-export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<TransferResult> {
+export async function addTracksToLibrary(
+  tracks: Array<ITrack>,
+  onProgress?: (completed: number, total: number) => void
+): Promise<TransferResult> {
   const authData = await getSpotifyAuthData("target");
   if (!authData) throw new Error("Not authenticated with Spotify");
 
@@ -483,7 +496,10 @@ export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<Transfe
     };
   }
 
-  // Add tracks to library in batches using retryWithExponentialBackoff
+  // Add tracks to library in small batches for individual track progress
+  let completedTracks = 0;
+  const total = tracksWithIds.length;
+
   const result = await processInBatches(
     async batch => {
       const ids = batch.map(track => track.targetId);
@@ -499,10 +515,16 @@ export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<Transfe
           }),
         SPOTIFY_RETRY_OPTIONS
       );
+
+      // Update progress after each batch
+      completedTracks += batch.length;
+      if (onProgress) {
+        onProgress(completedTracks, total);
+      }
     },
     {
       items: tracksWithIds,
-      batchSize: 50,
+      batchSize: 5, // Small batches for granular progress
       onBatchStart: () => {},
     }
   );
@@ -513,7 +535,10 @@ export async function addTracksToLibrary(tracks: Array<ITrack>): Promise<Transfe
   };
 }
 
-export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferResult> {
+export async function addAlbumsToLibrary(
+  albums: Set<IAlbum>,
+  onProgress?: (completed: number, total: number) => void
+): Promise<TransferResult> {
   const authData = await getSpotifyAuthData("target");
   if (!authData) throw new Error("Not authenticated with Spotify");
 
@@ -526,7 +551,10 @@ export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferR
     throw new Error("No albums with valid targetIds found");
   }
 
-  // Add albums to library in batches using retryWithExponentialBackoff
+  // Add albums one by one for individual album progress
+  let completedAlbums = 0;
+  const total = albumsWithIds.length;
+
   const result = await processInBatches(
     async batch => {
       const ids = batch.map(album => album.targetId);
@@ -542,10 +570,16 @@ export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferR
           }),
         SPOTIFY_RETRY_OPTIONS
       );
+
+      // Update progress after each album
+      completedAlbums += batch.length;
+      if (onProgress) {
+        onProgress(completedAlbums, total);
+      }
     },
     {
       items: albumsWithIds,
-      batchSize: 20,
+      batchSize: 1, // Individual albums for granular progress
       onBatchStart: () => {},
     }
   );

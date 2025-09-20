@@ -303,7 +303,7 @@
     "close": "Fechar"
   },
   "TransferButton": {
-    "findingMatches": "Encontrando Correspondências...",
+    "findingMatches": "Correspondências...",
     "transferring": "Transferindo...",
     "startTransfer": "Iniciar Transferência",
     "likedTracks": "faixas curtidas",

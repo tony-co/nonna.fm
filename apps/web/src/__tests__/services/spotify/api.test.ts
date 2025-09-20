@@ -54,6 +54,29 @@ describe("Spotify API Service", () => {
     expect(result.added).toBe(mockTracks.length);
   });
 
+  it("createPlaylistWithTracks calls onProgress callback with progress updates", async () => {
+    const tracksWithTargetId = mockTracks.map(t => ({ ...t, targetId: t.id }));
+    const onProgress = vi.fn();
+
+    const result = await api.createPlaylistWithTracks(
+      "Test Playlist",
+      tracksWithTargetId,
+      undefined,
+      onProgress
+    );
+
+    expect(result.playlistId).toBe("new_playlist_id");
+    expect(onProgress).toHaveBeenCalled();
+    expect(onProgress.mock.calls.length).toBeGreaterThan(0);
+
+    // Verify progress values are numbers and in valid range
+    for (const call of onProgress.mock.calls) {
+      expect(typeof call[0]).toBe("number");
+      expect(call[0]).toBeGreaterThan(0);
+      expect(call[0]).toBeLessThanOrEqual(mockTracks.length);
+    }
+  });
+
   it("addTracksToLibrary returns correct counts", async () => {
     const tracksWithTargetId = mockTracks.map(t => ({ ...t, targetId: t.id }));
     const result = await api.addTracksToLibrary(tracksWithTargetId);

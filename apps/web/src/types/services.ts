@@ -29,14 +29,21 @@ export interface IMusicServiceProvider {
     onProgress?: (progress: number) => void
   ) => Promise<SearchResult>;
 
-  addTracksToLibrary: (tracks: Array<ITrack>) => Promise<TransferResult>;
+  addTracksToLibrary: (
+    tracks: Array<ITrack>,
+    onProgress?: (completed: number, total: number) => void
+  ) => Promise<TransferResult>;
 
-  addAlbumsToLibrary: (albums: Set<IAlbum>) => Promise<TransferResult>;
+  addAlbumsToLibrary: (
+    albums: Set<IAlbum>,
+    onProgress?: (completed: number, total: number) => void
+  ) => Promise<TransferResult>;
 
   createPlaylistWithTracks: (
     name: string,
     tracks: Array<ITrack>,
-    description?: string
+    description?: string,
+    onProgress?: (completed: number, total: number) => void
   ) => Promise<TransferResult>;
 
   fetchUserLibrary: () => Promise<ILibraryData>;

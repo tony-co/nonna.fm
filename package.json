@@ -18,6 +18,7 @@
     "lint:fix": "biome lint --write .",
     "check": "biome check .",
     "check:fix": "biome check --write .",
+    "biome:ci": "biome ci",
     "update-deps": "syncpack update",
     "check-deps": "syncpack list-mismatches",
     "fix-deps": "syncpack fix-mismatches",
