@@ -452,7 +452,7 @@ export async function createPlaylistWithTracks(
   name: string,
   tracks: Array<ITrack>,
   description?: string,
-  onProgress?: (completed: number) => void
+  onProgress?: (completed: number, total: number) => void
 ): Promise<TransferResult> {
   const authData = await getAppleAuthData("target");
   if (!authData) {
@@ -503,6 +503,7 @@ export async function createPlaylistWithTracks(
 
   // Add tracks to playlist in batches for progress tracking
   let completedTracks = 0;
+  const total = tracksWithIds.length;
 
   await processInBatches(
     async batch => {
@@ -530,7 +531,7 @@ export async function createPlaylistWithTracks(
       // Update progress after each batch
       completedTracks += batch.length;
       if (onProgress) {
-        onProgress(completedTracks);
+        onProgress(completedTracks, total);
       }
     },
     {
@@ -550,7 +551,7 @@ export async function createPlaylistWithTracks(
 
 export async function addTracksToLibrary(
   tracks: Array<ITrack>,
-  onProgress?: (completed: number) => void
+  onProgress?: (completed: number, total: number) => void
 ): Promise<TransferResult> {
   const authData = await getAppleAuthData("target");
   if (!authData) {
@@ -573,6 +574,7 @@ export async function addTracksToLibrary(
 
   // Add tracks to library in batches for progress tracking
   let completedTracks = 0;
+  const total = tracksWithIds.length;
 
   await processInBatches(
     async batch => {
@@ -600,7 +602,7 @@ export async function addTracksToLibrary(
       // Update progress after each batch
       completedTracks += batch.length;
       if (onProgress) {
-        onProgress(completedTracks);
+        onProgress(completedTracks, total);
       }
     },
     {
@@ -620,7 +622,7 @@ export async function addTracksToLibrary(
 
 export async function addAlbumsToLibrary(
   albums: Set<IAlbum>,
-  onProgress?: (completed: number) => void
+  onProgress?: (completed: number, total: number) => void
 ): Promise<TransferResult> {
   const authData = await getAppleAuthData("target");
   if (!authData) {
@@ -640,6 +642,7 @@ export async function addAlbumsToLibrary(
   const albumsWithIds = Array.from(albums).filter(album => album.targetId);
 
   let completedAlbums = 0;
+  const total = albumsWithIds.length;
 
   // Process each album individually for progress tracking
   for (let i = 0; i < albumsWithIds.length; i++) {
@@ -693,7 +696,7 @@ export async function addAlbumsToLibrary(
     // Update progress after each album
     completedAlbums++;
     if (onProgress) {
-      onProgress(completedAlbums);
+      onProgress(completedAlbums, total);
     }
 
     // Small delay between requests to avoid rate limiting

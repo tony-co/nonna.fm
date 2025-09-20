@@ -313,7 +313,7 @@ export async function searchAlbums(
  */
 export async function addTracksToLibrary(
   tracks: ITrack[],
-  _onProgress?: (completed: number) => void
+  _onProgress?: (completed: number, total: number) => void
 ): Promise<TransferResult> {
   return {
     added: 0,
@@ -328,7 +328,7 @@ export async function addTracksToLibrary(
  */
 export async function addAlbumsToLibrary(
   albums: Set<IAlbum>,
-  _onProgress?: (completed: number) => void
+  _onProgress?: (completed: number, total: number) => void
 ): Promise<TransferResult> {
   return {
     added: 0,
@@ -345,7 +345,7 @@ export async function createPlaylistWithTracks(
   _name: string,
   _tracks: ITrack[],
   _description?: string,
-  _onProgress?: (completed: number) => void
+  _onProgress?: (completed: number, total: number) => void
 ): Promise<TransferResult> {
   return {
     added: 0,

@@ -101,7 +101,7 @@ export function useTransfer(): UseTransferHookReturn {
 
       if (matchedLikedSongs.length > 0) {
         const baseProgress = currentProgress;
-        results.likedSongs = await addTracksToLibrary(matchedLikedSongs, completed => {
+        results.likedSongs = await addTracksToLibrary(matchedLikedSongs, (completed, _total) => {
           setTransferProgress({ current: baseProgress + completed, total: totalTracksToTransfer });
         });
         currentProgress += matchedLikedSongs.length;
@@ -119,7 +119,7 @@ export function useTransfer(): UseTransferHookReturn {
       if (albumsWithIds.length > 0) {
         const albumsSet = new Set<IAlbum>(albumsWithIds);
         const baseProgress = currentProgress;
-        results.albums = await addAlbumsToLibrary(albumsSet, completed => {
+        results.albums = await addAlbumsToLibrary(albumsSet, (completed, _total) => {
           setTransferProgress({ current: baseProgress + completed, total: totalTracksToTransfer });
         });
         // Count albums as tracks for progress (as requested for simplicity)
@@ -150,13 +150,11 @@ export function useTransfer(): UseTransferHookReturn {
             playlist.name,
             matchedTracks,
             `Imported from ${sourceService} on ${new Date().toLocaleDateString()}`,
-            completed => {
-              setTimeout(() => {
-                setTransferProgress({
-                  current: baseProgress + completed,
-                  total: totalTracksToTransfer,
-                });
-              }, 0);
+            (completed, _total) => {
+              setTransferProgress({
+                current: baseProgress + completed,
+                total: totalTracksToTransfer,
+              });
             }
           );
           results.playlists.set(playlistId, result);

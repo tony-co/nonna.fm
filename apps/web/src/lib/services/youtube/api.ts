@@ -239,7 +239,7 @@ export async function createPlaylistWithTracks(
   name: string,
   tracks: ITrack[],
   description?: string,
-  onProgress?: (completed: number) => void
+  onProgress?: (completed: number, total: number) => void
 ): Promise<TransferResult> {
   const authData = await getYouTubeAuthData("target");
   if (!authData) throw new Error("Not authenticated with YouTube");
@@ -277,6 +277,7 @@ export async function createPlaylistWithTracks(
 
   // Add tracks to the playlist in batches, using retryWithExponentialBackoff for each request
   let completedTracks = 0;
+  const total = validTracks.length;
 
   const result = await processInBatches(
     async batch => {
@@ -315,7 +316,7 @@ export async function createPlaylistWithTracks(
       // Update progress after each batch
       completedTracks += batch.length;
       if (onProgress) {
-        onProgress(completedTracks);
+        onProgress(completedTracks, total);
       }
     },
     {
@@ -784,7 +785,7 @@ export async function searchAlbums(
  */
 export async function addTracksToLibrary(
   tracks: ITrack[],
-  onProgress?: (completed: number) => void
+  onProgress?: (completed: number, total: number) => void
 ): Promise<TransferResult> {
   const authData = await getYouTubeAuthData("target");
   if (!authData) {
@@ -820,7 +821,7 @@ export async function addTracksToLibrary(
 
 export async function addAlbumsToLibrary(
   _albums: Set<IAlbum>,
-  _onProgress?: (completed: number) => void
+  _onProgress?: (completed: number, total: number) => void
 ): Promise<TransferResult> {
   // no way to add albums to YouTube Music library yet
   return {
