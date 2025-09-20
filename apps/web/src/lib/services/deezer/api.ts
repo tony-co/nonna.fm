@@ -311,7 +311,10 @@ export async function searchAlbums(
 /**
  * Empty implementation for addTracksToLibrary - Deezer API not supported
  */
-export async function addTracksToLibrary(tracks: ITrack[]): Promise<TransferResult> {
+export async function addTracksToLibrary(
+  tracks: ITrack[],
+  _onProgress?: (completed: number) => void
+): Promise<TransferResult> {
   return {
     added: 0,
     failed: tracks.length,
@@ -323,7 +326,10 @@ export async function addTracksToLibrary(tracks: ITrack[]): Promise<TransferResu
 /**
  * Empty implementation for addAlbumsToLibrary - Deezer API not supported
  */
-export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferResult> {
+export async function addAlbumsToLibrary(
+  albums: Set<IAlbum>,
+  _onProgress?: (completed: number) => void
+): Promise<TransferResult> {
   return {
     added: 0,
     failed: albums.size,
@@ -338,7 +344,8 @@ export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferR
 export async function createPlaylistWithTracks(
   _name: string,
   _tracks: ITrack[],
-  _description?: string
+  _description?: string,
+  _onProgress?: (completed: number) => void
 ): Promise<TransferResult> {
   return {
     added: 0,

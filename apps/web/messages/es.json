@@ -302,7 +302,7 @@
     "close": "Cerrar"
   },
   "TransferButton": {
-    "findingMatches": "Buscando Coincidencias...",
+    "findingMatches": "Coincidencias...",
     "transferring": "Transfiriendo...",
     "startTransfer": "Iniciar Transferencia",
     "likedTracks": "canciones favoritas",

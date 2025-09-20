@@ -116,13 +116,15 @@ export const useMatching = (): UseMatchingReturn => {
         });
         if (result.albums) {
           // Batch update: merge all result.albums into state.albums
+          // Create a map using source album ID as key to preserve individual targetIds
           const updatedAlbumsMap = new Map(result.albums.map(album => [album.id, album]));
           const updated = new Set(
-            Array.from(state.albums ?? []).map(album =>
-              updatedAlbumsMap.has(album.id)
-                ? { ...album, ...updatedAlbumsMap.get(album.id) }
-                : album
-            )
+            Array.from(state.albums ?? []).map(album => {
+              const matchedAlbum = updatedAlbumsMap.get(album.id);
+              return matchedAlbum
+                ? { ...album, targetId: matchedAlbum.targetId, status: matchedAlbum.status }
+                : album;
+            })
           );
           actions.setAlbums(updated);
         }

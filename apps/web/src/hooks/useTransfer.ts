@@ -19,6 +19,8 @@ interface UseTransferHookReturn {
   showSuccessModal: boolean;
   setShowSuccessModal: (show: boolean) => void;
   error: string | null;
+  transferProgress: { current: number; total: number } | null;
+  isTransferring: boolean;
 }
 
 export function useTransfer(): UseTransferHookReturn {
@@ -27,49 +29,63 @@ export function useTransfer(): UseTransferHookReturn {
   const [transferResults, setTransferResults] = useState<TransferResults | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [transferProgress, setTransferProgress] = useState<{
+    current: number;
+    total: number;
+  } | null>(null);
+  const [isTransferring, setIsTransferring] = useState(false);
   const { updateUsage, checkLimit } = useTransferContext();
 
   const params = useParams();
   const sourceService = params.source as MusicService;
   const targetService = params.target as MusicService;
 
-  // Helper to count total tracks in a selection
-  const countSelectedTracks = (selection: ISelectionState): number => {
+  // Helper to count total tracks that will actually be transferred
+  const countTransferableItems = (selection: ISelectionState): number => {
     let count = 0;
 
-    // Count liked songs
-    count += Array.from(selection.likedSongs).filter(track => track.status === "matched").length;
+    // Count liked songs that are matched and have targetId
+    count += Array.from(selection.likedSongs).filter(
+      track => track.status === "matched" && track.targetId
+    ).length;
 
-    // Count tracks in playlists
+    // Count tracks in playlists that are matched and have targetId
     for (const [, selectedTracks] of Array.from(selection.playlists.entries())) {
-      count += Array.from(selectedTracks).filter(track => track.status === "matched").length;
+      count += Array.from(selectedTracks).filter(
+        track => track.status === "matched" && track.targetId
+      ).length;
     }
 
-    // Count albums as tracks (this is a simplification)
-    // In a full implementation, we would count the actual tracks in each album
-    count += selection.albums.size;
+    // Count albums that are matched and have targetId (albums count as 1 each for simplicity)
+    count += Array.from(selection.albums).filter(
+      album => album.status === "matched" && album.targetId
+    ).length;
 
     return count;
   };
 
   const handleStartTransfer = async (selection: ISelectionState): Promise<void> => {
     if (!state || !targetService) {
-      console.error("handleStartTransfer - missing required data", { state, targetService });
       setError("Target service not specified");
       return;
     }
 
+    setIsTransferring(true);
     try {
-      // Count total tracks that will be transferred
-      const totalTracksToTransfer = countSelectedTracks(selection);
+      // Count total items that will actually be transferred
+      const totalTracksToTransfer = countTransferableItems(selection);
+
+      // Initialize progress tracking
+      setTransferProgress({ current: 0, total: totalTracksToTransfer });
+      let currentProgress = 0;
 
       // Check against daily limit without updating usage
       const canProceed = await checkLimit(totalTracksToTransfer);
       if (!canProceed) {
+        setTransferProgress(null);
+        setIsTransferring(false);
         return;
       }
-
-      console.log("Starting transfer with selection:", selection);
 
       const results: TransferResults = {
         playlists: new Map<string, TransferResult>(),
@@ -84,7 +100,12 @@ export function useTransfer(): UseTransferHookReturn {
         }));
 
       if (matchedLikedSongs.length > 0) {
-        results.likedSongs = await addTracksToLibrary(matchedLikedSongs);
+        const baseProgress = currentProgress;
+        results.likedSongs = await addTracksToLibrary(matchedLikedSongs, completed => {
+          setTransferProgress({ current: baseProgress + completed, total: totalTracksToTransfer });
+        });
+        currentProgress += matchedLikedSongs.length;
+        setTransferProgress({ current: currentProgress, total: totalTracksToTransfer });
       }
 
       // Transfer matched albums
@@ -96,12 +117,14 @@ export function useTransfer(): UseTransferHookReturn {
         }));
 
       if (albumsWithIds.length > 0) {
-        console.log(
-          "Transferring albums with IDs:",
-          albumsWithIds.map(a => ({ name: a.name, targetId: a.targetId }))
-        );
         const albumsSet = new Set<IAlbum>(albumsWithIds);
-        results.albums = await addAlbumsToLibrary(albumsSet);
+        const baseProgress = currentProgress;
+        results.albums = await addAlbumsToLibrary(albumsSet, completed => {
+          setTransferProgress({ current: baseProgress + completed, total: totalTracksToTransfer });
+        });
+        // Count albums as tracks for progress (as requested for simplicity)
+        currentProgress += albumsWithIds.length;
+        setTransferProgress({ current: currentProgress, total: totalTracksToTransfer });
       }
 
       // Transfer playlists
@@ -114,8 +137,6 @@ export function useTransfer(): UseTransferHookReturn {
           throw new Error(`Playlist not found: ${playlistId}`);
         }
 
-        console.log("Transferring playlist:", playlist);
-
         const matchedTracks = Array.from(selectedTracks)
           .filter(track => track.status === "matched" && track.targetId)
           .map(track => ({
@@ -124,25 +145,37 @@ export function useTransfer(): UseTransferHookReturn {
           }));
 
         if (matchedTracks.length > 0) {
+          const baseProgress = currentProgress;
           const result = await createPlaylistWithTracks(
             playlist.name,
             matchedTracks,
-            `Imported from ${sourceService} on ${new Date().toLocaleDateString()}`
+            `Imported from ${sourceService} on ${new Date().toLocaleDateString()}`,
+            completed => {
+              setTimeout(() => {
+                setTransferProgress({
+                  current: baseProgress + completed,
+                  total: totalTracksToTransfer,
+                });
+              }, 0);
+            }
           );
           results.playlists.set(playlistId, result);
+          currentProgress += matchedTracks.length;
+          setTransferProgress({ current: currentProgress, total: totalTracksToTransfer });
         }
       }
 
       // Update usage count in Redis after successful transfer
       await updateUsage(totalTracksToTransfer);
 
-      console.log("Transfer completed successfully:", results);
       setTransferResults(results);
       setShowSuccessModal(true);
-      console.log("Success modal should show now:", { showModal: true });
-    } catch (err) {
-      console.error("handleStartTransfer - error:", err);
+      setTransferProgress(null); // Clear progress when done
+    } catch (_err) {
       setError("Failed to transfer tracks. Please try again.");
+      setTransferProgress(null); // Clear progress on error
+    } finally {
+      setIsTransferring(false);
     }
   };
 
@@ -151,10 +184,6 @@ export function useTransfer(): UseTransferHookReturn {
     selection: ISelectionState
   ): Promise<void> => {
     if (!state || !targetService) {
-      console.error("handleTransferPlaylist - missing required data", {
-        state,
-        targetService,
-      });
       setError("Target service not specified");
       return;
     }
@@ -199,8 +228,7 @@ export function useTransfer(): UseTransferHookReturn {
 
       setTransferResults(results);
       setShowSuccessModal(true);
-    } catch (err) {
-      console.error("handleTransferPlaylist - error:", err);
+    } catch (_err) {
       setError("Failed to transfer playlist. Please try again.");
     }
   };
@@ -212,5 +240,7 @@ export function useTransfer(): UseTransferHookReturn {
     showSuccessModal,
     setShowSuccessModal,
     error,
+    transferProgress,
+    isTransferring,
   };
 }

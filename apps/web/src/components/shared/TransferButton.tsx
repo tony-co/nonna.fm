@@ -2,7 +2,6 @@
 
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { useTransfer } from "@/contexts/TransferContext";
 import { useMatching } from "@/hooks/useMatching";
@@ -24,8 +23,9 @@ export function TransferButton() {
     showSuccessModal,
     setShowSuccessModal,
     error: transferError,
+    transferProgress,
+    isTransferring,
   } = useTransferHook();
-  const [isTransferring, setIsTransferring] = useState(false);
 
   // Dynamically check if any selected playlist is currently being fetched (no memo, always up-to-date)
   const isFetchingPlaylists = Array.from(state.selectedItems.playlists).some(playlistId =>
@@ -51,9 +51,11 @@ export function TransferButton() {
   const buttonText =
     isMatching || isFetchingPlaylists
       ? tTransferButton("findingMatches")
-      : isTransferring
-        ? tTransferButton("transferring")
-        : tTransferButton("startTransfer");
+      : isTransferring && transferProgress
+        ? `${tTransferButton("transferring")} (${transferProgress.current}/${transferProgress.total})`
+        : isTransferring
+          ? tTransferButton("transferring")
+          : tTransferButton("startTransfer");
 
   // Format summary text of selected items
   const getSummaryText = () => {
@@ -100,38 +102,33 @@ export function TransferButton() {
   // Handle button click
   const handleClick = async () => {
     if (!hasSelections) return;
-    setIsTransferring(true);
 
-    try {
-      // Create selection state from the selected items
-      const selection = {
-        likedSongs: new Set(
-          state.likedSongs
-            ? Array.from(state.likedSongs).filter(track => state.selectedItems.tracks.has(track.id))
-            : []
-        ),
-        albums: new Set(
-          state.albums
-            ? Array.from(state.albums).filter(album => state.selectedItems.albums.has(album.id))
-            : []
-        ),
-        playlists: new Map(),
-      };
+    // Create selection state from the selected items
+    const selection = {
+      likedSongs: new Set(
+        state.likedSongs
+          ? Array.from(state.likedSongs).filter(track => state.selectedItems.tracks.has(track.id))
+          : []
+      ),
+      albums: new Set(
+        state.albums
+          ? Array.from(state.albums).filter(album => state.selectedItems.albums.has(album.id))
+          : []
+      ),
+      playlists: new Map(),
+    };
 
-      // Add selected playlists to the selection
-      if (state.playlists) {
-        for (const playlistId of state.selectedItems.playlists) {
-          const playlist = state.playlists.get(playlistId);
-          if (playlist) {
-            selection.playlists.set(playlistId, new Set(playlist.tracks));
-          }
+    // Add selected playlists to the selection
+    if (state.playlists) {
+      for (const playlistId of state.selectedItems.playlists) {
+        const playlist = state.playlists.get(playlistId);
+        if (playlist) {
+          selection.playlists.set(playlistId, new Set(playlist.tracks));
         }
       }
-
-      await handleStartTransfer(selection);
-    } finally {
-      setIsTransferring(false);
     }
+
+    await handleStartTransfer(selection);
   };
 
   return (
@@ -145,7 +142,7 @@ export function TransferButton() {
         <button
           type="button"
           data-testid="transfer-button"
-          className={`relative flex w-[240px] items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-full px-6 py-3 text-base font-medium transition-all duration-200 ${
+          className={`relative flex min-w-[240px] items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-full px-8 py-3 text-base font-medium transition-all duration-200 ${
             !isDisabled
               ? "transform cursor-pointer bg-gradient-to-r from-indigo-600 to-indigo-500 text-white hover:scale-[1.02] hover:shadow-lg hover:shadow-indigo-200/50 active:scale-[0.98] dark:hover:shadow-indigo-900/30"
               : "cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"

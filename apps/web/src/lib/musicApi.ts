@@ -76,23 +76,30 @@ export async function fetchPlaylistTracks(
   return provider.fetchPlaylistTracks(playlistId, onProgress);
 }
 
-export async function addTracksToLibrary(tracks: ITrack[]): Promise<TransferResult> {
+export async function addTracksToLibrary(
+  tracks: ITrack[],
+  onProgress?: (completed: number) => void
+): Promise<TransferResult> {
   const provider = await getCurrentService("target");
-  return provider.addTracksToLibrary(tracks);
+  return provider.addTracksToLibrary(tracks, onProgress);
 }
 
 export async function createPlaylistWithTracks(
   name: string,
   tracks: ITrack[],
-  description?: string
+  description?: string,
+  onProgress?: (completed: number) => void
 ): Promise<TransferResult> {
   const provider = await getCurrentService("target");
-  return provider.createPlaylistWithTracks(name, tracks, description);
+  return provider.createPlaylistWithTracks(name, tracks, description, onProgress);
 }
 
-export async function addAlbumsToLibrary(albums: Set<IAlbum>): Promise<TransferResult> {
+export async function addAlbumsToLibrary(
+  albums: Set<IAlbum>,
+  onProgress?: (completed: number) => void
+): Promise<TransferResult> {
   const provider = await getCurrentService("target");
-  return provider.addAlbumsToLibrary(albums);
+  return provider.addAlbumsToLibrary(albums, onProgress);
 }
 
 export async function getLibraryData(): Promise<ILibraryData> {
