@@ -21,6 +21,7 @@ Set provider credentials in `apps/web/.env.local`, which is ignored by Git. Map 
 | `NEXT_PUBLIC_SPOTIFY_REDIRECT_URI` | Exact registered Spotify callback URL |
 | `APPLE_MUSIC_TEAM_ID`, `APPLE_MUSIC_KEY_ID`, `APPLE_MUSIC_PRIVATE_KEY` | Server-generated Apple developer tokens |
 | `REDIS_URL` | Usage tracking; required for transfers |
+| `CRON_SECRET` | Authorizes the weekly production Redis health check |
 | `NEXT_PUBLIC_YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET` | Development YouTube integration |
 | `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST` | Optional analytics |
 
@@ -40,6 +41,8 @@ pnpm --filter web test:e2e
 `pnpm test:coverage` produces `apps/web/coverage`. Set `REDIS_TEST_URL` to an **isolated test Redis** to run the concurrency/expiry tests; they never use the application's Redis URL by default. CI runs them against a dedicated Redis service. Browser tests require `pnpm --filter web exec playwright install chromium`, use dummy credentials, and intercept external requests.
 
 Every PR runs type checking, formatting/lint checks, dependency auditing, unit and Redis tests, a production build, and desktop/mobile browser smoke tests.
+
+Vercel runs `/api/health/redis` every Monday at 08:17 UTC. Set a random `CRON_SECRET` in the production environment; Vercel sends it as a bearer token. The check reads a dedicated health key, keeping the free Redis database active without modifying user usage counters. A failed check returns HTTP 503 and appears in Vercel runtime logs. See [the Redis operations guide](docs/redis-operations.md) for verification and recovery.
 
 ## Structure
 
