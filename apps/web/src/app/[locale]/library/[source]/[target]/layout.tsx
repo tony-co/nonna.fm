@@ -7,11 +7,7 @@ import { ItemTitleProvider } from "@/contexts/ItemTitleContext";
 import { LibraryProvider } from "@/contexts/LibraryContext";
 import { TransferProvider } from "@/contexts/TransferContext";
 import type { Locale } from "@/lib/seo";
-import {
-  generateMetadata as generateSEOMetadata,
-  generateServiceTransferBreadcrumbs,
-  ServiceTransferStructuredData,
-} from "@/lib/seo";
+import { generateMetadata as generateSEOMetadata } from "@/lib/seo";
 import { MusicServiceSchema } from "@/types/music-service";
 import { LibraryClientContent } from "./_components/LibraryClientContent";
 
@@ -35,12 +31,13 @@ export async function generateMetadata({
     locale: locale as Locale,
     pathname: `/library/${source}/${target}`,
     params: { source, target },
+    noIndex: true,
   });
 }
 
 export default async function LibraryLayout({ children, params }: LibraryLayoutProps) {
   // Next.js 15 async params handling
-  const { locale, source, target } = await params;
+  const { source, target } = await params;
 
   const parsedSource = MusicServiceSchema.safeParse(source);
   const parsedTarget = MusicServiceSchema.safeParse(target);
@@ -48,9 +45,6 @@ export default async function LibraryLayout({ children, params }: LibraryLayoutP
     notFound();
   const sourceService = parsedSource.data;
   const targetService = parsedTarget.data;
-
-  // Generate breadcrumbs for structured data
-  const breadcrumbs = generateServiceTransferBreadcrumbs(locale as Locale, source, target);
 
   return (
     <LibraryProvider key={`${source}:${target}`}>
@@ -81,14 +75,6 @@ export default async function LibraryLayout({ children, params }: LibraryLayoutP
               <TransferButton />
             </Footer>
           </div>
-
-          {/* SEO Structured Data */}
-          <ServiceTransferStructuredData
-            locale={locale as Locale}
-            source={source}
-            target={target}
-            breadcrumbs={breadcrumbs}
-          />
         </ItemTitleProvider>
       </TransferProvider>
     </LibraryProvider>

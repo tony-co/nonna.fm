@@ -80,10 +80,12 @@ export function generateMetadata(options: MetadataOptions): Metadata {
 
     // Basic Meta Tags
     metadataBase: new URL(SEO_CONFIG.brand.url),
-    alternates: {
-      canonical: canonicalUrl,
-      languages: hreflangs,
-    },
+    alternates: noIndex
+      ? undefined
+      : {
+          canonical: canonicalUrl,
+          languages: hreflangs,
+        },
 
     // Robots
     robots: {

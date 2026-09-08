@@ -15,11 +15,39 @@
     "features": {
       "freeplan": {
         "title": "Großzügiger Kostenloser Plan",
-        "description": "500 kostenlose Übertragungen <strong>jeden Tag</strong>.<br></br>Upgraden Sie auf einen Premium-Plan für 10x mehr."
+        "description": "Bis zu <strong>500 Übertragungen pro Tag</strong>, kostenlos."
       },
       "secure": {
         "title": "Sicher und privat",
         "description": "Wir verkaufen deine Daten nicht.<br></br>Unser Code ist Open Source für volle Transparenz."
+      }
+    },
+    "metaTitle": "Spotify- und Apple-Music-Playlists kostenlos übertragen",
+    "description": "Übertrage Playlists, Alben und Lieblingssongs zwischen Spotify und Apple Music mit Nonna.fm. Kostenlos und Open Source, bis zu 500 Übertragungen pro Tag.",
+    "languages": "Verfügbare Sprachen",
+    "guide": {
+      "title": "So überträgst du Musik zwischen Spotify und Apple Music",
+      "connect": "Wähle den Dienst mit deiner Musik, verbinde dein Konto und anschließend den Zieldienst.",
+      "select": "Wähle Playlists, Alben oder Lieblingssongs aus deiner Bibliothek. Prüfe die Treffer und passe sie vor der Übertragung an.",
+      "transfer": "Wähle die Musik aus, die du kopieren möchtest, und starte die Übertragung. Lass die Seite bis zum Abschluss geöffnet und prüfe dann deine Zielbibliothek."
+    },
+    "faq": {
+      "title": "Fragen zur Musikübertragung",
+      "services": {
+        "question": "Zwischen welchen Diensten kann ich Musik übertragen?",
+        "answer": "Nonna.fm unterstützt Übertragungen von Spotify zu Apple Music und von Apple Music zu Spotify. YouTube Music, Deezer und TIDAL sind noch in Entwicklung und in der öffentlichen App nicht verfügbar."
+      },
+      "free": {
+        "question": "Ist Nonna.fm kostenlos?",
+        "answer": "Du kannst bis zu 500 Übertragungen pro Tag kostenlos durchführen. Du brauchst Zugang zu deinen Konten bei beiden Musikdiensten; deren eigene Abonnementbedingungen gelten weiterhin."
+      },
+      "originals": {
+        "question": "Wird Musik aus meiner ursprünglichen Bibliothek gelöscht?",
+        "answer": "Nein. Nonna.fm fügt passende Musik zur Zielbibliothek hinzu, ohne Playlists, Alben oder Lieblingssongs beim Quelldienst zu löschen."
+      },
+      "matching": {
+        "question": "Warum wird ein Song möglicherweise nicht übertragen?",
+        "answer": "Musikkataloge unterscheiden sich je nach Dienst und Land. Manche Songs oder Versionen sind beim Zieldienst eventuell nicht verfügbar. Prüfe die Treffer vor der Übertragung: Du kannst sie ändern oder einen Eintrag überspringen."
       }
     }
   },
