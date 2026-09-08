@@ -1,84 +1,71 @@
-import { act, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
-import {
-  LibraryProvider,
-  mockLibraryState,
-  useLibrary,
-  useLibrarySelection,
-} from "@/__mocks__/contexts/LibraryContext";
+import { act, renderHook } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { LibraryProvider, useLibrary } from "@/contexts/LibraryContext";
+import type { ITrack } from "@/types";
 
-// --- Test component to consume context ---
-function TestConsumer() {
-  const { state, actions } = useLibrary();
-  return (
-    <div>
-      <div data-testid="is-loading">{String(state.status.isLoading)}</div>
-      <button type="button" onClick={() => actions.setLoading(true)}>
-        Set Loading
-      </button>
-    </div>
-  );
-}
+vi.mock("@/lib/services/factory", () => ({ musicServiceFactory: { getProvider: vi.fn() } }));
+const { fetchTracks } = vi.hoisted(() => ({ fetchTracks: vi.fn() }));
+vi.mock("@/lib/musicApi", () => ({ fetchPlaylistTracks: fetchTracks }));
+const track: ITrack = { id: "1", name: "Song", artist: "Artist" };
+const playlist = { id: "p", name: "Playlist", ownerId: "me", tracks: [], trackCount: 2 };
 
-// --- Test suite for LibraryContext ---
-describe("LibraryContext", () => {
-  beforeEach(() => {
-    // Reset any global state or mocks if needed
+describe("LibraryProvider", () => {
+  it("keeps independent sessions and stable actions", () => {
+    const first = renderHook(useLibrary, { wrapper: LibraryProvider });
+    const second = renderHook(useLibrary, { wrapper: LibraryProvider });
+    const actions = first.result.current.actions;
+    act(() => first.result.current.actions.setLikedSongs(new Set([track])));
+    act(() => first.result.current.actions.selectAllTracks());
+    expect(first.result.current.state.selectedItems.tracks).toEqual(new Set(["1"]));
+    expect(second.result.current.state.selectedItems.tracks.size).toBe(0);
+    expect(first.result.current.actions).toBe(actions);
   });
 
-  it("provides initial state to consumers", () => {
-    render(
-      <LibraryProvider>
-        <TestConsumer />
-      </LibraryProvider>
-    );
-    expect(screen.getByTestId("is-loading").textContent).toBe("false");
-  });
-
-  it("updates loading state via actions", async () => {
-    render(
-      <LibraryProvider>
-        <TestConsumer />
-      </LibraryProvider>
-    );
-    // Wrap state-changing interaction in act to flush updates
-    await act(async () => {
-      screen.getByText("Set Loading").click();
+  it("coalesces playlist loads, preserves progress, and commits the final response", async () => {
+    let resolve!: (tracks: ITrack[]) => void;
+    let onProgress!: (tracks: ITrack[], progress: number) => void;
+    fetchTracks.mockImplementation((_id, progress) => {
+      onProgress = progress;
+      return new Promise<ITrack[]>(done => {
+        resolve = done;
+      });
     });
-    expect(screen.getByTestId("is-loading").textContent).toBe("true");
-  });
-
-  it("useLibrarySelection returns selectedItems and actions", async () => {
-    function SelectionConsumer() {
-      const { selectedItems, selectAllTracks } = useLibrarySelection();
-      return (
-        <>
-          <div data-testid="selected-tracks">{Array.from(selectedItems.tracks).join(",")}</div>
-          <button type="button" onClick={selectAllTracks}>
-            Select All Tracks
-          </button>
-        </>
-      );
-    }
-    render(
-      <LibraryProvider>
-        <SelectionConsumer />
-      </LibraryProvider>
-    );
-    // Initially empty
-    expect(screen.getByTestId("selected-tracks").textContent).toBe("");
-    // Wrap state-changing interaction in act to flush updates
-    await act(async () => {
-      screen.getByText("Select All Tracks").click();
+    const { result } = renderHook(useLibrary, { wrapper: LibraryProvider });
+    act(() => result.current.actions.setPlaylists(new Map([[playlist.id, playlist]])));
+    let first!: Promise<unknown>;
+    let second!: Promise<unknown>;
+    act(() => {
+      first = result.current.operations.loadPlaylist("p");
+      second = result.current.operations.loadPlaylist("p");
     });
-    // Should now contain all track IDs from mockLibraryState
-    // Defensive: default to empty Set if likedSongs is undefined
-    const likedSongs = mockLibraryState.likedSongs ?? new Set();
-    const expected = Array.from(likedSongs)
-      .map(t => t.id)
-      .join(",");
-    expect(screen.getByTestId("selected-tracks").textContent).toBe(expected);
+    expect(first).toBe(second);
+    expect(fetchTracks).toHaveBeenCalledTimes(1);
+    act(() => onProgress([track], 0.5));
+    expect(result.current.state.playlistLoads?.p.status).toBe("loading");
+    const all = [track, { ...track, id: "2" }];
+    await act(async () => {
+      resolve(all);
+      await first;
+    });
+    expect(result.current.state.playlists?.get("p")?.tracks).toEqual(all);
+    expect(result.current.state.playlistLoads?.p.status).toBe("loaded");
+    await act(async () => {
+      await result.current.operations.loadPlaylist("p");
+    });
+    expect(fetchTracks).toHaveBeenCalledTimes(1);
   });
 
-  // Add more tests for reducer actions, error state, etc.
+  it("records a failed load without immediately retrying", async () => {
+    fetchTracks.mockReset().mockRejectedValue(new Error("Unavailable"));
+    const { result } = renderHook(useLibrary, { wrapper: LibraryProvider });
+    act(() => result.current.actions.setPlaylists(new Map([[playlist.id, playlist]])));
+    await act(async () => {
+      await expect(result.current.operations.loadPlaylist("p")).rejects.toThrow("Unavailable");
+    });
+    expect(result.current.state.playlistLoads?.p).toMatchObject({
+      status: "error",
+      error: "Unavailable",
+    });
+    expect(fetchTracks).toHaveBeenCalledTimes(1);
+  });
 });

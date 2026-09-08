@@ -1,6 +1,6 @@
 import { CheckCircle, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { type FC, useEffect } from "react";
+import type { FC } from "react";
 import { createPortal } from "react-dom";
 import { getServiceById } from "@/config/services";
 import type { IAlbum, IPlaylist, ITrack, TransferResult } from "@/types";
@@ -9,6 +9,7 @@ import Dialog from "./Dialog";
 
 interface TransferSuccessModalProps {
   isOpen: boolean;
+  error?: string | null;
   onClose: () => void;
   targetServiceId: string;
   results: {
@@ -25,6 +26,7 @@ interface TransferSuccessModalProps {
 
 export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
   isOpen,
+  error,
   onClose,
   targetServiceId,
   results,
@@ -33,30 +35,9 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
   const tAccessibility = useTranslations("Accessibility");
   const tModals = useTranslations("Modals");
   const tButtons = useTranslations("Buttons");
-  // Log when the modal is rendered
-  useEffect(() => {
-    console.log("TransferSuccessModal rendered:", {
-      isOpen,
-      targetServiceId,
-      hasResults: !!results,
-      resultsPlaylists: results?.playlists?.size || 0,
-      likedSongsResult: !!results?.likedSongs,
-      albumsResult: !!results?.albums,
-      hasSelectedData: {
-        likedSongs: selectedData?.likedSongs?.length || 0,
-        albums: selectedData?.albums?.length || 0,
-        playlists: selectedData?.playlists?.size || 0,
-      },
-    });
-
-    return () => {
-      console.log("TransferSuccessModal unmounting");
-    };
-  }, [isOpen, targetServiceId, results, selectedData]);
-
   const targetService = getServiceById(targetServiceId);
 
-  if (!targetService) {
+  if (!targetService || typeof document === "undefined") {
     console.log("Target service not found:", targetServiceId);
     return null;
   }
@@ -80,6 +61,11 @@ export const TransferSuccessModal: FC<TransferSuccessModalProps> = ({
       closeOnBackdropClick={false}
     >
       <div className="flex flex-col gap-6">
+        {error ? (
+          <p role="alert" className="text-red-600 dark:text-red-400">
+            {error}
+          </p>
+        ) : null}
         <div className="flex items-center gap-4 rounded-lg bg-gradient-to-r from-indigo-500/10 to-indigo-600/5 p-6 text-indigo-600 dark:from-indigo-400/10 dark:to-indigo-500/5 dark:text-indigo-400">
           <div className="flex items-center gap-3">
             <CheckCircle className="h-8 w-8" />

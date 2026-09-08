@@ -8,6 +8,7 @@ import type { Locale } from "@/lib/seo";
 import { generateSEOReport, validatePageSEO } from "@/lib/seo/utils/validation";
 
 export async function GET(request: NextRequest): Promise<Response> {
+  if (process.env.NODE_ENV === "production") return new Response(null, { status: 404 });
   try {
     const { searchParams } = new URL(request.url);
     const locale = (searchParams.get("locale") || "en") as Locale;

@@ -79,7 +79,7 @@ export function StructuredData({ locale, type, source, target, breadcrumbs }: St
           type="application/ld+json"
           // biome-ignore lint/security/noDangerouslySetInnerHtml: Safe usage with JSON.stringify for structured data
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(schema, null, 0),
+            __html: JSON.stringify(schema).replace(/</g, "\\u003c"),
           }}
         />
       ))}

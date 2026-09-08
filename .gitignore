@@ -49,3 +49,6 @@ next-env.d.ts
 .turbo/
 certificates/
 tokens/
+# Browser tests
+playwright-report/
+test-results/

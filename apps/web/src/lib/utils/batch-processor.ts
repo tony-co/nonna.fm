@@ -1,7 +1,3 @@
-/**
- * Utility for processing items in batches with consistent error handling and logging
- */
-
 export interface BatchProcessorOptions<T> {
   items: T[];
   batchSize: number;
@@ -9,6 +5,7 @@ export interface BatchProcessorOptions<T> {
   onBatchStart?: (batchNumber: number, totalBatches: number) => void;
   onBatchComplete?: (successCount: number, failureCount: number) => void;
   onError?: (error: Error, batch: T[]) => void;
+  continueOnError?: boolean;
 }
 
 export interface BatchProcessorResult {
@@ -17,67 +14,42 @@ export interface BatchProcessorResult {
   total: number;
 }
 
-/**
- * Generic batch processor that handles common patterns like:
- * - Processing items in batches of a fixed size
- * - Adding delays between batches
- * - Handling API responses
- * - Tracking success/failure counts
- * - Error handling
- */
 export async function processInBatches<T, R>(
   processBatch: (batch: T[]) => Promise<R>,
-  options: BatchProcessorOptions<T>
-): Promise<BatchProcessorResult> {
-  const {
+  {
     items,
-    batchSize = 5,
+    batchSize,
     delayBetweenBatches = 100,
     onBatchStart,
     onBatchComplete,
-    onError = (error, batch) => {
-      throw new Error(`Batch processing error: ${error.message}`, { cause: { error, batch } });
-    },
-  } = options;
-
+    onError,
+    continueOnError = false,
+  }: BatchProcessorOptions<T>
+): Promise<BatchProcessorResult> {
+  if (!Number.isInteger(batchSize) || batchSize < 1) {
+    throw new RangeError("batchSize must be a positive integer");
+  }
   let added = 0;
   let failed = 0;
-  const totalBatches = Math.ceil(items.length / batchSize);
-
-  for (let i = 0; i < items.length; i += batchSize) {
-    const batchNumber = Math.floor(i / batchSize) + 1;
-    const batch = items.slice(i, i + batchSize);
-
+  for (let index = 0; index < items.length; index += batchSize) {
+    const batch = items.slice(index, index + batchSize);
+    onBatchStart?.(index / batchSize + 1, Math.ceil(items.length / batchSize));
+    let didSucceed = false;
     try {
-      onBatchStart?.(batchNumber, totalBatches);
-
       await processBatch(batch);
-      added += batch.length;
-
-      onBatchComplete?.(batch.length, 0);
+      didSucceed = true;
     } catch (error) {
-      failed += batch.length;
-      onError?.(error as Error, batch);
-
-      // If error is AbortError, stop processing
-      if (
-        (error instanceof DOMException && error.name === "AbortError") ||
-        (error instanceof Error && error.message === "Aborted")
-      ) {
-        console.log("Batch processing aborted due to AbortError");
-        break;
-      }
+      if ((error instanceof Error || error instanceof DOMException) && error.name === "AbortError")
+        throw error;
+      onError?.(error instanceof Error ? error : new Error(String(error)), batch);
+      if (!continueOnError) throw error;
     }
-
-    // Add delay between batches if not the last batch
-    if (i + batchSize < items.length) {
+    added += didSucceed ? batch.length : 0;
+    failed += didSucceed ? 0 : batch.length;
+    onBatchComplete?.(didSucceed ? batch.length : 0, didSucceed ? 0 : batch.length);
+    if (delayBetweenBatches > 0 && index + batchSize < items.length) {
       await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
     }
   }
-
-  return {
-    added,
-    failed,
-    total: items.length,
-  };
+  return { added, failed, total: items.length };
 }

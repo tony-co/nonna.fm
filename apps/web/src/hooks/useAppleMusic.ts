@@ -75,6 +75,7 @@ export function useAppleMusic(): UseAppleMusicReturn {
       setError(err instanceof Error ? err : new Error("Failed to authorize with Apple Music"));
       setIsAuthorized(false);
       setMusicUserToken(null);
+      throw err;
     }
   }, []);
 

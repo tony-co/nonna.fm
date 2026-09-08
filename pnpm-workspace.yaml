@@ -4,3 +4,8 @@ packages:
 
 onlyBuiltDependencies:
   - lefthook
+
+overrides:
+  "syncpack>minimatch": ^9.0.7
+  "vite>yaml": ^2.8.3
+  "next>postcss": ^8.5.28

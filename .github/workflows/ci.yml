@@ -4,58 +4,73 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: ["**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
     name: Quality Checks & Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      REDIS_TEST_URL: redis://127.0.0.1:6379
+      NEXT_TELEMETRY_DISABLED: 1
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 10.12.4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "22.x"
-          cache: "pnpm"
-
+          cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
       - name: Type check
-        run: pnpm run type-check
-
-      - name: Lint, format and import sorting check
-        run: pnpm run biome:ci
-
-      - name: Run unit tests with coverage
-        run: pnpm run test:coverage
-
+        run: pnpm type-check
+      - name: Lint, format and import sorting
+        run: pnpm biome:ci
+      - name: Dependency audit
+        run: pnpm audit --audit-level=high
+      - name: Unit and Redis regression tests
+        run: pnpm test:coverage
       - name: Cache Next.js build cache
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.npm
-            apps/web/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/src/**/*.{js,jsx,ts,tsx}') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          path: apps/web/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/src/**') }}
+          restore-keys: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
+      - name: Production build
+        run: pnpm build
+      - name: Install browser for smoke tests
+        run: pnpm --filter web exec playwright install --with-deps chromium
+      - name: Browser smoke tests
+        run: pnpm --filter web test:e2e
+      - name: Upload browser failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
         with:
-          fail_ci_if_error: true
-
-      - name: Build
-        if: github.ref == 'refs/heads/main'
-        run: pnpm run build
+          name: browser-results
+          path: apps/web/test-results
+          if-no-files-found: ignore
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: apps/web/coverage
+          if-no-files-found: ignore

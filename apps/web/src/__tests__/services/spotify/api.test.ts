@@ -85,7 +85,8 @@ describe("Spotify API Service", () => {
 
   it("addAlbumsToLibrary returns correct counts", async () => {
     const result = await api.addAlbumsToLibrary(new Set(mockAlbums));
-    expect(result.added).toBe(result.total);
+    expect(result.added).toBe(mockAlbums.filter(album => album.targetId).length);
+    expect(result.failed).toBe(mockAlbums.filter(album => !album.targetId).length);
   });
 
   it("searchAlbums matches albums and returns SearchResult", async () => {
@@ -101,60 +102,51 @@ describe("Spotify API Service", () => {
     }
   });
 
-  it("handles empty playlists/tracks/albums gracefully", async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockImplementationOnce(
-      async (input: string | URL | Request) => {
-        const url =
-          typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-        if (url.includes("/me/playlists?limit=1")) {
-          return new Response(JSON.stringify({ total: 0 }), { status: 200 });
-        }
-        return new Response(JSON.stringify({}), { status: 404 });
-      }
-    );
-    await expect(api.fetchUserLibrary()).rejects.toThrow();
+  it("handles empty libraries", async () => {
+    global.fetch = vi.fn().mockImplementation(async () => Response.json({ items: [], total: 0 }));
+    await expect(api.fetchUserLibrary()).resolves.toEqual({
+      playlists: [],
+      likedSongs: [],
+      albums: [],
+    });
   });
 
-  it("handles fetch errors gracefully", async () => {
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
-    // Attach a temporary unhandledRejection handler to suppress expected errors for this test
-    const unhandledRejectionHandler = (err: unknown): void => {
-      // Prevent Vitest from failing the test due to this expected error
-      // Only suppress the specific error we expect
-      if (err instanceof Error && err.message === "Network error") {
-        // Do nothing, this is expected
-        return;
+  it("fetches every playlist page and preserves order", async () => {
+    const playlists = Array.from({ length: 125 }, (_, index) => ({
+      id: String(index),
+      name: `Playlist ${index}`,
+      tracks: { total: 0 },
+      owner: { id: "me" },
+      images: [],
+    }));
+    const offsets: number[] = [];
+    global.fetch = vi.fn().mockImplementation(async (input: string) => {
+      const url = new URL(input);
+      if (url.pathname.endsWith("/me/playlists")) {
+        const offset = Number(url.searchParams.get("offset"));
+        offsets.push(offset);
+        return Response.json({
+          items: playlists.slice(offset, offset + 50),
+          total: playlists.length,
+        });
       }
-      // For any other error, rethrow so the test fails as normal
-      throw err;
-    };
-    process.on("unhandledRejection", unhandledRejectionHandler);
+      return Response.json({ items: [], total: 0 });
+    });
+    const library = await api.fetchUserLibrary();
+    expect(library.playlists.map(playlist => playlist.id)).toEqual(
+      playlists.map(playlist => playlist.id)
+    );
+    expect(offsets).toEqual([0, 50, 100]);
+  });
 
-    try {
-      vi.useFakeTimers();
-      // The retry logic in fetchUserLibrary will retry 5 times before throwing.
-      // We mock fetch to throw an error for each attempt.
-      const fetchMock = vi.fn().mockImplementation(() => {
-        throw new Error("Network error");
-      });
-      global.fetch = fetchMock;
+  it("skips unavailable tracks and accepts empty playlists", async () => {
+    global.fetch = vi.fn().mockResolvedValue(Response.json({ items: [{ track: null }], total: 1 }));
+    await expect(api.fetchPlaylistTracks("p")).resolves.toEqual([]);
+  });
 
-      const promise = api.fetchUserLibrary();
-
-      // Fast-forward all timers (simulate all retries instantly)
-      await vi.runAllTimersAsync();
-
-      await expect(promise).rejects.toThrow("Network error");
-      expect(fetchMock).toHaveBeenCalledTimes(5);
-
-      vi.useRealTimers();
-    } finally {
-      // Always remove the handler after the test to avoid side effects
-      process.off("unhandledRejection", unhandledRejectionHandler);
-      errorSpy.mockRestore();
-      warnSpy.mockRestore();
-    }
+  it("propagates permanent failures", async () => {
+    global.fetch = vi.fn().mockImplementation(async () => new Response(null, { status: 401 }));
+    await expect(api.fetchUserLibrary()).rejects.toThrow("401");
+    expect(global.fetch).toHaveBeenCalledTimes(3);
   });
 });

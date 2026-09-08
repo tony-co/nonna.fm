@@ -66,6 +66,7 @@ describe("TransferButton", () => {
         error: null,
       },
       matching: initialMatchingState,
+      playlistLoads: { playlist_1: { status: "loaded" as const } },
     };
 
     render(

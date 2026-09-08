@@ -1,28 +1,30 @@
 import { useEffect, useState } from "react";
 
-/**
- * A hook that uses the Intersection Observer API to detect when an element becomes visible in the viewport.
- * This is particularly useful for implementing lazy loading of images and other content.
- *
- * @param ref - A React ref object pointing to the element to observe
- * @returns boolean - Whether the element is currently visible in the viewport
- */
-export const useIsVisible = (ref: React.RefObject<HTMLElement | null>): boolean => {
-  const [isIntersecting, setIntersecting] = useState(false);
+const listeners = new Map<Element, (isVisible: boolean) => void>();
+let observer: IntersectionObserver | undefined;
 
+export function useIsVisible(ref: React.RefObject<HTMLElement | null>): boolean {
+  const [isVisible, setIsVisible] = useState(false);
   useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      setIntersecting(entry.isIntersecting);
-    });
-
-    if (ref.current) {
-      observer.observe(ref.current);
+    const element = ref.current;
+    if (!element) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setIsVisible(true);
+      return;
     }
-
+    observer ??= new IntersectionObserver(entries => {
+      for (const entry of entries) listeners.get(entry.target)?.(entry.isIntersecting);
+    });
+    listeners.set(element, setIsVisible);
+    observer.observe(element);
     return () => {
-      observer.disconnect();
+      observer?.unobserve(element);
+      listeners.delete(element);
+      if (listeners.size === 0) {
+        observer?.disconnect();
+        observer = undefined;
+      }
     };
   }, [ref]);
-
-  return isIntersecting;
-};
+  return isVisible;
+}

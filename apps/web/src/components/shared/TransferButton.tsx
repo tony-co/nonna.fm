@@ -9,9 +9,6 @@ import { useTransfer as useTransferHook } from "@/hooks/useTransfer";
 import type { MusicService } from "@/types";
 import { TransferSuccessModal } from "./TransferSuccessModal";
 
-// Track playlists that are currently being fetched
-export const fetchingPlaylists = new Set<string>();
-
 export function TransferButton() {
   const { state } = useLibrary();
   const tTransferButton = useTranslations("TransferButton");
@@ -28,8 +25,8 @@ export function TransferButton() {
   } = useTransferHook();
 
   // Dynamically check if any selected playlist is currently being fetched (no memo, always up-to-date)
-  const isFetchingPlaylists = Array.from(state.selectedItems.playlists).some(playlistId =>
-    fetchingPlaylists.has(playlistId)
+  const isFetchingPlaylists = Array.from(state.selectedItems.playlists).some(
+    playlistId => state.playlistLoads?.[playlistId]?.status !== "loaded"
   );
 
   // Get target service from URL parameters
@@ -177,6 +174,7 @@ export function TransferButton() {
           onClose={() => setShowSuccessModal(false)}
           targetServiceId={targetServiceId}
           results={transferResults}
+          error={transferError}
           selectedData={getSelectedData()}
         />
       )}

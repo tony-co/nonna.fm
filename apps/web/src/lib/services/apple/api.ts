@@ -136,150 +136,96 @@ const APPLE_RETRY_OPTIONS: RetryOptions = {
   jitterFactor: 0.1,
 };
 
-// Helper function to get a valid developer token
-async function getDeveloperToken(): Promise<string> {
-  try {
-    // In client-side code, fetch from our API endpoint
-    if (typeof window !== "undefined") {
-      const response = await fetch("/api/apple/developer-token");
-      if (!response.ok) {
-        throw new Error(`Failed to get developer token: ${response.status}`);
-      }
-      const data = await response.json();
-      if (!data.success || !data.token) {
-        throw new Error("Invalid developer token response");
-      }
-      return data.token;
-    } else {
-      // In server-side code, use the token manager directly
-      const { getValidDeveloperToken } = await import("./token-manager");
-      return getValidDeveloperToken();
-    }
-  } catch (error) {
-    console.error("Error getting developer token:", error);
-    throw new Error("Failed to obtain valid Apple Music developer token");
-  }
+let developerToken: { value: string; expiresAt: number } | null = null;
+let developerTokenRequest: Promise<string> | null = null;
+
+export function clearDeveloperTokenCache(): void {
+  developerToken = null;
+  developerTokenRequest = null;
+  storefrontRequest = undefined;
 }
 
-// Helper function to fetch Apple Music API with authentication (returns Response like other services)
+async function getDeveloperToken(): Promise<string> {
+  if (developerToken && developerToken.expiresAt > Date.now()) return developerToken.value;
+  if (developerTokenRequest) return developerTokenRequest;
+  developerTokenRequest = fetch("/api/apple/developer-token", { cache: "no-store" })
+    .then(async response => {
+      if (!response.ok) throw new Error(`Failed to get developer token: ${response.status}`);
+      const data = await response.json();
+      if (!data.success || typeof data.token !== "string")
+        throw new Error("Invalid developer token response");
+      developerToken = { value: data.token, expiresAt: Date.now() + 60 * 60 * 1000 };
+      return data.token as string;
+    })
+    .finally(() => {
+      developerTokenRequest = null;
+    });
+  return developerTokenRequest;
+}
+
 async function fetchAppleMusic(
   url: string | URL,
   options: RequestInit = {},
-  authData: AuthData,
-  retryCount = 0
+  authData: AuthData
 ): Promise<Response> {
-  const finalUrl = url instanceof URL ? url.toString() : url;
-
-  try {
-    // Get a fresh, valid developer token
-    const developerToken = await getDeveloperToken();
-
-    const headers = {
-      ...options.headers,
-      Authorization: `Bearer ${developerToken}`,
-      "Music-User-Token": authData.accessToken,
-    };
-
-    const response = await fetch(finalUrl, {
-      ...options,
-      headers,
-    });
-
-    // Check for token-related errors
-    if (response.status === 401 && retryCount === 0) {
-      console.warn("Apple Music API returned 401, attempting token refresh...");
-
-      // Force refresh the token
-      try {
-        if (typeof window !== "undefined") {
-          await fetch("/api/apple/developer-token", { method: "POST" });
-        } else {
-          const { refreshDeveloperToken } = await import("./token-manager");
-          await refreshDeveloperToken();
-        }
-
-        // Retry the request once with the new token
-        return fetchAppleMusic(url, options, authData, retryCount + 1);
-      } catch (refreshError) {
-        console.error("Failed to refresh Apple Music token:", refreshError);
-        throw new Error("Apple Music authentication failed and token could not be refreshed");
-      }
-    }
-
-    return response;
-  } catch (error) {
-    // If this is a network error and we haven't retried yet, try once more
-    if (retryCount === 0 && error instanceof TypeError && error.message.includes("fetch")) {
-      console.warn("Network error calling Apple Music API, retrying once...");
-      return fetchAppleMusic(url, options, authData, retryCount + 1);
-    }
-
-    throw error;
+  async function request(): Promise<Response> {
+    const headers = new Headers(options.headers);
+    headers.set("Authorization", `Bearer ${await getDeveloperToken()}`);
+    headers.set("Music-User-Token", authData.accessToken);
+    return fetch(url, { ...options, headers });
   }
+  const response = await request();
+  if (response.status !== 401) return response;
+  clearDeveloperTokenCache();
+  return request();
+}
+
+let storefrontRequest: { userToken: string; promise: Promise<string> } | undefined;
+
+async function getStorefront(authData: AuthData): Promise<string> {
+  if (storefrontRequest?.userToken === authData.accessToken) return storefrontRequest.promise;
+  const promise = retryWithExponentialBackoff<{ data: { id: string }[] }>(
+    () => fetchAppleMusic(`${BASE_URL}/v1/me/storefront`, {}, authData),
+    APPLE_RETRY_OPTIONS
+  )
+    .then(response => {
+      const id = response.data?.[0]?.id;
+      if (!id || !/^[a-z]{2}$/.test(id)) throw new Error("Apple Music storefront is unavailable");
+      return id;
+    })
+    .catch(error => {
+      if (storefrontRequest?.promise === promise) storefrontRequest = undefined;
+      throw error;
+    });
+  storefrontRequest = { userToken: authData.accessToken, promise };
+  return promise;
 }
 
 export async function initializeAppleMusic(
   injectedMusicKit?: MusicKitGlobal
 ): Promise<MusicKitInstance> {
-  try {
-    // Use the injected MusicKit if provided, otherwise use window.MusicKit
-    let musicKit =
-      injectedMusicKit ?? (typeof window !== "undefined" ? window.MusicKit : undefined);
-
-    if (!musicKit) {
-      // Retry logic as before
-      let attempts = 0;
-      while (attempts < 10) {
-        await new Promise(resolve => setTimeout(resolve, 500 * (attempts + 1)));
-        musicKit =
-          injectedMusicKit ?? (typeof window !== "undefined" ? window.MusicKit : undefined);
-        if (musicKit) {
-          break;
-        }
-        attempts++;
-      }
-      if (!musicKit) {
-        throw new Error("MusicKit failed to load after multiple attempts");
-      }
-    }
-
-    // Get a fresh, valid developer token
-    const developerToken = await getDeveloperToken();
-
-    await musicKit.configure({
-      developerToken,
-      app: {
-        name: "Nonna.fm",
-        build: "1.0.0",
-      },
-    });
-
-    return musicKit.getInstance();
-  } catch (error) {
-    // If the error is about an expired token, try to refresh and retry once
-    if (error instanceof Error && error.message.includes("expired token")) {
-      console.warn("Apple Music token expired, attempting to refresh...");
-      try {
-        // Force refresh the token by making a POST request to our API
-        if (typeof window !== "undefined") {
-          await fetch("/api/apple/developer-token", { method: "POST" });
-        } else {
-          const { refreshDeveloperToken } = await import("./token-manager");
-          await refreshDeveloperToken();
-        }
-
-        // Retry initialization with the new token by recursively calling this function
-        return initializeAppleMusic(injectedMusicKit);
-      } catch (retryError) {
-        console.error("Failed to recover from expired token:", retryError);
-        throw new Error(
-          "Apple Music token expired and could not be refreshed. Please check your Apple Music configuration."
-        );
-      }
-    }
-
-    throw error;
+  let musicKit = injectedMusicKit ?? (typeof window !== "undefined" ? window.MusicKit : undefined);
+  for (let attempt = 0; !musicKit && attempt < 10; attempt++) {
+    await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+    musicKit = injectedMusicKit ?? (typeof window !== "undefined" ? window.MusicKit : undefined);
   }
+  if (!musicKit) throw new Error("MusicKit failed to load after multiple attempts");
+  const configure = async () => {
+    await musicKit.configure({
+      developerToken: await getDeveloperToken(),
+      app: { name: "Nonna.fm", build: "1.0.0" },
+    });
+  };
+  try {
+    await configure();
+  } catch (error) {
+    if (!(error instanceof Error) || !error.message.includes("expired token")) throw error;
+    const response = await fetch("/api/apple/developer-token", { method: "POST" });
+    if (!response.ok) throw new Error("Failed to refresh Apple Music developer token");
+    clearDeveloperTokenCache();
+    await configure();
+  }
+  return musicKit.getInstance();
 }
 
 export async function authorizeAppleMusic(
@@ -321,7 +267,7 @@ async function performSearch(
   searchTerm: string,
   authData: AuthData
 ): Promise<{ songId: string | null; albumId: string | null }> {
-  const url = new URL(`${BASE_URL}/v1/catalog/fr/search`);
+  const url = new URL(`${BASE_URL}/v1/catalog/${await getStorefront(authData)}/search`);
   url.searchParams.set("term", searchTerm);
   url.searchParams.set("types", "songs");
   url.searchParams.set("limit", "3");
@@ -478,7 +424,7 @@ export async function createPlaylistWithTracks(
         },
         authData
       ),
-    APPLE_RETRY_OPTIONS
+    { ...APPLE_RETRY_OPTIONS, retrySafe: false }
   );
 
   const playlistId = playlistData.data?.[0]?.id;
@@ -505,7 +451,7 @@ export async function createPlaylistWithTracks(
   let completedTracks = 0;
   const total = tracksWithIds.length;
 
-  await processInBatches(
+  const result = await processInBatches(
     async batch => {
       await retryWithExponentialBackoff(
         () =>
@@ -525,7 +471,7 @@ export async function createPlaylistWithTracks(
             },
             authData
           ),
-        APPLE_RETRY_OPTIONS
+        { ...APPLE_RETRY_OPTIONS, retrySafe: false }
       );
 
       // Update progress after each batch
@@ -537,13 +483,13 @@ export async function createPlaylistWithTracks(
     {
       items: tracksWithIds,
       batchSize: 5, // Small batches for granular progress
-      onBatchStart: () => {},
+      continueOnError: true,
     }
   );
 
   return {
-    added: tracksWithIds.length,
-    failed: tracks.length - tracksWithIds.length,
+    added: result.added,
+    failed: tracks.length - result.added,
     total: tracks.length,
     playlistId,
   };
@@ -576,24 +522,13 @@ export async function addTracksToLibrary(
   let completedTracks = 0;
   const total = tracksWithIds.length;
 
-  await processInBatches(
+  const result = await processInBatches(
     async batch => {
       await retryWithExponentialBackoff(
         () =>
           fetchAppleMusic(
-            `${BASE_URL}/v1/me/library`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                data: batch.map(track => ({
-                  id: track.targetId,
-                  type: "songs",
-                })),
-              }),
-            },
+            `${BASE_URL}/v1/me/library?${new URLSearchParams({ "ids[songs]": batch.map(track => track.targetId).join(",") })}`,
+            { method: "POST" },
             authData
           ),
         APPLE_RETRY_OPTIONS
@@ -608,13 +543,13 @@ export async function addTracksToLibrary(
     {
       items: tracksWithIds,
       batchSize: 5, // Small batches for granular progress
-      onBatchStart: () => {},
+      continueOnError: true,
     }
   );
 
   return {
-    added: tracksWithIds.length,
-    failed: tracks.length - tracksWithIds.length,
+    added: result.added,
+    failed: tracks.length - result.added,
     total: tracks.length,
     playlistId: null,
   };
@@ -625,89 +560,26 @@ export async function addAlbumsToLibrary(
   onProgress?: (completed: number, total: number) => void
 ): Promise<TransferResult> {
   const authData = await getAppleAuthData("target");
-  if (!authData) {
-    throw new Error("Not authenticated with Apple Music");
-  }
-
-  if (albums.size === 0) {
-    return {
-      added: 0,
-      failed: albums.size,
-      total: albums.size,
-      playlistId: null,
-    };
-  }
-
-  // Add albums to library in batches for progress tracking
+  if (!authData) throw new Error("Not authenticated with Apple Music");
   const albumsWithIds = Array.from(albums).filter(album => album.targetId);
-
-  let completedAlbums = 0;
-  const total = albumsWithIds.length;
-
-  // Process each album individually for progress tracking
-  for (let i = 0; i < albumsWithIds.length; i++) {
-    const album = albumsWithIds[i];
-    const url = `${BASE_URL}/v1/me/library?ids[albums]=${album.targetId}`;
-
-    // Handle Apple Music's empty 202 responses manually to avoid JSON parsing errors
-    let attempt = 0;
-    const maxRetries = APPLE_RETRY_OPTIONS.maxRetries || 3;
-
-    while (attempt <= maxRetries) {
-      try {
-        const response = await fetchAppleMusic(
-          url,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          },
-          authData
-        );
-
-        // Apple Music returns empty 202 responses for successful album additions
-        if (response.ok) {
-          break; // Success - exit the retry loop
-        } else if (response.status === 429 || response.status >= 500) {
-          // Retryable error
-          if (attempt === maxRetries) {
-            throw new Error(
-              `Apple Music API error after ${maxRetries} retries: ${response.status} ${response.statusText}`
-            );
-          }
-          const delay = Math.min(1000 * 2 ** attempt, 16000);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          attempt++;
-        } else {
-          // Non-retryable error
-          throw new Error(`Apple Music API error: ${response.status} ${response.statusText}`);
-        }
-      } catch (error) {
-        if (attempt === maxRetries) {
-          throw error;
-        }
-        const delay = Math.min(1000 * 2 ** attempt, 16000);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        attempt++;
-      }
-    }
-
-    // Update progress after each album
-    completedAlbums++;
-    if (onProgress) {
-      onProgress(completedAlbums, total);
-    }
-
-    // Small delay between requests to avoid rate limiting
-    if (i < albumsWithIds.length - 1) {
-      await new Promise(resolve => setTimeout(resolve, 10));
-    }
-  }
-
+  let completed = 0;
+  const result = await processInBatches(
+    async batch => {
+      const query = new URLSearchParams({
+        "ids[albums]": batch.map(album => album.targetId).join(","),
+      });
+      await retryWithExponentialBackoff(
+        () => fetchAppleMusic(`${BASE_URL}/v1/me/library?${query}`, { method: "POST" }, authData),
+        APPLE_RETRY_OPTIONS
+      );
+      completed += batch.length;
+      onProgress?.(completed, albumsWithIds.length);
+    },
+    { items: albumsWithIds, batchSize: 1, delayBetweenBatches: 10, continueOnError: true }
+  );
   return {
-    added: albums.size,
-    failed: 0, // All were added if no error
+    added: result.added,
+    failed: albums.size - result.added,
     total: albums.size,
     playlistId: null,
   };
@@ -721,7 +593,7 @@ async function findBestAlbumMatch(
     // Clean search terms
     const searchTerm = `${cleanSearchTerm(album.name)} ${cleanSearchTerm(album.artist)}`;
 
-    const url = new URL(`${BASE_URL}/v1/catalog/fr/search`);
+    const url = new URL(`${BASE_URL}/v1/catalog/${await getStorefront(authData)}/search`);
     url.searchParams.set("term", searchTerm);
     url.searchParams.set("types", "albums");
     url.searchParams.set("limit", "3");

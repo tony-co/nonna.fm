@@ -3,9 +3,17 @@
   "ui": "tui",
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"],
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**"
+      ],
       "env": [
         "NODE_ENV",
         "NEXT_PUBLIC_APP_URL",
@@ -22,39 +30,50 @@
         "REDIS_URL",
         "GOOGLE_SITE_VERIFICATION",
         "NEXT_PUBLIC_POSTHOG_KEY",
-        "NEXT_PUBLIC_POSTHOG_HOST",
-        "SENTRY_ORG",
-        "SENTRY_PROJECT",
-        "SENTRY_AUTH_TOKEN",
-        "NEXT_PUBLIC_SENTRY_DSN"
+        "NEXT_PUBLIC_POSTHOG_HOST"
       ]
     },
     "dev": {
       "cache": false,
       "persistent": true
     },
-    "dev:https": {
-      "cache": false,
-      "persistent": true
-    },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": [
+        "^lint"
+      ]
     },
     "format": {},
     "type-check": {
-      "dependsOn": ["^type-check"]
+      "dependsOn": [
+        "^type-check"
+      ]
     },
     "test": {
-      "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", "!coverage/**"]
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!coverage/**"
+      ],
+      "env": [
+        "REDIS_TEST_URL"
+      ]
     },
     "test:watch": {
       "cache": false,
       "persistent": true
     },
     "test:coverage": {
-      "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "coverage/**"
+      ],
+      "env": [
+        "REDIS_TEST_URL"
+      ]
     },
     "clean": {
       "cache": false

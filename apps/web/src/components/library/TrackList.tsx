@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { type FC, useRef } from "react";
+import { type FC, memo, useRef } from "react";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import { StatusIcon } from "@/components/shared/StatusIcon";
 import { useIsVisible } from "@/hooks/useIsVisible";
@@ -18,7 +18,7 @@ const TrackRow: FC<{
   index: number;
   isSelected: boolean;
   playlist?: IPlaylist;
-}> = ({ track, index, isSelected, playlist }) => {
+}> = memo(({ track, index, isSelected, playlist }) => {
   const ref = useRef<HTMLDivElement>(null);
   const isVisible = useIsVisible(ref as React.RefObject<HTMLElement>);
   // Status is now read directly from the track object (single source of truth)
@@ -77,7 +77,7 @@ const TrackRow: FC<{
       </div>
     </div>
   );
-};
+});
 
 // Empty state component for empty playlists
 const EmptyPlaylistState: FC = () => {
@@ -111,6 +111,7 @@ const EmptyPlaylistState: FC = () => {
 
 export const TrackList: FC<TrackListProps> = ({ tracks, selection = new Set(), playlist }) => {
   const tTableHeaders = useTranslations("TableHeaders");
+  const selectedIds = new Set(Array.from(selection, track => track.id));
   // Show empty state if no tracks
   if (!tracks || tracks.length === 0) {
     return <EmptyPlaylistState />;
@@ -144,9 +145,7 @@ export const TrackList: FC<TrackListProps> = ({ tracks, selection = new Set(), p
       {/* Tracks */}
       <div className="space-y-2" data-testid="tracklist">
         {tracks.map((track, index) => {
-          const isSelected = Array.from(selection).some(
-            selectedTrack => selectedTrack.id === track.id
-          );
+          const isSelected = selectedIds.has(track.id);
 
           return (
             <TrackRow

@@ -6,8 +6,8 @@ import { LibrarySidebar } from "@/components/layout/Sidebar";
 import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
 import { useItemTitle } from "@/contexts/ItemTitleContext";
 import { useLibrary } from "@/contexts/LibraryContext";
-import { fetchInitialLibraryData } from "@/lib/server/library";
 import { authorizeAppleMusic } from "@/lib/services/apple/api";
+import { musicServiceFactory } from "@/lib/services/factory";
 import type { IPlaylist, MusicService } from "@/types";
 
 interface LibraryClientContentProps {
@@ -19,18 +19,14 @@ interface LibraryClientContentProps {
 function LibraryContent({ source, _target, children }: LibraryClientContentProps) {
   const { state, actions } = useLibrary();
   const { setShowTitle } = useItemTitle();
-  const [isContentVisible, setIsContentVisible] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const pathname = usePathname();
   const [mainEl, setMainEl] = useState<HTMLElement | null>(null);
   const mainRef = useCallback((node: HTMLElement | null) => {
     setMainEl(node);
   }, []);
 
-  // Show content when route changes (i.e., when an item is selected)
-  useEffect(() => {
-    const isHome = pathname.endsWith(`${source}/${_target}`);
-    setIsContentVisible(!isHome);
-  }, [pathname, source, _target]);
+  const isContentVisible = !pathname.endsWith(`${source}/${_target}`);
 
   // Effect to observe the h1 within the main content area
   useEffect(() => {
@@ -99,15 +95,12 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
           await authorizeAppleMusic("source");
         }
 
-        const { initialData, error } = await fetchInitialLibraryData(source);
+        const initialData = await musicServiceFactory.getProvider(source).fetchUserLibrary();
 
         // Check if component is still mounted before updating state
         if (!mounted) return;
 
-        if (error) {
-          console.error("Error initializing library:", error);
-          actions.setError(error.toString());
-        } else if (initialData) {
+        if (initialData) {
           actions.updateLibrary({
             likedSongs: new Set(initialData.likedSongs),
             albums: new Set(initialData.albums),
@@ -121,22 +114,18 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
       } finally {
         if (mounted) {
           actions.setLoading(false);
+          setIsInitialized(true);
         }
       }
     }
 
-    const isLibraryEmpty =
-      !state?.likedSongs?.size && !state?.albums?.size && !state?.playlists?.size;
-
-    if (isLibraryEmpty && source) {
-      initLibrary();
-    }
+    void initLibrary();
 
     // Cleanup function to prevent state updates after unmount
     return () => {
       mounted = false;
     };
-  }, [source, state?.likedSongs, state?.albums, state?.playlists, actions]);
+  }, [source, actions]);
 
   if (state?.status?.isLoading) {
     return (
@@ -150,15 +139,8 @@ function LibraryContent({ source, _target, children }: LibraryClientContentProps
     return <div>Error: {state.status.error}</div>;
   }
 
-  const isLibraryEmpty =
-    !state?.likedSongs?.size && !state?.albums?.size && !state?.playlists?.size;
-
-  if (isLibraryEmpty) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <LoadingOverlay />
-      </div>
-    );
+  if (!isInitialized) {
+    return <LoadingOverlay />;
   }
 
   return (

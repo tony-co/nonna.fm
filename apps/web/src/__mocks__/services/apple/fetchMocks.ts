@@ -77,6 +77,7 @@ export function setupAppleFetchMock(): void {
         }
       );
     }
+    if (url.endsWith("/v1/me/storefront")) return Response.json({ data: [{ id: "ca" }] });
     // Playlist tracks endpoint: /v1/me/library/playlists/{playlistId}/tracks
     if (/\/v1\/me\/library\/playlists\/[^/]+\/tracks/.test(url) && options?.method === "GET") {
       const match = url.match(/\/v1\/me\/library\/playlists\/([^/]+)\/tracks/);
@@ -149,13 +150,13 @@ export function setupAppleFetchMock(): void {
       }
     }
     // Add tracks/albums to library
-    if (url.endsWith("/v1/me/library") && options?.method === "POST") {
+    if (new URL(url).pathname === "/v1/me/library" && options?.method === "POST") {
       return new Response(JSON.stringify({}), {
         status: 202,
         headers: { "Content-Type": "application/json" },
       });
     }
-    if (url.includes("/v1/me/library?ids[albums]=") && options?.method === "POST") {
+    if (new URL(url).searchParams.has("ids[albums]") && options?.method === "POST") {
       return new Response(JSON.stringify({}), {
         status: 202,
         headers: { "Content-Type": "application/json" },

@@ -2,7 +2,8 @@ import type React from "react";
 import { createContext, useContext, useState } from "react";
 import { vi } from "vitest";
 import { mockLibraryData } from "@/__mocks__/data/libraryData";
-import type { LibraryState } from "@/types";
+import { fetchPlaylistTracks } from "@/lib/musicApi";
+import type { IPlaylist, LibraryState } from "@/types";
 
 // Mock library state
 const initialMockState: LibraryState = {
@@ -78,6 +79,7 @@ type LibraryContextType = {
   state: LibraryState;
   dispatch: ReturnType<typeof vi.fn>;
   actions: MockActions;
+  operations: { loadPlaylist: (id: string) => Promise<IPlaylist> };
 };
 
 // Create the context
@@ -93,6 +95,10 @@ export const LibraryProvider = ({
   const [state, setState] = useState(initialState);
   const contextValue: LibraryContextType = {
     state,
+    operations: {
+      loadPlaylist: async id =>
+        ({ ...state.playlists?.get(id), tracks: await fetchPlaylistTracks(id) }) as IPlaylist,
+    },
     dispatch: vi.fn(),
     actions: {
       ...mockActions,

@@ -1,79 +1,67 @@
-import { logger } from "./logger";
-
-/**
- * Configuration options for retry behavior
- */
 export interface RetryOptions {
-  /** Maximum number of retry attempts */
+  /** Maximum number of attempts, including the initial request. */
   maxRetries?: number;
-  /** Initial delay between retries in milliseconds */
   initialRetryDelay?: number;
-  /** Maximum delay between retries in milliseconds */
   maxRetryDelay?: number;
-  /** Factor to add jitter to delay (0-1) */
   jitterFactor?: number;
-  /** Additional status codes to retry (beyond the defaults) */
   additionalRetryStatusCodes?: number[];
-  /** Allow handling of 404s as empty content for specific paths */
   treat404AsEmpty?: boolean;
+  signal?: AbortSignal;
+  /** Disable ambiguous retries for operations such as creating a playlist. */
+  retrySafe?: boolean;
 }
 
-/**
- * Default retry configuration values
- */
-const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
-  maxRetries: 5,
-  initialRetryDelay: 1000, // 1 second
-  maxRetryDelay: 64000, // 64 seconds
-  jitterFactor: 0.1, // 10% jitter
-  additionalRetryStatusCodes: [],
-  treat404AsEmpty: false,
-};
-
-/**
- * Adds jitter to a delay value to prevent thundering herd problems
- */
-function addJitter(delay: number, factor: number): number {
-  const jitter = delay * factor;
-  return delay + (Math.random() * 2 - 1) * jitter;
+export class HttpError extends Error {
+  constructor(
+    public readonly status: number,
+    statusText: string
+  ) {
+    super(`Request failed with status ${status}: ${statusText}`);
+    this.name = "HttpError";
+  }
 }
 
-/**
- * Type definition for YouTube API error object
- */
-interface YouTubeErrorObject {
-  domain: string;
-  reason: string;
-  message?: string;
+function wait(delayMs: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    signal?.throwIfAborted();
+    const abort = () => {
+      clearTimeout(timer);
+      reject(signal?.reason);
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", abort);
+      resolve();
+    }, delayMs);
+    signal?.addEventListener("abort", abort, { once: true });
+  });
 }
 
-/**
- * Utility function to retry a fetch request with exponential backoff
- * Handles rate limiting (429) and other retryable errors
- * Uses Sentry logger for all logging operations
- *
- * @param fetchFn - Function that returns a Promise<Response>
- * @param options - Retry configuration options
- * @returns Promise<T> - The response data of type T
- */
+function getRetryAfter(response: Response): number | undefined {
+  const value = response.headers.get("Retry-After");
+  if (!value) return undefined;
+  const seconds = Number(value);
+  const delayMs = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(value) - Date.now();
+  return Number.isFinite(delayMs) ? Math.max(0, delayMs) : undefined;
+}
+
 export async function retryWithExponentialBackoff<T>(
   fetchFn: () => Promise<Response>,
-  options: RetryOptions = {}
+  {
+    maxRetries = 5,
+    initialRetryDelay = 1000,
+    maxRetryDelay = 64000,
+    jitterFactor = 0.1,
+    additionalRetryStatusCodes = [],
+    treat404AsEmpty = false,
+    signal,
+    retrySafe = true,
+  }: RetryOptions = {}
 ): Promise<T> {
-  const {
-    maxRetries = DEFAULT_RETRY_OPTIONS.maxRetries,
-    initialRetryDelay = DEFAULT_RETRY_OPTIONS.initialRetryDelay,
-    maxRetryDelay = DEFAULT_RETRY_OPTIONS.maxRetryDelay,
-    jitterFactor = DEFAULT_RETRY_OPTIONS.jitterFactor,
-    additionalRetryStatusCodes = DEFAULT_RETRY_OPTIONS.additionalRetryStatusCodes,
-    treat404AsEmpty = DEFAULT_RETRY_OPTIONS.treat404AsEmpty,
-  } = options;
+  if (!Number.isInteger(maxRetries) || maxRetries < 1) {
+    throw new RangeError("maxRetries must be a positive integer");
+  }
 
-  let attempt = 0;
-  let delay = initialRetryDelay;
-
-  // Default status codes that should be retried (4xx/5xx excluding specific ones below)
-  const retryableStatusCodes = new Set([
+  const retryableStatuses = new Set([
     408,
     409,
     425,
@@ -84,155 +72,45 @@ export async function retryWithExponentialBackoff<T>(
     504,
     ...additionalRetryStatusCodes,
   ]);
-  // Status codes that should never be retried
-  const nonRetryableStatusCodes = new Set([401, 403, 404]);
-
-  while (attempt < maxRetries) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    signal?.throwIfAborted();
+    let response: Response;
+    const backoffMs = Math.min(initialRetryDelay * 2 ** attempt, maxRetryDelay);
     try {
-      const response = await fetchFn();
-
-      // If the response is ok, parse and return the data
-      if (response.ok) {
-        if (response.status === 204) {
-          return {} as T;
-        }
-        // Handle both JSON and text responses
-        const contentType = response.headers.get("content-type");
-        if (contentType?.includes("application/json")) {
-          return await response.json();
-        }
-        return (await response.text()) as T;
-      }
-
-      // If we get a 429, use the Retry-After header if available
-      if (response.status === 429) {
-        const retryAfter = response.headers.get("Retry-After");
-        if (retryAfter) {
-          delay = parseInt(retryAfter, 10) * 1000; // Convert to milliseconds
-        }
-      }
-
-      // If it's a 409 (often used for YouTube's SERVICE_UNAVAILABLE), check error contents
-      if (response.status === 409) {
-        try {
-          const contentType = response.headers.get("content-type");
-          if (contentType?.includes("application/json")) {
-            // Clone the response to read it twice (once here, once for the content)
-            const clonedResponse = response.clone();
-            const errorData = await clonedResponse.json();
-
-            // Check if it's a YouTube SERVICE_UNAVAILABLE error
-            const isYouTubeServiceUnavailable = errorData?.error?.errors?.some(
-              (e: YouTubeErrorObject) => e.reason === "SERVICE_UNAVAILABLE"
-            );
-
-            if (isYouTubeServiceUnavailable) {
-              logger.warn("YouTube SERVICE_UNAVAILABLE detected, retrying...");
-
-              // Log the retry attempt
-              logger.warn(`API request failed (attempt ${attempt + 1}/${maxRetries})`, {
-                status: response.status,
-                statusText: response.statusText,
-                reason: "SERVICE_UNAVAILABLE",
-                retryIn: delay,
-              });
-
-              // Wait before retrying
-              await new Promise(resolve => setTimeout(resolve, addJitter(delay, jitterFactor)));
-
-              // Exponential backoff for next attempt
-              delay = Math.min(delay * 2, maxRetryDelay);
-              attempt++;
-              continue;
-            }
-          }
-        } catch (e) {
-          // If we couldn't parse the error JSON, just continue with normal error handling
-          logger.warn("Could not parse response JSON for 409 error", { error: e });
-        }
-      }
-
-      // For errors that we don't want to retry, throw immediately
-      if (nonRetryableStatusCodes.has(response.status)) {
-        // Special handling for 404 responses that should be treated as empty
-        if (response.status === 404 && treat404AsEmpty) {
-          return { data: [] } as T;
-        }
-        const error = new Error(
-          `Request failed with status ${response.status}: ${response.statusText}`
-        );
-        logger.captureException(error, {
-          tags: {
-            category: "api",
-            statusCode: response.status.toString(),
-            retryable: "false",
-          },
-          extra: {
-            status: response.status,
-            statusText: response.statusText,
-          },
-        });
-        throw error;
-      }
-
-      // For errors with status codes that should be retried
-      if (retryableStatusCodes.has(response.status)) {
-        // Log the retry attempt
-        logger.warn(`API request failed (attempt ${attempt + 1}/${maxRetries})`, {
-          status: response.status,
-          statusText: response.statusText,
-          retryIn: delay,
-        });
-
-        // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, addJitter(delay, jitterFactor)));
-
-        // Exponential backoff for next attempt
-        delay = Math.min(delay * 2, maxRetryDelay);
-        attempt++;
-        continue;
-      }
-
-      // For any other status code, throw an error
-      throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
+      response = await fetchFn();
     } catch (error) {
-      // Check if this is an error we explicitly threw for non-retryable status codes
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      const isNonRetryableStatusCode = Array.from(nonRetryableStatusCodes).some(code =>
-        errorMessage.includes(`Request failed with status ${code}`)
-      );
-
-      // Don't retry if it's a non-retryable status code
-      if (isNonRetryableStatusCode) {
-        logger.captureException(error);
-        throw error;
-      }
-
-      // If it's the last attempt, throw the error
-      if (attempt === maxRetries - 1) {
-        logger.captureException(error, {
-          tags: {
-            category: "api",
-            finalAttempt: "true",
-          },
-          extra: {
-            attempt: attempt + 1,
-            maxRetries,
-          },
-        });
-        throw error;
-      }
-
-      logger.warn(`API request error (attempt ${attempt + 1}/${maxRetries})`, {
-        error: error instanceof Error ? error.message : String(error),
-        attempt: attempt + 1,
-        maxRetries,
-      } as Record<string, unknown>);
-      await new Promise(resolve => setTimeout(resolve, addJitter(delay, jitterFactor)));
-      delay = Math.min(delay * 2, maxRetryDelay);
-      attempt++;
+      signal?.throwIfAborted();
+      if (!retrySafe || !(error instanceof TypeError) || attempt === maxRetries - 1) throw error;
+      await wait(Math.min(backoffMs * (1 + Math.random() * jitterFactor), maxRetryDelay), signal);
+      continue;
     }
-  }
 
-  throw new Error(`Failed after ${maxRetries} retries`);
+    signal?.throwIfAborted();
+    if (response.ok) {
+      const body = await response.text();
+      if (!body) return {} as T;
+      return response.headers.get("content-type")?.includes("json")
+        ? JSON.parse(body)
+        : (body as T);
+    }
+    if (response.status === 404 && treat404AsEmpty) return { data: [] } as T;
+
+    const error = new HttpError(response.status, response.statusText);
+    if (
+      !retryableStatuses.has(response.status) ||
+      (!retrySafe && response.status !== 429) ||
+      attempt === maxRetries - 1
+    )
+      throw error;
+
+    const retryAfter = getRetryAfter(response);
+    // A long server cooldown must not turn into an earlier, abusive retry.
+    if (retryAfter !== undefined && retryAfter > maxRetryDelay) throw error;
+    await response.body?.cancel();
+    await wait(
+      retryAfter ?? Math.min(backoffMs * (1 + Math.random() * jitterFactor), maxRetryDelay),
+      signal
+    );
+  }
+  throw new Error("Request attempts exhausted");
 }
