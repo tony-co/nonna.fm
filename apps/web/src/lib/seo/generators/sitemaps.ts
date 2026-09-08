@@ -29,12 +29,10 @@ export interface SitemapIndexEntry {
  */
 export function generateSitemapIndex(): SitemapIndexEntry[] {
   const sitemaps: SitemapIndexEntry[] = [];
-  const now = new Date().toISOString();
 
   // Add consolidated public pages sitemap
   sitemaps.push({
     sitemap: `${SEO_CONFIG.brand.url}/sitemap-public.xml`,
-    lastModified: now,
   });
 
   return sitemaps;
@@ -61,7 +59,6 @@ export function generatePublicSitemap(): SitemapUrl[] {
       const localizedPath = generateLocalizedPath(path, locale);
       urls.push({
         url: `${baseUrl}${localizedPath}`,
-        lastModified: new Date().toISOString(),
         changeFrequency,
         priority,
         alternateRefs: generateAlternateRefs(path),
@@ -219,23 +216,10 @@ function escapeXml(unsafe: string): string {
  * Get all sitemap URLs for validation
  */
 export function getAllSitemapUrls(): string[] {
-  const urls: string[] = [];
-
-  // Main sitemap index
-  urls.push(`${SEO_CONFIG.brand.url}/sitemap.xml`);
-
-  // Locale-specific sitemaps
-  SEO_CONFIG.supportedLocales.forEach(locale => {
-    urls.push(`${SEO_CONFIG.brand.url}/sitemap-${locale}.xml`);
-  });
-
-  // Special sitemaps
-  urls.push(
-    `${SEO_CONFIG.brand.url}/sitemap-services.xml`,
-    `${SEO_CONFIG.brand.url}/sitemap-transfers.xml`
-  );
-
-  return urls;
+  return [
+    `${SEO_CONFIG.brand.url}/sitemap.xml`,
+    ...generateSitemapIndex().map(entry => entry.sitemap),
+  ];
 }
 
 /**

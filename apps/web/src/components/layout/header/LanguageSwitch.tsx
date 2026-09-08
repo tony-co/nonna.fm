@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronDown, Languages } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "@/i18n/navigation";
@@ -12,7 +11,6 @@ export const LanguageSwitch = () => {
   const currentLocale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -31,7 +29,7 @@ export const LanguageSwitch = () => {
     setIsOpen(false);
 
     // Convert search params to object to preserve URL parameters
-    const searchParamsObj = Object.fromEntries(searchParams.entries());
+    const searchParamsObj = Object.fromEntries(new URLSearchParams(window.location.search));
 
     router.replace({ pathname, query: searchParamsObj }, { locale });
   };

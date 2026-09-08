@@ -1,76 +1,37 @@
-"use client";
-
-import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { Suspense, useEffect, useState } from "react";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { hasLocale } from "next-intl";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { Suspense } from "react";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
-import { DeezerConnectModal } from "@/components/modals/DeezerConnectModal";
-import { SpotifyConsentModal } from "@/components/modals/SpotifyConsentModal";
 import { AudioEqualizer } from "@/components/shared/AudioEqualizer";
-import { getAvailableServices } from "@/config/services";
-import { useRouter } from "@/i18n/navigation";
-import { initializeEncryption } from "@/lib/auth/crypto";
-import { clearAllServiceData } from "@/lib/auth/utils";
-import { authorizeAppleMusic } from "@/lib/services/apple/api";
-import { initiateSpotifyAuth } from "@/lib/services/spotify/auth";
-import { initiateYouTubeAuth } from "@/lib/services/youtube/auth";
+import { routing } from "@/i18n/routing";
+import { generateMetadata as generateSEOMetadata } from "@/lib/seo/generators/metadata";
+import { HomepageStructuredData } from "@/lib/seo/generators/structured-data";
+import { HomeGuide } from "./_components/HomeGuide";
+import { HomeAuthState, SourceServices } from "./_components/SourceServices";
 
-function HomePageContent() {
-  const t = useTranslations("HomePage");
-  const tAccessibility = useTranslations("Accessibility");
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const error = searchParams.get("error");
-  const [isDeezerModalOpen, setIsDeezerModalOpen] = useState(false);
-  const [isSpotifyConsentModalOpen, setIsSpotifyConsentModalOpen] = useState(false);
+type PageProps = { params: Promise<{ locale: string }> };
 
-  useEffect(() => {
-    // Clear all service data if there was an error
-    if (error) {
-      clearAllServiceData();
-    }
-    // Initialize encryption on app start
-    initializeEncryption();
-  }, [error]);
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) return {};
+  const t = await getTranslations({ locale, namespace: "HomePage" });
+  return generateSEOMetadata({
+    locale,
+    pathname: "/",
+    title: t("metaTitle"),
+    description: t("description"),
+  });
+}
 
-  const handleSpotifyLogin = async (): Promise<void> => {
-    setIsSpotifyConsentModalOpen(true);
-  };
-
-  const handleSpotifyConsent = async (): Promise<void> => {
-    try {
-      clearAllServiceData();
-      setIsSpotifyConsentModalOpen(false);
-      await initiateSpotifyAuth("source");
-    } catch (error) {
-      console.error("Error initiating Spotify auth:", error);
-    }
-  };
-
-  const handleAppleLogin = async (): Promise<void> => {
-    try {
-      clearAllServiceData();
-      await authorizeAppleMusic("source");
-      router.push("/source?source=apple");
-    } catch (error) {
-      console.error("Error initiating Apple Music auth:", error);
-    }
-  };
-
-  const handleYouTubeLogin = async (): Promise<void> => {
-    try {
-      clearAllServiceData();
-      await initiateYouTubeAuth("source");
-    } catch (error) {
-      console.error("Error initiating YouTube auth:", error);
-    }
-  };
-
-  const openDeezerModal = (): void => {
-    clearAllServiceData();
-    setIsDeezerModalOpen(true);
-  };
+export default async function HomePage({ params }: PageProps) {
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) notFound();
+  setRequestLocale(locale);
+  const t = await getTranslations({ locale, namespace: "HomePage" });
+  const tAccessibility = await getTranslations({ locale, namespace: "Accessibility" });
 
   return (
     <div className="grid h-[100dvh] grid-rows-[auto_1fr_auto] overflow-hidden">
@@ -104,58 +65,15 @@ function HomePageContent() {
                 </p>
               </div>
 
-              {error && (
-                <div
-                  className="bg-[var(--color-error)]/5 dark:bg-[var(--color-error)]/10 border-[var(--color-error)]/20 dark:text-[var(--color-error)]/90 mx-auto mb-8 max-w-lg rounded-2xl border px-6 py-4 text-[var(--color-error)] shadow-lg backdrop-blur-sm"
-                  style={{ contain: "content" }}
-                >
-                  {error === "spotify_auth_failed" && t("errors.spotifyAuthFailed")}
-                  {error === "spotify_auth_error" && t("errors.spotifyAuthError")}
-                  {error === "youtube_auth_failed" && t("errors.youtubeAuthFailed")}
-                  {error === "youtube_auth_error" && t("errors.youtubeAuthError")}
-                  {error === "not_authenticated" && t("errors.notAuthenticated")}
-                </div>
-              )}
+              <Suspense fallback={null}>
+                <HomeAuthState />
+              </Suspense>
 
               <div className="mb-22">
                 <AudioEqualizer className="opacity-90" />
               </div>
 
-              <h2 className="mb-8 flex items-center justify-center gap-3 text-2xl font-semibold text-zinc-800 lg:text-3xl dark:text-stone-200">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-stone-100 text-lg text-zinc-800 dark:text-indigo-800">
-                  1
-                </span>
-                {t("selectSource")}
-              </h2>
-
-              {/* Service Buttons */}
-              <div className="mx-auto flex max-w-4xl flex-wrap items-stretch justify-center gap-4 py-4 pb-16">
-                {getAvailableServices().map(service => (
-                  <button
-                    type="button"
-                    key={service.id}
-                    onClick={
-                      service.id === "spotify"
-                        ? handleSpotifyLogin
-                        : service.id === "youtube"
-                          ? handleYouTubeLogin
-                          : service.id === "deezer"
-                            ? openDeezerModal
-                            : service.id === "apple"
-                              ? handleAppleLogin
-                              : undefined
-                    }
-                    className="group flex h-[180px] w-[280px] cursor-pointer flex-col items-center justify-center gap-4 rounded-3xl bg-indigo-100 px-5 py-5 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-indigo-200 dark:bg-indigo-950 dark:hover:bg-indigo-900/70"
-                  >
-                    <service.image className="h-12 w-12" size={48} />
-                    <span className="text-text text-center text-base font-semibold">
-                      {t("connectWith")}
-                      <br />
-                      {service.name}
-                    </span>
-                  </button>
-                ))}
-              </div>
+              <SourceServices />
             </div>
           </div>
 
@@ -205,31 +123,11 @@ function HomePageContent() {
           </div>
         </div>
 
-        {/* Deezer Modal */}
-        <DeezerConnectModal
-          isOpen={isDeezerModalOpen}
-          onClose={() => setIsDeezerModalOpen(false)}
-        />
-
-        {/* Spotify Consent Modal */}
-        <SpotifyConsentModal
-          isOpen={isSpotifyConsentModalOpen}
-          onClose={() => setIsSpotifyConsentModalOpen(false)}
-          onAgree={handleSpotifyConsent}
-        />
+        <HomeGuide locale={locale} />
+        <HomepageStructuredData locale={locale} description={t("description")} />
       </main>
 
       <Footer />
     </div>
-  );
-}
-
-export default function HomePage() {
-  const t = useTranslations("Loading");
-
-  return (
-    <Suspense fallback={<div>{t("loading")}</div>}>
-      <HomePageContent />
-    </Suspense>
   );
 }

@@ -15,11 +15,39 @@
     "features": {
       "freeplan": {
         "title": "Generous Free Plan",
-        "description": "500 transfers for free <strong>everyday</strong>.<br></br>Upgrade to a Premium plan for 10x more."
+        "description": "Up to <strong>500 transfers per day</strong>, for free."
       },
       "secure": {
         "title": "Secure and private",
         "description": "We do not sell your data.<br></br>Our code is open source for full transparency."
+      }
+    },
+    "metaTitle": "Transfer Spotify & Apple Music Playlists for Free",
+    "description": "Transfer playlists, albums and liked songs between Spotify and Apple Music with Nonna.fm. Free, open source, with up to 500 transfers per day.",
+    "languages": "Available languages",
+    "guide": {
+      "title": "How to transfer between Spotify and Apple Music",
+      "connect": "Choose the service that holds your music, connect your account, then connect your destination service.",
+      "select": "Choose playlists, albums or liked songs from your library. Review the matches and adjust them before transferring.",
+      "transfer": "Select the music you want to copy and start the transfer. Keep the page open until it finishes, then check your destination library."
+    },
+    "faq": {
+      "title": "Questions about transferring your music",
+      "services": {
+        "question": "Which music services can I transfer between?",
+        "answer": "Nonna.fm currently supports Spotify to Apple Music and Apple Music to Spotify. YouTube Music, Deezer and TIDAL are still in development and are not available in the public app."
+      },
+      "free": {
+        "question": "Is Nonna.fm free?",
+        "answer": "You can make up to 500 transfers per day for free. You need access to your accounts on both music services; their own subscription requirements still apply."
+      },
+      "originals": {
+        "question": "Will transferring remove music from my original library?",
+        "answer": "No. Nonna.fm adds matched music to your destination library without deleting playlists, albums or liked songs from the source service."
+      },
+      "matching": {
+        "question": "Why might a song not transfer?",
+        "answer": "Music catalogs differ by service and country. Some songs or versions may be unavailable on the destination service. Review the suggested matches before transferring; you can change a match or skip an item."
       }
     }
   },

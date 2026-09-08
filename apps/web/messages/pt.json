@@ -15,11 +15,39 @@
     "features": {
       "freeplan": {
         "title": "Plano Gratuito Generoso",
-        "description": "500 transferências grátis <strong>todos os dias</strong>.<br></br>Atualize para um plano Premium para 10x mais."
+        "description": "Até <strong>500 transferências por dia</strong>, grátis."
       },
       "secure": {
         "title": "Seguro e privado",
         "description": "Não vendemos seus dados.<br></br>Nosso código é open source para total transparência."
+      }
+    },
+    "metaTitle": "Transfira playlists do Spotify e Apple Music grátis",
+    "description": "Transfira playlists, álbuns e músicas curtidas entre Spotify e Apple Music com Nonna.fm. Grátis e de código aberto, com até 500 transferências por dia.",
+    "languages": "Idiomas disponíveis",
+    "guide": {
+      "title": "Como transferir entre Spotify e Apple Music",
+      "connect": "Escolha o serviço que contém suas músicas, conecte sua conta e depois conecte o serviço de destino.",
+      "select": "Escolha playlists, álbuns ou músicas curtidas da sua biblioteca. Confira as correspondências e ajuste-as antes de transferir.",
+      "transfer": "Selecione as músicas que deseja copiar e inicie a transferência. Mantenha a página aberta até terminar e confira sua biblioteca de destino."
+    },
+    "faq": {
+      "title": "Dúvidas sobre a transferência de músicas",
+      "services": {
+        "question": "Entre quais serviços posso transferir músicas?",
+        "answer": "Nonna.fm permite transferir do Spotify para o Apple Music e do Apple Music para o Spotify. YouTube Music, Deezer e TIDAL ainda estão em desenvolvimento e não estão disponíveis no aplicativo público."
+      },
+      "free": {
+        "question": "Nonna.fm é grátis?",
+        "answer": "Você pode fazer até 500 transferências por dia gratuitamente. É preciso ter acesso às suas contas nos dois serviços de música; os requisitos de assinatura de cada serviço continuam valendo."
+      },
+      "originals": {
+        "question": "A transferência remove músicas da minha biblioteca original?",
+        "answer": "Não. Nonna.fm adiciona as músicas correspondentes à biblioteca de destino sem excluir playlists, álbuns ou músicas curtidas do serviço de origem."
+      },
+      "matching": {
+        "question": "Por que uma música pode não ser transferida?",
+        "answer": "Os catálogos variam conforme o serviço e o país. Algumas músicas ou versões podem não estar disponíveis no destino. Confira as correspondências antes de transferir: você pode alterá-las ou pular um item."
       }
     }
   },

@@ -37,8 +37,7 @@ export function generateCanonicalUrl(
   } else if (preferredLocale && SEO_CONFIG.supportedLocales.includes(preferredLocale)) {
     targetLocale = preferredLocale;
   } else {
-    // Use default locale for canonical unless it's a locale-specific page
-    targetLocale = shouldUseLocaleInCanonical(pathname) ? locale : SEO_CONFIG.defaultLocale;
+    targetLocale = locale;
   }
 
   // Generate the localized path
@@ -70,26 +69,6 @@ export function generateDefaultCanonicalUrl(
   }
 
   return canonicalUrl;
-}
-
-/**
- * Check if the pathname should use locale in canonical URL
- */
-function shouldUseLocaleInCanonical(pathname: string): boolean {
-  // Remove locale prefix for analysis
-  const pathWithoutLocale = removeLocaleFromPath(pathname);
-
-  // Pages that should use locale-specific canonical URLs
-  const localeSpecificPaths = [
-    "/", // Homepage
-    "/source", // Source selection
-    "/library", // Library pages (content varies by locale)
-  ];
-
-  // Check if path starts with any locale-specific path
-  return localeSpecificPaths.some(
-    path => pathWithoutLocale === path || pathWithoutLocale.startsWith(`${path}/`)
-  );
 }
 
 /**

@@ -9,43 +9,18 @@ export const SEO_CONFIG = {
     name: "Nonna.fm",
     tagline: "Transfer your music library between streaming services seamlessly",
     description:
-      "The ultimate music transfer platform for moving your playlists, albums, and liked songs between Spotify, Apple Music, YouTube Music, Deezer, and more.",
+      "Transfer playlists, albums and liked songs between Spotify and Apple Music. Free and open source.",
     domain: "nonna.fm",
     url: "https://nonna.fm",
     logo: "/favicons/android-chrome-512x512.png",
     favicon: "/favicons/favicon.svg",
   },
 
-  // Company Information
-  company: {
-    name: "Nonna.fm",
-    foundingDate: "2024",
-    type: "SoftwareApplication",
-    category: "Music Transfer Tool",
-    operatingSystem: ["Web", "iOS", "Android"],
-    applicationCategory: "MultimediaApplication",
-    offers: {
-      freeTier: {
-        name: "Free Plan",
-        description: "500 transfers daily for free",
-        price: "0",
-        priceCurrency: "USD",
-      },
-      premiumTier: {
-        name: "Premium Plan",
-        description: "5,000+ transfers daily with premium features",
-        price: "9.99",
-        priceCurrency: "USD",
-        billingDuration: "P1M", // 1 month
-      },
-    },
-  },
-
   // Social Media
   social: {
     twitter: "@nonnafm",
-    github: "https://github.com/nonnafm",
-    support: "https://nonna.fm/support",
+    github: "https://github.com/tony-co/nonna.fm",
+    support: "https://github.com/tony-co/nonna.fm/issues",
   },
 
   // Technical SEO

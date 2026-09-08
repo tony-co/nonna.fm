@@ -20,7 +20,7 @@ export { generateMetadata } from "./generators/metadata";
 export type { SitemapIndexEntry, SitemapUrl } from "./generators/sitemaps";
 export * from "./generators/sitemaps";
 export * from "./generators/structured-data";
-export { HomepageStructuredData, StructuredData } from "./generators/structured-data";
+export { HomepageStructuredData } from "./generators/structured-data";
 export * from "./utils/canonical";
 // Utilities
 export * from "./utils/hreflang";

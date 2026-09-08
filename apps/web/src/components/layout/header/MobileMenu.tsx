@@ -1,5 +1,4 @@
 import { FileText, Languages, Menu, Shield, Sun } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { createPortal } from "react-dom";
 import Dialog from "@/components/shared/Dialog";
@@ -24,12 +23,11 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
   const currentLocale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { theme, toggleTheme } = useTheme();
 
   const handleLanguageSelect = (locale: string) => {
     // Convert search params to object to preserve URL parameters
-    const searchParamsObj = Object.fromEntries(searchParams.entries());
+    const searchParamsObj = Object.fromEntries(new URLSearchParams(window.location.search));
 
     router.replace({ pathname, query: searchParamsObj }, { locale });
   };

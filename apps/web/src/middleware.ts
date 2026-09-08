@@ -16,6 +16,6 @@ export const config = {
   matcher: [
     // Match all pathnames except for
     // - API routes, _next static files, images, favicons, XML files (sitemaps), and robots.txt
-    "/((?!api/|_next/|_vercel/|favicons/|favicon\\.ico|manifest\\.json|sitemap|robots\\.txt).*)",
+    "/((?!api/|_next/|_vercel/|images/|favicons/|favicon\\.ico|manifest\\.json|sitemap|robots\\.txt).*)",
   ],
 };
