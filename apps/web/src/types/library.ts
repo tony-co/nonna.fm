@@ -3,6 +3,7 @@ import { AlbumSchema, type IAlbum } from "./album";
 import type { MatchingState, QueueTask } from "./matching";
 import type { MusicService } from "./music-service";
 import { type IPlaylist, PlaylistSchema } from "./playlist";
+import type { SearchResult } from "./services";
 import { type ITrack, TrackSchema } from "./track";
 
 export const LibraryDataSchema = z.object({
@@ -19,6 +20,7 @@ export interface ISelectionState {
 }
 
 export interface LibraryState {
+  playlistLoads?: Record<string, { status: "loading" | "loaded" | "error"; error?: string }>;
   // Library Data
   likedSongs: Set<ITrack> | undefined;
   albums: Set<IAlbum> | undefined;
@@ -41,6 +43,13 @@ export interface LibraryState {
 }
 
 export type LibraryAction =
+  | {
+      type: "PLAYLIST_LOAD_STATUS";
+      payload: { id: string; status: "loading" | "loaded" | "error"; error?: string };
+    }
+  | { type: "PLAYLIST_TRACKS"; payload: { id: string; tracks: ITrack[] } }
+  | { type: "MATCHING_ITEMS_PENDING"; payload: { task: QueueTask; ids: string[] } }
+  | { type: "MATCHING_ITEMS_COMPLETE"; payload: { task: QueueTask; result: SearchResult } }
   // Selection Actions
   | { type: "SELECT_ALL_TRACKS" }
   | { type: "DESELECT_ALL_TRACKS" }

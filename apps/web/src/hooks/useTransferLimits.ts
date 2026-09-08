@@ -18,8 +18,8 @@ export interface UseTransferLimitsReturn {
   status: TransferLimits | null;
   loading: boolean;
   error: Error | null;
-  updateUsage: (count: number) => Promise<boolean>;
-  checkLimit: (count: number) => Promise<boolean>;
+  updateUsage: (count: number, userId?: string) => Promise<boolean>;
+  checkLimit: (count: number, userId?: string) => Promise<boolean>;
   refreshStatus: () => Promise<void>;
   isLimitExceededModalOpen: boolean;
   setIsLimitExceededModalOpen: (isOpen: boolean) => void;
@@ -75,7 +75,7 @@ export function useTransferLimits(): UseTransferLimitsReturn {
         currentUsage: 0,
         availableToday: FREE_TIER_LIMIT,
       };
-      setStatus(fallbackStatus);
+      setStatus({ ...fallbackStatus, availableToday: 0 });
       setError(err instanceof Error ? err : new Error("Unknown error"));
     } finally {
       setLoading(false);
@@ -87,9 +87,9 @@ export function useTransferLimits(): UseTransferLimitsReturn {
   }, [fetchUserStatus]);
 
   const checkLimit = useCallback(
-    async (count: number): Promise<boolean> => {
+    async (count: number, transferUserId?: string): Promise<boolean> => {
       try {
-        const userId = getCurrentUserId();
+        const userId = transferUserId ?? getCurrentUserId();
         const response = await fetch("/api/user/status", {
           headers: {
             "x-user-id": userId,
@@ -131,9 +131,9 @@ export function useTransferLimits(): UseTransferLimitsReturn {
   );
 
   const updateUsage = useCallback(
-    async (count: number): Promise<boolean> => {
+    async (count: number, transferUserId?: string): Promise<boolean> => {
       try {
-        const userId = getCurrentUserId();
+        const userId = transferUserId ?? getCurrentUserId();
         const response = await fetch("/api/transfer/usage", {
           method: "POST",
           headers: {
@@ -172,6 +172,7 @@ export function useTransferLimits(): UseTransferLimitsReturn {
           const newStatus = calculateFullStatus({
             isPremium: status.isPremium,
             currentUsage: data.currentUsage,
+            resetInSeconds: data.resetInSeconds,
           });
           setStatus(newStatus);
         }

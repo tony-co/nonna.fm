@@ -177,36 +177,10 @@ describe("YouTube Music API Service", () => {
 
   it("handles fetch errors gracefully", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
-    const unhandledRejectionHandler = (err: unknown): void => {
-      if (
-        err instanceof Error &&
-        (err.message === "Network error" || err.message.includes("Failed to fetch user library"))
-      ) {
-        return;
-      }
-      throw err;
-    };
-    process.on("unhandledRejection", unhandledRejectionHandler);
-
-    try {
-      vi.useFakeTimers();
-      const fetchMock = vi.fn().mockImplementation(() => {
-        throw new Error("Network error");
-      });
-      global.fetch = fetchMock;
-
-      const promise = api.fetchUserLibrary();
-      await vi.runAllTimersAsync();
-      await expect(promise).rejects.toThrow();
-      expect(fetchMock).toHaveBeenCalled();
-      vi.useRealTimers();
-    } finally {
-      process.off("unhandledRejection", unhandledRejectionHandler);
-      errorSpy.mockRestore();
-      warnSpy.mockRestore();
-    }
+    global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
+    await expect(api.fetchUserLibrary()).rejects.toThrow();
+    expect(global.fetch).toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 
   it("handles authentication errors gracefully", async () => {

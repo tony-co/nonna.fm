@@ -1,42 +1,24 @@
-import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { z } from "zod/v4";
+import { exchangeOAuthToken } from "@/lib/server/oauth";
 
-export async function POST(request: NextRequest): Promise<Response> {
-  try {
-    const { code, codeVerifier } = await request.json();
-
-    if (!code || !codeVerifier) {
-      return new Response(JSON.stringify({ error: "Missing required parameters" }), {
-        status: 400,
-      });
-    }
-
-    const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        client_id: process.env.NEXT_PUBLIC_YOUTUBE_CLIENT_ID || "",
-        client_secret: process.env.YOUTUBE_CLIENT_SECRET || "",
-        grant_type: "authorization_code",
-        code,
-        redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/callback/youtube`,
-        code_verifier: codeVerifier,
-      }),
-    });
-
-    if (!tokenResponse.ok) {
-      const error = await tokenResponse.text();
-      console.error("Token exchange failed:", error);
-      return new Response(JSON.stringify({ error: "Failed to exchange token" }), {
-        status: tokenResponse.status,
-      });
-    }
-
-    const tokenData = await tokenResponse.json();
-    return new Response(JSON.stringify(tokenData));
-  } catch (error) {
-    console.error("Error in YouTube callback:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500 });
-  }
+const schema = z.object({
+  code: z.string().min(1).max(8192),
+  codeVerifier: z.string().min(43).max(128),
+});
+export async function POST(request: Request): Promise<NextResponse> {
+  const body = schema.safeParse(await request.json().catch(() => null));
+  if (!body.success) return NextResponse.json({ error: "Invalid token request" }, { status: 400 });
+  const clientId = process.env.NEXT_PUBLIC_YOUTUBE_CLIENT_ID;
+  const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
+  if (!clientId || !clientSecret)
+    return NextResponse.json({ error: "YouTube is not configured" }, { status: 503 });
+  return exchangeOAuthToken("https://oauth2.googleapis.com/token", {
+    client_id: clientId,
+    client_secret: clientSecret,
+    grant_type: "authorization_code",
+    code: body.data.code,
+    code_verifier: body.data.codeVerifier,
+    redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/callback/youtube`,
+  });
 }

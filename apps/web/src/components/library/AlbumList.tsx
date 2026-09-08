@@ -1,6 +1,6 @@
 "use client";
 import { useTranslations } from "next-intl";
-import { type FC, useEffect, useRef } from "react";
+import { type FC, memo, useEffect, useRef } from "react";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import { PlayOnButton } from "@/components/shared/PlayOnButton";
 import { StatusIcon } from "@/components/shared/StatusIcon";
@@ -13,7 +13,7 @@ interface AlbumItemProps {
   album: IAlbum;
 }
 
-const AlbumItem: FC<AlbumItemProps> = ({ album }) => {
+const AlbumItem: FC<AlbumItemProps> = memo(({ album }) => {
   const ref = useRef<HTMLDivElement>(null);
   const isVisible = useIsVisible(ref);
   const status = album.status;
@@ -54,7 +54,7 @@ const AlbumItem: FC<AlbumItemProps> = ({ album }) => {
       </div>
     </div>
   );
-};
+});
 
 export const AlbumList: FC = () => {
   const tAccessibility = useTranslations("Accessibility");

@@ -6,7 +6,7 @@ pre-commit:
       run: pnpm run type-check
     biome-check:
       glob: "{apps,packages}/**/*.{js,jsx,ts,tsx,json}"
-      run: biome check --write {staged_files}
+      run: pnpm exec biome check --write {staged_files}
       stage_fixed: true
 
 pre-push:

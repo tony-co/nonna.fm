@@ -1,77 +1,72 @@
+import "server-only";
 import { createClient } from "redis";
-import { env } from "../env.server.mjs";
-// WARNING: This module contains server-only code and should NEVER be imported in client components
-import { FREE_TIER_LIMIT, PREMIUM_TIER_LIMIT } from "./constants";
+import { FREE_TIER_LIMIT } from "./constants";
 
-// Initialize Redis client with validated environmental URL
-export const redis = createClient({
-  url: env.REDIS_URL || "",
-});
+type RedisClient = ReturnType<typeof createClient>;
+let client: RedisClient | undefined;
+let connection: Promise<RedisClient> | undefined;
 
-// Add error handling
-redis.on("error", err => {
-  console.error("Redis Client Error:", err);
-});
-
-// Connect to Redis only when needed (lazy initialization)
-async function getRedisClient(): Promise<typeof redis> {
-  try {
-    if (!redis.isOpen) {
-      await redis.connect();
-    }
-    return redis;
-  } catch (error) {
-    console.error("Failed to connect to Redis:", error);
-    throw error;
+async function getRedisClient(): Promise<RedisClient> {
+  if (connection) return connection;
+  if (client?.isReady) return client;
+  if (!client) {
+    const url = process.env.REDIS_URL;
+    if (!url) throw new Error("REDIS_URL is required for usage tracking");
+    client = createClient({
+      url,
+      socket: { connectTimeout: 5000, reconnectStrategy: false },
+      disableOfflineQueue: true,
+    });
+    client.on("error", error => console.error("Redis connection error:", error.message));
   }
+  const redis = client;
+  connection = redis
+    .connect()
+    .then(() => redis)
+    .finally(() => {
+      connection = undefined;
+    });
+  return connection;
 }
 
-// Get current environment to prefix keys
-const getEnvPrefix = (): string => {
-  const env = process.env.NODE_ENV || "development";
-  return `${env}:`;
-};
+export const createKey = (key: string): string => `${process.env.NODE_ENV || "development"}:${key}`;
+export const createUsageKey = (platformIdHash: string): string =>
+  createKey(`usage:${platformIdHash}`);
 
-// Helper to create prefixed keys
-export const createKey = (key: string): string => {
-  return `${getEnvPrefix()}${key}`;
-};
-
-// Usage tracking keys and functions
-export const createUsageKey = (platformIdHash: string): string => {
-  return createKey(`usage:${platformIdHash}`);
-};
-
-// Re-export the constant for backward compatibility
-export { FREE_TIER_LIMIT, PREMIUM_TIER_LIMIT };
-
-// Helper to get and increment usage, ensuring proper TTL setting
-export async function incrementUsage(usageKey: string, count: number = 1): Promise<number> {
-  const client = await getRedisClient();
-
-  // Get the current value
-  const currentValue = await client.get(usageKey);
-  const newValue = parseInt(currentValue || "0", 10) + count;
-
-  // Set the new value with TTL (24 hours)
-  await client.set(usageKey, newValue.toString(), {
-    EX: 86400, // 24 hours in seconds
-  });
-
-  return newValue;
-}
-
-// Helper to get usage count and TTL
 export interface UsageInfo {
   usage: number;
   ttl: number;
 }
 
+// Check and increment in one operation. The window starts at the first transfer.
+const incrementScript = `
+local usage = tonumber(redis.call('GET', KEYS[1]) or '0')
+local count = tonumber(ARGV[1])
+local limit = tonumber(ARGV[2])
+local ttl = redis.call('TTL', KEYS[1])
+if usage + count > limit then return {0, usage, math.max(0, ttl)} end
+local updated = redis.call('INCRBY', KEYS[1], count)
+if ttl < 0 then redis.call('EXPIRE', KEYS[1], 86400) end
+return {1, updated, redis.call('TTL', KEYS[1])}
+`;
+
+export async function incrementUsage(
+  usageKey: string,
+  count = 1,
+  limit = FREE_TIER_LIMIT
+): Promise<UsageInfo & { allowed: boolean }> {
+  if (!Number.isSafeInteger(count) || count <= 0)
+    throw new RangeError("count must be a positive integer");
+  const redis = await getRedisClient();
+  const result = (await redis.eval(incrementScript, {
+    keys: [usageKey],
+    arguments: [String(count), String(limit)],
+  })) as number[];
+  return { allowed: result[0] === 1, usage: result[1], ttl: result[2] };
+}
+
 export async function getUsage(usageKey: string): Promise<UsageInfo> {
-  const client = await getRedisClient();
-  const [value, ttl] = await Promise.all([client.get(usageKey), client.ttl(usageKey)]);
-  return {
-    usage: parseInt(value || "0", 10),
-    ttl: ttl,
-  };
+  const redis = await getRedisClient();
+  const result = await redis.multi().get(usageKey).ttl(usageKey).exec();
+  return { usage: Number(result[0] ?? 0), ttl: Math.max(0, Number(result[1])) };
 }

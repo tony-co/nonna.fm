@@ -257,7 +257,7 @@ export async function createPlaylistWithTracks(
   // Create the playlist using retryWithExponentialBackoff for reliability
   const playlistData = await retryWithExponentialBackoff<YouTubePlaylistCreateResponse>(
     () =>
-      fetch("https://www.googleapis.com/youtube/v3/playlists?part=snippet", {
+      fetch("https://www.googleapis.com/youtube/v3/playlists?part=snippet,status", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${authData.accessToken}`,
@@ -267,11 +267,11 @@ export async function createPlaylistWithTracks(
           snippet: {
             title: name,
             description: description || "",
-            privacyStatus: "private",
           },
+          status: { privacyStatus: "private" },
         }),
       }),
-    YOUTUBE_RETRY_OPTIONS
+    { ...YOUTUBE_RETRY_OPTIONS, retrySafe: false }
   );
   const playlistId = playlistData.id;
 
@@ -304,7 +304,7 @@ export async function createPlaylistWithTracks(
                     },
                   }),
                 }),
-              YOUTUBE_RETRY_OPTIONS
+              { ...YOUTUBE_RETRY_OPTIONS, retrySafe: false }
             );
             // If no data.id, treat as error
             if (!data.id) {
@@ -321,14 +321,16 @@ export async function createPlaylistWithTracks(
     },
     {
       items: validTracks,
-      batchSize: 2, // Small batches for granular progress
+      batchSize: 1, // Small batches for granular progress
       delayBetweenBatches: 200,
-      onBatchStart: () => {},
+      continueOnError: true,
     }
   );
 
   return {
-    ...result,
+    added: result.added,
+    failed: tracks.length - result.added,
+    total: tracks.length,
     playlistId,
   };
 }
@@ -804,18 +806,13 @@ export async function addTracksToLibrary(
 
   // Create a playlist for the tracks
   const playlistName = `Imported from Nonna.fm - ${new Date().toLocaleDateString()}`;
-  const playlistId = await createPlaylistWithTracks(
-    playlistName,
-    validTracks,
-    undefined,
-    onProgress
-  );
+  const result = await createPlaylistWithTracks(playlistName, validTracks, undefined, onProgress);
 
   return {
-    added: validTracks.length,
-    failed: tracks.length - validTracks.length,
+    added: result.added,
+    failed: tracks.length - result.added,
     total: tracks.length,
-    playlistId: playlistId.playlistId,
+    playlistId: result.playlistId,
   };
 }
 

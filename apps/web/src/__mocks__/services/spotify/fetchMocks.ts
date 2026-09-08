@@ -172,7 +172,7 @@ export function setupSpotifyFetchMock(): void {
             },
           }))
         : [];
-      return new Response(JSON.stringify({ items }), {
+      return new Response(JSON.stringify({ items, total: items.length }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });

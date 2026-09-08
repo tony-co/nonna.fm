@@ -30,8 +30,22 @@ export function getAuthData(role: "source" | "target"): AuthData | null {
     return null;
   }
   const key = role === "source" ? AUTH_STORAGE_KEYS.SOURCE.TOKEN : AUTH_STORAGE_KEYS.TARGET.TOKEN;
-  const data = localStorage.getItem(key);
-  return data ? JSON.parse(data) : null;
+  try {
+    const data = localStorage.getItem(key);
+    if (!data) return null;
+    const parsed = JSON.parse(data);
+    if (
+      !parsed ||
+      typeof parsed.accessToken !== "string" ||
+      typeof parsed.timestamp !== "number" ||
+      typeof parsed.expiresIn !== "number" ||
+      parsed.role !== role
+    )
+      return null;
+    return parsed;
+  } catch {
+    return null;
+  }
 }
 
 export function setAuthData(role: "source" | "target", data: AuthData): void {

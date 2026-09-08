@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { TransferButton } from "@/components/shared/TransferButton";
@@ -11,7 +12,7 @@ import {
   generateServiceTransferBreadcrumbs,
   ServiceTransferStructuredData,
 } from "@/lib/seo";
-import type { MusicService } from "@/types";
+import { MusicServiceSchema } from "@/types/music-service";
 import { LibraryClientContent } from "./_components/LibraryClientContent";
 
 interface LibraryLayoutProps {
@@ -41,15 +42,18 @@ export default async function LibraryLayout({ children, params }: LibraryLayoutP
   // Next.js 15 async params handling
   const { locale, source, target } = await params;
 
-  // Type assertion for MusicService
-  const sourceService = source as MusicService;
-  const targetService = target as MusicService;
+  const parsedSource = MusicServiceSchema.safeParse(source);
+  const parsedTarget = MusicServiceSchema.safeParse(target);
+  if (!parsedSource.success || !parsedTarget.success || source === target || target === "deezer")
+    notFound();
+  const sourceService = parsedSource.data;
+  const targetService = parsedTarget.data;
 
   // Generate breadcrumbs for structured data
   const breadcrumbs = generateServiceTransferBreadcrumbs(locale as Locale, source, target);
 
   return (
-    <LibraryProvider>
+    <LibraryProvider key={`${source}:${target}`}>
       <TransferProvider>
         <ItemTitleProvider>
           {/*

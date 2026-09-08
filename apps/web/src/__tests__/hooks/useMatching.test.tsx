@@ -1,203 +1,190 @@
-import { render, screen } from "@testing-library/react";
-import React, { act } from "react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  getMockCancelled,
-  getMockCompleted,
-  getMockQueue,
-  mockFns,
-  resetMocks,
-  setMockMatchingState,
-  useMatching,
-} from "@/__mocks__/hooks/useMatching";
-import { TestWrapper } from "../testUtils";
+import { LibraryProvider, useLibrary } from "@/contexts/LibraryContext";
+import { useMatching } from "@/hooks/useMatching";
+import type { ITrack, SearchResult } from "@/types";
 
-// --- Test component to consume useMatching ---
-function MatchingConsumer() {
-  const { isLoading, error, matchLikedSongs, cancelMatching, getProgress } = useMatching();
-  return (
-    <div>
-      <div data-testid="is-loading">{String(isLoading)}</div>
-      <div data-testid="error">{error ?? ""}</div>
-      <div data-testid="progress">{getProgress("likedSongs")}</div>
-      <button type="button" onClick={() => matchLikedSongs([], "spotify")}>
-        Match Liked Songs
-      </button>
-      <button type="button" onClick={() => cancelMatching("likedSongs")}>
-        Cancel
-      </button>
-    </div>
+const { search, fetchTracks } = vi.hoisted(() => ({ search: vi.fn(), fetchTracks: vi.fn() }));
+vi.mock("@/lib/services/factory", () => ({
+  musicServiceFactory: { getProvider: () => ({ search }) },
+}));
+vi.mock("@/lib/musicApi", () => ({ fetchPlaylistTracks: fetchTracks }));
+
+const track: ITrack = { id: "one", name: "One", artist: "Artist", status: "pending" };
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(done => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+const matched: SearchResult = {
+  total: 1,
+  matched: 1,
+  unmatched: 0,
+  tracks: [{ ...track, targetId: "target-one", status: "matched" }],
+};
+
+function setup() {
+  return renderHook(
+    () => ({ library: useLibrary(), first: useMatching(), second: useMatching() }),
+    { wrapper: LibraryProvider }
   );
 }
 
-// --- Test component for advanced queue/cancel testing ---
-function AdvancedMatchingConsumer() {
-  const { matchLikedSongs, cancelMatching } = useMatching();
-  // Store IDs in local state for test control
-  const [ids, setIds] = React.useState<string[]>([]);
-  return (
-    <div>
-      <button
-        type="button"
-        onClick={() => {
-          // Queue a new item and store its ID
-          const id = matchLikedSongs([], "spotify");
-          setIds(prev => [...prev, id]);
-        }}
-      >
-        Queue Item
-      </button>
-      {ids.map((id, idx) => (
-        <button
-          type="button"
-          key={id}
-          data-testid={`cancel-${idx}`}
-          onClick={() => cancelMatching(id)}
-        >
-          Cancel {idx}
-        </button>
-      ))}
-    </div>
-  );
-}
+beforeEach(() => {
+  search.mockReset();
+});
 
-// --- Test suite for useMatching ---
-describe("useMatching", () => {
-  beforeEach(() => {
-    resetMocks();
-    setMockMatchingState({ isLoading: false, error: null });
-  });
-
-  it("returns initial loading and error state", () => {
-    render(
-      <TestWrapper>
-        <MatchingConsumer />
-      </TestWrapper>
-    );
-    expect(screen.getByTestId("is-loading").textContent).toBe("false");
-    expect(screen.getByTestId("error").textContent).toBe("");
-  });
-
-  it("calls matchLikedSongs when button is clicked", () => {
-    render(
-      <TestWrapper>
-        <MatchingConsumer />
-      </TestWrapper>
-    );
-    screen.getByText("Match Liked Songs").click();
-    expect(mockFns.matchLikedSongs).toHaveBeenCalled();
-  });
-
-  it("calls cancelMatching when cancel button is clicked", () => {
-    render(
-      <TestWrapper>
-        <MatchingConsumer />
-      </TestWrapper>
-    );
-    screen.getByText("Cancel").click();
-    expect(mockFns.cancelMatching).toHaveBeenCalledWith("likedSongs");
-  });
-
-  it("shows progress from getProgress", () => {
-    mockFns.getProgress.mockReturnValueOnce(42);
-    render(
-      <TestWrapper>
-        <MatchingConsumer />
-      </TestWrapper>
-    );
-    expect(screen.getByTestId("progress").textContent).toBe("42");
-  });
-
-  it("shows error if error state is set", () => {
-    setMockMatchingState({ error: "Something went wrong" });
-    render(
-      <TestWrapper>
-        <MatchingConsumer />
-      </TestWrapper>
-    );
-    expect(screen.getByTestId("error").textContent).toBe("Something went wrong");
-  });
-
-  it("queues multiple items, cancels one, and matches others (with async)", async () => {
-    // Diagnostic: use real timers to see if fake timers are the issue
-    vi.useRealTimers();
-    render(
-      <TestWrapper>
-        <AdvancedMatchingConsumer />
-      </TestWrapper>
-    );
-    // Queue three items, each wrapped in act
-    await act(async () => {
-      screen.getByText("Queue Item").click();
+describe("matching with the real library provider", () => {
+  it("shares a queue across consumers and deduplicates work", async () => {
+    const pending = deferred<SearchResult>();
+    search.mockReturnValue(pending.promise);
+    const { result } = setup();
+    act(() => result.current.library.actions.setLikedSongs(new Set([track])));
+    act(() => {
+      void result.current.first.matchLikedSongs([track], "spotify");
+      void result.current.second.matchLikedSongs([track], "spotify");
     });
-    await act(async () => {
-      screen.getByText("Queue Item").click();
-    });
-    await act(async () => {
-      screen.getByText("Queue Item").click();
-    });
-    // Wait for the cancel buttons to appear
-    await screen.findByTestId("cancel-1");
-    // Get the queued IDs
-    const ids = getMockQueue();
-    expect(ids.length).toBe(3);
-    // Cancel the second item before it matches, wrapped in act
-    await act(async () => {
-      screen.getByTestId("cancel-1").click();
-    });
-    // Wait for all items to be processed (simulate 3x100ms + buffer)
-    await new Promise(r => setTimeout(r, 400));
-    // Assert: second item is cancelled, others are completed
-    const completed = getMockCompleted();
-    const cancelled = getMockCancelled();
-    expect(completed).toContain(ids[0]);
-    expect(completed).toContain(ids[2]);
-    expect(completed).not.toContain(ids[1]);
-    expect(cancelled).toContain(ids[1]);
+    expect(search).toHaveBeenCalledTimes(1);
+    expect(result.current.second.isLoading).toBe(true);
+    await act(async () => pending.resolve(matched));
+    expect(result.current.first.isLoading).toBe(false);
+    expect(result.current.second.getProgress("likedSongs")).toBe(100);
+    expect(Array.from(result.current.library.state.likedSongs ?? [])[0].targetId).toBe(
+      "target-one"
+    );
   });
 
-  it("preserves tracks array of first playlist when a second playlist is queued", async () => {
-    // This test ensures that when two playlists are queued, the tracks array of the first is not lost or replaced
-    // Define two playlists with unique tracks arrays
-    const playlist1 = { id: "playlist1", tracks: ["trackA", "trackB"] };
-    const playlist2 = { id: "playlist2", tracks: ["trackX", "trackY"] };
+  it("ignores late results when another consumer cancels", async () => {
+    const pending = deferred<SearchResult>();
+    search.mockReturnValue(pending.promise);
+    const { result } = setup();
+    act(() => result.current.library.actions.setLikedSongs(new Set([track])));
+    act(() => {
+      void result.current.first.matchLikedSongs([track], "spotify");
+    });
+    act(() => result.current.second.cancelMatching("likedSongs"));
+    await act(async () => pending.resolve(matched));
+    expect(result.current.first.getProgress("likedSongs")).toBe(0);
+    expect(
+      result.current.library.state.likedSongs?.values().next().value?.targetId
+    ).toBeUndefined();
+  });
 
-    // Test component to queue playlists with tracks
-    function PlaylistMatchingConsumer() {
-      const { matchLikedSongs } = useMatching();
-      return (
-        <div>
-          <button type="button" onClick={() => matchLikedSongs(playlist1.tracks, "spotify")}>
-            Queue Playlist 1
-          </button>
-          <button type="button" onClick={() => matchLikedSongs(playlist2.tracks, "spotify")}>
-            Queue Playlist 2
-          </button>
-        </div>
+  it("merges results into current data and preserves previous matches", async () => {
+    const pending = deferred<SearchResult>();
+    search.mockReturnValue(pending.promise);
+    const { result } = setup();
+    const previous = { ...track, id: "previous", targetId: "already", status: "matched" as const };
+    act(() => result.current.library.actions.setLikedSongs(new Set([track, previous])));
+    act(() => {
+      void result.current.first.matchLikedSongs([track, previous], "spotify");
+    });
+    expect(search.mock.calls[0][0]).toEqual([track]);
+    const added = { ...track, id: "added-during-search" };
+    act(() => result.current.library.actions.setLikedSongs(new Set([track, previous, added])));
+    await act(async () => pending.resolve(matched));
+    expect(Array.from(result.current.library.state.likedSongs ?? [])).toEqual([
+      matched.tracks?.[0],
+      previous,
+      added,
+    ]);
+  });
+
+  it("runs queued playlists sequentially and cancels queued work", async () => {
+    const pending = deferred<SearchResult>();
+    search.mockReturnValue(pending.promise);
+    const { result } = setup();
+    const first = { id: "p1", name: "First", ownerId: "me", trackCount: 1, tracks: [track] };
+    const second = { ...first, id: "p2" };
+    act(() =>
+      result.current.library.actions.setPlaylists(
+        new Map([
+          [first.id, first],
+          [second.id, second],
+        ])
+      )
+    );
+    act(() => {
+      void result.current.first.matchPlaylistTracks(first, "spotify");
+      void result.current.second.matchPlaylistTracks(second, "spotify");
+      result.current.second.cancelMatching("playlist", second.id);
+    });
+    await act(async () => pending.resolve(matched));
+    expect(search).toHaveBeenCalledTimes(1);
+    expect(result.current.library.state.playlists?.get("p1")?.tracks[0].targetId).toBe(
+      "target-one"
+    );
+    expect(result.current.library.state.playlists?.get("p2")?.tracks[0].targetId).toBeUndefined();
+  });
+
+  it("matches the final playlist even before React commits the load", async () => {
+    fetchTracks.mockResolvedValue([track]);
+    search.mockResolvedValue(matched);
+    const { result } = setup();
+    const playlist = { id: "p", name: "Playlist", ownerId: "me", trackCount: 1, tracks: [] };
+    act(() => result.current.library.actions.setPlaylists(new Map([["p", playlist]])));
+    await act(async () => {
+      const loaded = await result.current.library.operations.loadPlaylist("p");
+      await result.current.first.matchPlaylistTracks(loaded, "spotify");
+    });
+    expect(search).toHaveBeenCalledTimes(1);
+    expect(search.mock.calls[0][0]).toEqual([track]);
+    expect(result.current.library.state.playlists?.get("p")?.tracks[0].targetId).toBe("target-one");
+  });
+
+  it.each([true, false])(
+    "stays busy when replacement work is queued before cancellation: %s",
+    async queuedBeforeCancel => {
+      const firstRequest = deferred<SearchResult>();
+      const secondRequest = deferred<SearchResult>();
+      search.mockReturnValueOnce(firstRequest.promise).mockReturnValueOnce(secondRequest.promise);
+      const { result } = setup();
+      const first = { id: "p1", name: "First", ownerId: "me", trackCount: 1, tracks: [track] };
+      const second = { ...first, id: "p2" };
+      act(() =>
+        result.current.library.actions.setPlaylists(
+          new Map([
+            [first.id, first],
+            [second.id, second],
+          ])
+        )
+      );
+      act(() => {
+        void result.current.first.matchPlaylistTracks(first, "spotify");
+        if (queuedBeforeCancel) void result.current.second.matchPlaylistTracks(second, "spotify");
+        result.current.first.cancelMatching("playlist", first.id);
+        if (!queuedBeforeCancel) void result.current.second.matchPlaylistTracks(second, "spotify");
+      });
+      expect(result.current.first.isLoading).toBe(true);
+      await act(async () => firstRequest.resolve(matched));
+      expect(search).toHaveBeenCalledTimes(2);
+      expect(result.current.first.isLoading).toBe(true);
+      await act(async () => secondRequest.resolve(matched));
+      expect(result.current.first.isLoading).toBe(false);
+      expect(result.current.library.state.playlists?.get("p1")?.tracks[0].targetId).toBeUndefined();
+      expect(result.current.library.state.playlists?.get("p2")?.tracks[0].targetId).toBe(
+        "target-one"
       );
     }
+  );
 
-    render(
-      <TestWrapper>
-        <PlaylistMatchingConsumer />
-      </TestWrapper>
-    );
-
-    // Queue both playlists
-    screen.getByText("Queue Playlist 1").click();
-    screen.getByText("Queue Playlist 2").click();
-
-    // Get the queued tasks (full objects)
-    const { getMockQueueTasks } = await import("@/__mocks__/hooks/useMatching");
-    const queueTasks = getMockQueueTasks();
-    // Find the first playlist in the queue by its tracks
-    const first = queueTasks.find(
-      item => Array.isArray(item.items) && item.items.includes("trackA")
-    );
-    // Assert that the tracks array is intact and not replaced
-    expect(first).toBeDefined();
-    expect(first?.items).toEqual(["trackA", "trackB"]);
+  it("does not leak work between library sessions", async () => {
+    const pending = deferred<SearchResult>();
+    search.mockReturnValueOnce(pending.promise).mockResolvedValue(matched);
+    const first = setup();
+    act(() => first.result.current.library.actions.setLikedSongs(new Set([track])));
+    act(() => {
+      void first.result.current.first.matchLikedSongs([track], "spotify");
+    });
+    first.unmount();
+    const second = setup();
+    act(() => second.result.current.library.actions.setLikedSongs(new Set([track])));
+    await act(async () => {
+      void second.result.current.first.matchLikedSongs([track], "spotify");
+    });
+    await act(async () => pending.resolve(matched));
+    await waitFor(() => expect(second.result.current.first.getProgress("likedSongs")).toBe(100));
   });
-
-  // Add more tests for queueing, completion, edge cases, etc.
 });

@@ -4,12 +4,13 @@ export async function GET(request: Request): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
   const videoId = searchParams.get("videoId");
 
-  if (!videoId) {
+  if (!videoId || !/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
     return new NextResponse("Missing videoId parameter", { status: 400 });
   }
 
   try {
     const response = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+      signal: AbortSignal.timeout(10000),
       headers: {
         // Add headers to make the request look more like a browser
         "User-Agent":
@@ -30,7 +31,9 @@ export async function GET(request: Request): Promise<NextResponse> {
     // Return the HTML content with appropriate headers
     return new NextResponse(html, {
       headers: {
-        "Content-Type": "text/html",
+        "Content-Type": "text/plain; charset=utf-8",
+        "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": "default-src 'none'; sandbox",
         "Cache-Control": "public, max-age=3600", // Cache for 1 hour
       },
     });

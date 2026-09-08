@@ -1,7 +1,11 @@
 // PostHog-based logging utility (formerly Sentry logger)
 // Provides consistent event tracking and error capture throughout the application
 
-import posthog from "posthog-js";
+function capture(event: string, properties: Record<string, unknown> = {}): void {
+  void import("posthog-js")
+    .then(({ default: posthog }) => posthog.capture(event, properties))
+    .catch(() => {});
+}
 
 // Check if PostHog is properly configured and available
 const isPostHogConfigured = (): boolean => {
@@ -22,7 +26,7 @@ export const logger = {
    */
   warn: (message: string, extra?: Record<string, unknown>) => {
     if (isPostHogConfigured()) {
-      posthog.capture("warning", {
+      capture("warning", {
         message,
         level: "warning",
         ...extra,
@@ -41,7 +45,7 @@ export const logger = {
   error: (error: Error | string, extra?: Record<string, unknown>) => {
     if (isPostHogConfigured()) {
       if (error instanceof Error) {
-        posthog.capture("error", {
+        capture("error", {
           error: error.message,
           stack: error.stack,
           name: error.name,
@@ -49,7 +53,7 @@ export const logger = {
           ...extra,
         });
       } else {
-        posthog.capture("error", {
+        capture("error", {
           message: error,
           level: "error",
           ...extra,
@@ -58,7 +62,7 @@ export const logger = {
     }
 
     // Always log to console in development or if PostHog fails
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== "production" || typeof window === "undefined") {
       console.error("[PostHog][error]", error, extra);
     }
   },
@@ -74,7 +78,7 @@ export const logger = {
   ) => {
     if (isPostHogConfigured()) {
       try {
-        posthog.capture("matching_error", {
+        capture("matching_error", {
           operation,
           target_service: targetService,
           error: error instanceof Error ? error.message : String(error),
@@ -112,7 +116,7 @@ export const logger = {
   ) => {
     if (isPostHogConfigured()) {
       try {
-        posthog.capture("exception", {
+        capture("exception", {
           error: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
           level: context?.level || "error",
@@ -136,7 +140,7 @@ export const logger = {
    */
   addBreadcrumb: (message: string, data?: Record<string, unknown>) => {
     if (isPostHogConfigured()) {
-      posthog.capture("breadcrumb", {
+      capture("breadcrumb", {
         message,
         timestamp: Date.now(),
         ...data,
@@ -151,7 +155,7 @@ export const logger = {
    */
   trackEvent: (event: string, properties?: Record<string, unknown>) => {
     if (isPostHogConfigured()) {
-      posthog.capture(event, properties);
+      capture(event, properties);
     } else {
       console.log("[EVENT]", event, properties);
     }
@@ -162,7 +166,9 @@ export const logger = {
    */
   identifyUser: (userId: string, properties?: Record<string, unknown>) => {
     if (isPostHogConfigured()) {
-      posthog.identify(userId, properties);
+      void import("posthog-js")
+        .then(({ default: posthog }) => posthog.identify(userId, properties))
+        .catch(() => {});
     }
   },
 };

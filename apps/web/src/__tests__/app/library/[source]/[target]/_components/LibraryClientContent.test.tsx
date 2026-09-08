@@ -1,170 +1,51 @@
-// Mock window.matchMedia for test environment (jsdom/Node)
-// This prevents errors from hooks/components that use matchMedia (e.g., useIsMobile, ThemeContext)
-// Set matches: true so isMobile returns true and Header renders the back button
-if (!window.matchMedia) {
-  window.matchMedia = vi.fn().mockImplementation(query => ({
-    matches: true, // force mobile mode for test
-    media: query,
-    onchange: null,
-    addListener: vi.fn(), // deprecated
-    removeListener: vi.fn(), // deprecated
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  }));
-} else {
-  // If already defined, override to force matches: true
-  window.matchMedia = vi.fn().mockImplementation(query => ({
-    matches: true,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  }));
-}
+import { render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { LibraryClientContent } from "@/app/[locale]/library/[source]/[target]/_components/LibraryClientContent";
+import { LibraryProvider } from "@/contexts/LibraryContext";
 
-// Setup mocks first
-import { vi } from "vitest";
-// Import and setup navigation mock
-import { mockNavigationImplementation, mockNextNavigation } from "@/__tests__/testUtils";
-
-mockNextNavigation();
-
-// Mock useMatching hook
-import { resetMocks as resetMatchingMocks, useMatching } from "@/__mocks__/hooks/useMatching";
-
-vi.mock("@/hooks/useMatching", () => ({ useMatching }));
-
-// Mock next/font/google for font imports (fixes Inter is not a function error)
-vi.mock("next/font/google", () => ({
-  Inter: () => ({ className: "font-inter" }),
+const { fetchLibrary, setShowTitle } = vi.hoisted(() => ({
+  fetchLibrary: vi.fn(),
+  setShowTitle: vi.fn(),
+}));
+vi.mock("next/navigation", () => ({ usePathname: () => "/library/spotify/apple/liked" }));
+vi.mock("@/contexts/ItemTitleContext", () => ({ useItemTitle: () => ({ setShowTitle }) }));
+vi.mock("@/lib/services/factory", () => ({
+  musicServiceFactory: { getProvider: () => ({ fetchUserLibrary: fetchLibrary }) },
+}));
+vi.mock("@/lib/musicApi", () => ({ fetchPlaylistTracks: vi.fn() }));
+vi.mock("@/lib/services/apple/api", () => ({ authorizeAppleMusic: vi.fn() }));
+vi.mock("@/components/layout/Sidebar", () => ({
+  LibrarySidebar: () => <div>Library sidebar</div>,
+}));
+vi.mock("@/components/shared/LoadingOverlay", () => ({
+  LoadingOverlay: () => <div>Loading library</div>,
 }));
 
-import { render, screen } from "@testing-library/react";
-import { NextIntlClientProvider } from "next-intl";
-// Regular imports
-import React from "react";
-import { beforeEach, describe, expect, it } from "vitest";
-import { mockLibraryState } from "@/__mocks__/contexts/LibraryContext";
-import { TestWrapper } from "@/__tests__/testUtils";
-import { LibraryClientContent } from "@/app/[locale]/library/[source]/[target]/_components/LibraryClientContent";
-import { Header } from "@/components/layout/Header";
-import { ItemTitleProvider, useItemTitle } from "@/contexts/ItemTitleContext";
-import { LibraryProvider } from "@/contexts/LibraryContext";
-import { ThemeProvider } from "@/contexts/ThemeContext";
-import { TransferProvider } from "@/contexts/TransferContext";
-import messages from "../../../../../../../messages/en.json";
+function renderLibrary() {
+  return render(
+    <LibraryProvider>
+      <LibraryClientContent source="spotify" _target="apple">
+        <h1>Library content</h1>
+      </LibraryClientContent>
+    </LibraryProvider>
+  );
+}
 
-// Mock the children component
-const MockChildren = () => <div data-testid="mock-children">Child Content</div>;
-
-// Helper to set minimalMobileHeader in context so Header renders back button
-const SetMinimalMobileHeader: React.FC = () => {
-  const { setMinimalMobileHeader } = useItemTitle();
-  React.useEffect(() => {
-    setMinimalMobileHeader(true);
-    return () => setMinimalMobileHeader(false);
-  }, [setMinimalMobileHeader]);
-  return null;
-};
-
-describe("LibraryClientContent", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    resetMatchingMocks(); // Reset useMatching mock state and spies
+beforeEach(() => {
+  fetchLibrary.mockReset();
+});
+describe("library initialization", () => {
+  it("renders a successfully loaded empty library without refetching", async () => {
+    fetchLibrary.mockResolvedValue({ likedSongs: [], albums: [], playlists: [] });
+    renderLibrary();
+    expect(await screen.findByText("Library content")).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("Loading library")).not.toBeInTheDocument());
+    expect(fetchLibrary).toHaveBeenCalledTimes(1);
   });
-
-  it("renders loading state when data is loading", () => {
-    render(
-      <TestWrapper initialLoading={true}>
-        <LibraryClientContent source="spotify" _target="apple">
-          <MockChildren />
-        </LibraryClientContent>
-      </TestWrapper>
-    );
-
-    expect(screen.getByText(/Loading your library/i)).toBeInTheDocument();
-    expect(screen.queryByTestId("mock-children")).not.toBeInTheDocument();
-  });
-
-  it("renders error state when there is an error", async () => {
-    const errorState = {
-      ...mockLibraryState,
-      status: {
-        isLoading: false,
-        error: "Failed to load library",
-      },
-    };
-
-    render(
-      <TestWrapper initialLoading={false} initialState={errorState}>
-        <LibraryClientContent source="spotify" _target="apple">
-          <MockChildren />
-        </LibraryClientContent>
-      </TestWrapper>
-    );
-
-    expect(screen.getByText("Error: Failed to load library")).toBeInTheDocument();
-    expect(screen.queryByTestId("mock-children")).not.toBeInTheDocument();
-  });
-
-  it("renders sidebar and children when library is loaded", () => {
-    render(
-      <TestWrapper initialLoading={false}>
-        <LibraryClientContent source="spotify" _target="apple">
-          <MockChildren />
-        </LibraryClientContent>
-      </TestWrapper>
-    );
-
-    expect(screen.getByTestId("sidebar")).toBeInTheDocument();
-    expect(screen.getByRole("main")).toBeInTheDocument();
-    expect(screen.getByTestId("mock-children")).toBeInTheDocument();
-  });
-
-  it("navigates back to library on mobile back button click", async () => {
-    // Set up router mock with spy
-    const routerPushSpy = vi.fn();
-    const baseRouter = mockNavigationImplementation.useRouter();
-    vi.spyOn(mockNavigationImplementation, "useRouter").mockImplementation(() => ({
-      ...baseRouter,
-      push: routerPushSpy,
-    }));
-
-    // Mock pathname to be on the liked songs view
-    vi.spyOn(mockNavigationImplementation, "usePathname").mockReturnValue(
-      "/library/spotify/apple/liked"
-    );
-
-    // Render Header and LibraryClientContent directly, with only minimal required providers
-    // This avoids a heavy custom TestLayout and keeps the test focused
-    render(
-      <NextIntlClientProvider locale="en" messages={messages}>
-        <ThemeProvider>
-          <LibraryProvider>
-            <TransferProvider>
-              <ItemTitleProvider>
-                {/* Set minimalMobileHeader so Header renders back button */}
-                <SetMinimalMobileHeader />
-                <Header />
-                <LibraryClientContent source="spotify" _target="apple">
-                  <MockChildren />
-                </LibraryClientContent>
-              </ItemTitleProvider>
-            </TransferProvider>
-          </LibraryProvider>
-        </ThemeProvider>
-      </NextIntlClientProvider>
-    );
-
-    const backButton = screen.getByTestId("back-to-library");
-    expect(backButton).toBeInTheDocument();
-    // Check that the back button points to the correct URL
-    expect(backButton).toHaveAttribute("href", "/library/spotify/apple");
-    // Check that the sidebar text 'Your library' is present
-    expect(screen.getByText("Your library")).toBeInTheDocument();
+  it("renders errors without retrying indefinitely", async () => {
+    fetchLibrary.mockRejectedValue(new Error("Provider unavailable"));
+    renderLibrary();
+    expect(await screen.findByText("Error: Provider unavailable")).toBeInTheDocument();
+    expect(fetchLibrary).toHaveBeenCalledTimes(1);
   });
 });

@@ -4,12 +4,14 @@ import { mockAppleAuth, setupAppleFetchMock } from "@/__mocks__/services/apple/f
 import * as api from "@/lib/services/apple/api";
 
 beforeEach(() => {
+  api.clearDeveloperTokenCache();
   setupAppleFetchMock();
   mockAppleAuth();
 });
 
 afterEach(() => {
   vi.clearAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("Apple Music API Service", () => {
@@ -84,7 +86,8 @@ describe("Apple Music API Service", () => {
 
   it("addAlbumsToLibrary returns correct counts", async () => {
     const result = await api.addAlbumsToLibrary(new Set(mockAlbums));
-    expect(result.added).toBe(result.total);
+    expect(result.added).toBe(mockAlbums.filter(album => album.targetId).length);
+    expect(result.failed).toBe(mockAlbums.filter(album => !album.targetId).length);
   });
 
   it("searchAlbums matches albums and returns SearchResult", async () => {
@@ -135,39 +138,48 @@ describe("Apple Music API Service", () => {
     expect(result.albums).toEqual([]);
   });
 
-  it("handles fetch errors gracefully", async () => {
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+  it("propagates developer token failures", async () => {
+    global.fetch = vi.fn().mockResolvedValue(new Response(null, { status: 503 }));
+    await expect(api.fetchUserLibrary()).rejects.toThrow("Failed to get developer token: 503");
+  });
 
-    const unhandledRejectionHandler = (err: unknown): void => {
-      if (
-        err instanceof Error &&
-        (err.message === "Network error" ||
-          err.message.includes("Failed to obtain valid Apple Music developer token"))
-      ) {
-        return;
-      }
-      throw err;
-    };
-    process.on("unhandledRejection", unhandledRejectionHandler);
+  it("uses song IDs and accepts empty 202 responses without retrying", async () => {
+    global.fetch = vi.fn().mockImplementation(async (input: string | URL) => {
+      if (String(input) === "/api/apple/developer-token")
+        return Response.json({ success: true, token: "developer" });
+      const url = new URL(input);
+      expect(url.searchParams.get("ids[songs]")).toBe("target");
+      return new Response(null, { status: 202, headers: { "Content-Type": "application/json" } });
+    });
+    const result = await api.addTracksToLibrary([{ ...mockTracks[0], targetId: "target" }]);
+    expect(result).toMatchObject({ added: 1, failed: 0 });
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
 
-    try {
-      vi.useFakeTimers();
-      const fetchMock = vi.fn().mockImplementation(() => {
-        throw new Error("Network error");
-      });
-      global.fetch = fetchMock;
+  it("searches the authenticated storefront when the loaded SDK is not configured", async () => {
+    const getInstance = vi.fn(() => {
+      throw new Error("No configured instance");
+    });
+    vi.stubGlobal("MusicKit", { getInstance });
+    await Promise.all([
+      api.search([mockTracks[0]], undefined),
+      api.searchAlbums([mockAlbums[0]], undefined),
+    ]);
+    const urls = vi.mocked(global.fetch).mock.calls.map(([input]) => String(input));
+    expect(urls.some(url => url.includes("/v1/catalog/ca/search"))).toBe(true);
+    expect(urls.some(url => url.includes("/v1/catalog/fr/search"))).toBe(false);
+    expect(urls.filter(url => url.endsWith("/v1/me/storefront"))).toHaveLength(1);
+    expect(getInstance).not.toHaveBeenCalled();
+  });
 
-      const promise = api.fetchUserLibrary();
-      await vi.runAllTimersAsync();
-      await expect(promise).rejects.toThrow("Failed to obtain valid Apple Music developer token");
-      // The fetch mock will be called multiple times due to token requests and retries
-      expect(fetchMock).toHaveBeenCalled();
-      vi.useRealTimers();
-    } finally {
-      process.off("unhandledRejection", unhandledRejectionHandler);
-      errorSpy.mockRestore();
-      warnSpy.mockRestore();
-    }
+  it("coalesces developer token requests across concurrent operations", async () => {
+    await Promise.all([
+      api.addTracksToLibrary([{ ...mockTracks[0], targetId: "target" }]),
+      api.addTracksToLibrary([{ ...mockTracks[0], targetId: "target" }]),
+    ]);
+    const tokenCalls = vi
+      .mocked(global.fetch)
+      .mock.calls.filter(([input]) => String(input) === "/api/apple/developer-token");
+    expect(tokenCalls).toHaveLength(1);
   });
 });

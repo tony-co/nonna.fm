@@ -1,80 +1,28 @@
-import crypto from "node:crypto";
 import { NextResponse } from "next/server";
-import { FREE_TIER_LIMIT, PREMIUM_TIER_LIMIT } from "@/lib/constants";
-import { createUsageKey, getUsage, incrementUsage } from "@/lib/redis";
+import { z } from "zod/v4";
+import { incrementUsage } from "@/lib/redis";
+import { getUsageKey } from "@/lib/server/usage";
 
-// Helper to hash platform user IDs
-const hashPlatformId = (platformId: string): string => {
-  return crypto.createHash("sha256").update(platformId).digest("hex");
-};
+const bodySchema = z.object({ count: z.number().int().positive().max(Number.MAX_SAFE_INTEGER) });
 
-// Get the platform user ID from the request header
-const getPlatformUserId = async (req: Request): Promise<string> => {
-  const userId = req.headers.get("x-user-id");
-  if (!userId) {
-    throw new Error("No user ID provided");
-  }
-  return userId;
-};
-
-export async function POST(req: Request): Promise<NextResponse> {
+export async function POST(request: Request): Promise<NextResponse> {
+  const usageKey = getUsageKey(request);
+  if (!usageKey) return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+  const body = bodySchema.safeParse(await request.json().catch(() => null));
+  if (!body.success)
+    return NextResponse.json({ error: "Invalid count parameter" }, { status: 400 });
   try {
-    // Parse the request body
-    const body = await req.json();
-    const { count } = body;
-
-    // Validate count
-    if (!count || typeof count !== "number" || count <= 0) {
-      return NextResponse.json({ error: "Invalid count parameter" }, { status: 400 });
-    }
-
-    // Get platform user ID
-    const platformUserId = await getPlatformUserId(req);
-    const platformIdHash = hashPlatformId(platformUserId);
-
-    // Create Redis key
-    const usageKey = createUsageKey(platformIdHash);
-
-    // Get current usage
-    const { usage: currentUsage, ttl } = await getUsage(usageKey);
-
-    // Calculate new usage
-    const newUsage = currentUsage + count;
-
-    // Check if new usage exceeds limit
-    const isPremium = false; // Hardcoded for now
-
-    if (newUsage > FREE_TIER_LIMIT && !isPremium) {
-      return NextResponse.json(
-        {
-          error: "Daily transfer limit exceeded",
-          currentUsage,
-          resetInSeconds: ttl,
-        },
-        { status: 403 }
-      );
-    }
-
-    if (newUsage > PREMIUM_TIER_LIMIT && isPremium) {
-      return NextResponse.json(
-        {
-          error: "Daily transfer limit exceeded",
-          currentUsage,
-          resetInSeconds: ttl,
-        },
-        { status: 403 }
-      );
-    }
-
-    // Increment the usage count and set 24-hour TTL
-    await incrementUsage(usageKey, count);
-
-    return NextResponse.json({
-      success: true,
-      currentUsage: newUsage,
-    });
+    const result = await incrementUsage(usageKey, body.data.count);
+    return NextResponse.json(
+      {
+        ...(result.allowed ? { success: true } : { error: "Daily transfer limit exceeded" }),
+        currentUsage: result.usage,
+        resetInSeconds: result.ttl,
+      },
+      { status: result.allowed ? 200 : 403, headers: { "Cache-Control": "no-store" } }
+    );
   } catch (error) {
     console.error("Error updating usage:", error);
-    return NextResponse.json({ error: "Failed to update usage" }, { status: 500 });
+    return NextResponse.json({ error: "Usage tracking is unavailable" }, { status: 503 });
   }
 }

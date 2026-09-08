@@ -1,9 +1,19 @@
 "use client";
 
-import { createContext, useContext, useMemo, useReducer } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+} from "react";
 import type { IAlbum, IPlaylist, ITrack, LibraryAction, LibraryState } from "@/types";
 import { matchingReducer } from "./LibraryContext.matchingReducer";
 import { initialMatchingState } from "./LibraryContext.matchingState";
+
+import { createLibraryOperations, type LibraryOperations } from "./LibraryContext.operations";
 
 // Initial state
 const initialLibraryState: LibraryState = {
@@ -25,6 +35,7 @@ const initialLibraryState: LibraryState = {
 // Context type
 interface LibraryContextType {
   state: LibraryState;
+  operations: LibraryOperations;
   dispatch: React.Dispatch<LibraryAction>;
   actions: {
     // Selection actions
@@ -62,6 +73,48 @@ export const LibraryContext = createContext<LibraryContextType | null>(null);
 function libraryReducer(state: LibraryState, action: LibraryAction): LibraryState {
   // Delegate matching actions to matchingReducer
   switch (action.type) {
+    case "PLAYLIST_LOAD_STATUS":
+      return {
+        ...state,
+        playlistLoads: { ...state.playlistLoads, [action.payload.id]: action.payload },
+      };
+    case "PLAYLIST_TRACKS": {
+      const playlist = state.playlists?.get(action.payload.id);
+      if (!playlist) return state;
+      const playlists = new Map(state.playlists);
+      playlists.set(playlist.id, { ...playlist, tracks: action.payload.tracks });
+      return { ...state, playlists };
+    }
+    case "MATCHING_ITEMS_PENDING":
+    case "MATCHING_ITEMS_COMPLETE": {
+      const { task } = action.payload;
+      const ids = action.type === "MATCHING_ITEMS_PENDING" ? new Set(action.payload.ids) : null;
+      const result = action.type === "MATCHING_ITEMS_COMPLETE" ? action.payload.result : null;
+      function merge<T extends ITrack | IAlbum>(
+        items: T[],
+        matches: (ITrack | IAlbum)[] = []
+      ): T[] {
+        const byId = new Map(matches.map(item => [item.id, item]));
+        return items.map(item => {
+          if (ids?.has(item.id)) return { ...item, status: "pending" };
+          const match = byId.get(item.id);
+          return match ? { ...item, ...match } : item;
+        });
+      }
+      if (task.type === "likedSongs")
+        return {
+          ...state,
+          likedSongs: new Set(merge(Array.from(state.likedSongs ?? []), result?.tracks)),
+        };
+      if (task.type === "albums")
+        return { ...state, albums: new Set(merge(Array.from(state.albums ?? []), result?.albums)) };
+      const playlist = state.playlists?.get(task.playlist.id);
+      if (!playlist) return state;
+      const playlists = new Map(state.playlists);
+      playlists.set(playlist.id, { ...playlist, tracks: merge(playlist.tracks, result?.tracks) });
+      return { ...state, playlists };
+    }
+
     case "MATCHING_START":
     case "MATCHING_PROGRESS":
     case "MATCHING_ERROR":
@@ -170,6 +223,15 @@ function libraryReducer(state: LibraryState, action: LibraryAction): LibraryStat
 // Provider component
 export function LibraryProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(libraryReducer, initialLibraryState);
+  const stateRef = useRef(state);
+  useLayoutEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+  const operations = useMemo(() => createLibraryOperations(() => stateRef.current, dispatch), []);
+  useEffect(() => {
+    operations.activate();
+    return () => operations.dispose();
+  }, [operations]);
 
   const actions = useMemo(
     () => ({
@@ -212,11 +274,12 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
-  return (
-    <LibraryContext.Provider value={{ state, dispatch, actions }}>
-      {children}
-    </LibraryContext.Provider>
+  const value = useMemo(
+    () => ({ state, dispatch, actions, operations }),
+    [state, actions, operations]
   );
+
+  return <LibraryContext.Provider value={value}>{children}</LibraryContext.Provider>;
 }
 
 // Hooks

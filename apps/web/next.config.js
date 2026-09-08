@@ -4,14 +4,23 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  poweredByHeader: false,
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        ],
+      },
+    ];
+  },
   images: {
-    domains: [
-      "cdn-images.dzcdn.net", // Deezer images
-      "i.scdn.co", // Spotify images
-      "mosaic.scdn.co", // Spotify images
-      "api.music.apple.com", // Apple Music images
-    ],
     remotePatterns: [
+      ...["cdn-images.dzcdn.net", "i.scdn.co", "mosaic.scdn.co", "api.music.apple.com"].map(
+        hostname => ({ protocol: "https", hostname })
+      ),
       {
         protocol: "https",
         hostname: "is*.mzstatic.com", // Apple Music images

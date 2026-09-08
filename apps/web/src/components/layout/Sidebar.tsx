@@ -7,15 +7,13 @@ import { LikedSongsIcon } from "@/components/icons/LikedSongsIcon";
 import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import { CircularProgress } from "@/components/shared/CircularProgress";
 import { IndeterminateCheckbox } from "@/components/shared/IndeterminateCheckbox";
-import { fetchingPlaylists } from "@/components/shared/TransferButton";
 import { useLibrary, useLibrarySelection } from "@/contexts/LibraryContext";
 import { useMatching } from "@/hooks/useMatching";
-import { fetchPlaylistTracks } from "@/lib/musicApi";
 import type { IPlaylist, MusicService } from "@/types";
 
 // Main component
 export const LibrarySidebar: FC = () => {
-  const { state, actions } = useLibrary();
+  const { state, operations } = useLibrary();
   const tSidebar = useTranslations("Sidebar");
   const tAccessibility = useTranslations("Accessibility");
   const router = useRouter();
@@ -33,9 +31,11 @@ export const LibrarySidebar: FC = () => {
     deselectPlaylist,
   } = useLibrarySelection();
 
-  // Tracking map to handle async operations - this is no longer needed as a ref
-  // since we're using the shared fetchingPlaylists Set
   const fetchingPlaylistsRef = React.useRef(new Set<string>());
+  React.useEffect(() => {
+    const fetching = fetchingPlaylistsRef.current;
+    return () => fetching.clear();
+  }, []);
 
   if (!state.likedSongs || !state.albums || !state.playlists) return null;
 
@@ -79,66 +79,25 @@ export const LibrarySidebar: FC = () => {
     }
   };
 
-  // complex but this allows us to have a very responsive UI
-  // and cancel matching quickly if the playlist is deselected
   const handlePlaylistToggle = async (playlist: IPlaylist) => {
     const playlistId = playlist.id;
-
     if (selectedItems.playlists.has(playlistId)) {
-      // If deselecting, remove from selection and cancel matching
       deselectPlaylist(playlistId);
       cancelMatching("playlist", playlistId);
-
-      // Mark as no longer being processed
       fetchingPlaylistsRef.current.delete(playlistId);
-      fetchingPlaylists.delete(playlistId);
-    } else {
-      // Optimistically update UI by selecting the playlist immediately
-      selectPlaylist(playlistId);
-
-      // Add to our tracking set
-      fetchingPlaylistsRef.current.add(playlistId);
-      fetchingPlaylists.add(playlistId);
-
-      // Only fetch tracks if they don't exist
-      // TODO: Keep an eye on this as we could have playlists not fully fetched
-      if (!playlist.tracks || playlist.tracks.length === 0) {
-        try {
-          // Fetch tracks in the background
-          const tracks = await fetchPlaylistTracks(playlistId);
-
-          // After fetch completes, check if playlist is still being processed
-          if (tracks && fetchingPlaylistsRef.current.has(playlistId)) {
-            // Update the playlist in the library context
-            const updatedPlaylist = { ...playlist, tracks };
-            // Use updatePlaylist to only update the relevant playlist in the Map
-            // This avoids accidentally overwriting the entire playlists Map
-            actions.updatePlaylist(updatedPlaylist);
-
-            // Check if it's still selected in the UI before matching
-            if (fetchingPlaylistsRef.current.has(playlistId)) {
-              matchPlaylistTracks(updatedPlaylist, target);
-            }
-
-            // Remove from tracking set
-            fetchingPlaylistsRef.current.delete(playlistId);
-            fetchingPlaylists.delete(playlistId);
-          }
-        } catch (error) {
-          console.error("Error fetching playlist tracks:", error);
-          // Clean up tracking on error
-          fetchingPlaylistsRef.current.delete(playlistId);
-          fetchingPlaylists.delete(playlistId);
-        }
-      } else {
-        // Always retrieve the latest playlist object from state before matching
-        // This ensures we use the freshest tracks array and avoid stale data
-        const latestPlaylist = state.playlists?.get(playlistId) || playlist;
-        matchPlaylistTracks(latestPlaylist, target);
-        // Remove from tracking set
-        fetchingPlaylistsRef.current.delete(playlistId);
-        fetchingPlaylists.delete(playlistId);
+      return;
+    }
+    selectPlaylist(playlistId);
+    fetchingPlaylistsRef.current.add(playlistId);
+    try {
+      const completePlaylist = await operations.loadPlaylist(playlistId);
+      if (fetchingPlaylistsRef.current.has(playlistId)) {
+        await matchPlaylistTracks(completePlaylist, target);
       }
+    } catch {
+      if (fetchingPlaylistsRef.current.has(playlistId)) deselectPlaylist(playlistId);
+    } finally {
+      fetchingPlaylistsRef.current.delete(playlistId);
     }
   };
 
@@ -336,7 +295,7 @@ export const LibrarySidebar: FC = () => {
               src={playlist.artwork}
               alt={playlist.name}
               type="playlist"
-              className={`rounded-lg ${fetchingPlaylists.has(playlist.id) ? "animate-pulse" : ""}`}
+              className={`rounded-lg ${state.playlistLoads?.[playlist.id]?.status === "loading" ? "animate-pulse" : ""}`}
             />
             {/* Show progress if matching this playlist */}
             {currentTask &&
@@ -357,7 +316,7 @@ export const LibrarySidebar: FC = () => {
                     currentTask.type === "playlist" &&
                     currentTask.playlist.id === playlist.id &&
                     isMatching
-                ) || fetchingPlaylists.has(playlist.id)
+                ) || (state.playlistLoads?.[playlist.id]?.status === "loading")
                   ? "animate-pulse"
                   : ""
               }`}
@@ -366,6 +325,11 @@ export const LibrarySidebar: FC = () => {
             >
               {playlist.name}
             </p>
+            {state.playlistLoads?.[playlist.id]?.error && (
+              <p role="alert" className="text-sm text-red-500 dark:text-red-400">
+                {state.playlistLoads[playlist.id].error}
+              </p>
+            )}
             <p
               className="truncate text-sm text-zinc-600 dark:text-zinc-400"
               data-testid={`playlist-track-count-${playlist.id}`}

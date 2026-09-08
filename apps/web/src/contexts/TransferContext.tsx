@@ -13,8 +13,8 @@ interface TransferContextType {
   userStatus: TransferLimits | null;
   isLoading: boolean;
   error: Error | null;
-  updateUsage: (count: number) => Promise<boolean>;
-  checkLimit: (count: number) => Promise<boolean>;
+  updateUsage: (count: number, userId?: string) => Promise<boolean>;
+  checkLimit: (count: number, userId?: string) => Promise<boolean>;
   refreshStatus: () => Promise<void>;
 }
 

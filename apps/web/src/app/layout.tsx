@@ -28,7 +28,6 @@ export const viewport: Viewport = {
   themeColor: "#4F46E5",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
 };
 
 // Minimal root layout - locale-specific layout is in [locale]/layout.tsx

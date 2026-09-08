@@ -3,6 +3,8 @@ import { afterEach, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import React from "react";
 
+vi.mock("server-only", () => ({}));
+
 // Mock next-intl locale hook
 vi.mock("next-intl", async () => {
   const actual = await vi.importActual("next-intl");

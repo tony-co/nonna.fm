@@ -83,10 +83,10 @@ export function calculateStringSimilarity(str1: string, str2: string): number {
   if (norm1 === norm2) return 1;
 
   // Calculate word match ratio
-  const words1 = norm1.split(" ");
-  const words2 = norm2.split(" ");
-  const commonWords = words1.filter(word => words2.includes(word));
-  return (2 * commonWords.length) / (words1.length + words2.length);
+  const words1 = new Set(norm1.split(" ").filter(Boolean));
+  const words2 = new Set(norm2.split(" ").filter(Boolean));
+  const commonWords = Array.from(words1).filter(word => words2.has(word));
+  return (2 * commonWords.length) / (words1.size + words2.size);
 }
 
 // Helper to compare artist arrays for better matching
@@ -143,7 +143,7 @@ export async function calculateTrackMatchScore(
   }
 
   // If we have a YouTube video ID and the score is low, try additional matching strategies
-  if (!!sourceTrack.videoId && totalScore < 0.5) {
+  if (sourceTrack.videoId && totalScore < 0.5) {
     // First try: Compare source name against combined target name + artist
     const combinedTargetTitle = `${targetTrack.name} ${targetTrack.artist}`;
     const combinedNameScore = calculateStringSimilarity(sourceTrack.name, combinedTargetTitle);

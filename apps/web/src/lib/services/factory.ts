@@ -1,27 +1,28 @@
-import type { IMusicServiceProvider, IServiceFactory, MusicService } from "@/types";
-import * as appleService from "./apple/api";
-import * as deezerService from "./deezer/api";
-import * as spotifyService from "./spotify/api";
-import * as youtubeService from "./youtube/api";
+import type { IMusicServiceProvider, MusicService } from "@/types";
 
-class MusicServiceFactory implements IServiceFactory {
-  private providers: Record<MusicService, IMusicServiceProvider> = {
-    apple: appleService,
-    spotify: spotifyService,
-    youtube: youtubeService,
-    deezer: deezerService,
+function lazyProvider(load: () => Promise<IMusicServiceProvider>): IMusicServiceProvider {
+  return {
+    search: async (...args) => (await load()).search(...args),
+    searchAlbums: async (...args) => (await load()).searchAlbums(...args),
+    addTracksToLibrary: async (...args) => (await load()).addTracksToLibrary(...args),
+    addAlbumsToLibrary: async (...args) => (await load()).addAlbumsToLibrary(...args),
+    createPlaylistWithTracks: async (...args) => (await load()).createPlaylistWithTracks(...args),
+    fetchUserLibrary: async (...args) => (await load()).fetchUserLibrary(...args),
+    fetchPlaylistTracks: async (...args) => (await load()).fetchPlaylistTracks(...args),
   };
-
-  getProvider(service: MusicService): IMusicServiceProvider {
-    const provider = this.providers[service];
-    if (!provider) {
-      throw new Error(`No provider found for service: ${service}`);
-    }
-    return provider;
-  }
 }
 
-export const musicServiceFactory = new MusicServiceFactory();
+const providers: Record<MusicService, IMusicServiceProvider> = {
+  apple: lazyProvider(() => import("./apple/api")),
+  spotify: lazyProvider(() => import("./spotify/api")),
+  youtube: lazyProvider(() => import("./youtube/api")),
+  deezer: lazyProvider(() => import("./deezer/api")),
+};
 
-// Keep track of playlists currently being fetched
-export const fetchingPlaylists = new Set<string>();
+export const musicServiceFactory = {
+  getProvider(service: MusicService): IMusicServiceProvider {
+    const provider = providers[service];
+    if (!provider) throw new Error(`No provider found for service: ${service}`);
+    return provider;
+  },
+};

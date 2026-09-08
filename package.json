@@ -25,13 +25,15 @@
     "prepare": "lefthook install"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.4",
-    "lefthook": "^1.10.0",
+    "@biomejs/biome": "2.2.4",
+    "lefthook": "^1.13.6",
     "syncpack": "^13.0.4",
-    "turbo": "^2.5.6"
+    "turbo": "^2.10.12"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["lefthook"]
+    "onlyBuiltDependencies": [
+      "lefthook"
+    ]
   },
   "engines": {
     "node": "22.x"
