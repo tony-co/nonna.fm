@@ -58,3 +58,19 @@ test("invalid service routes return 404", async ({ page }) => {
   const response = await page.goto("/en/library/unknown/apple");
   expect(response?.status()).toBe(404);
 });
+
+test("homepage auth errors and consent still work after hydration", async ({ page }) => {
+  await page.goto("/en?error=not_authenticated&utm_source=test");
+  await expect(
+    page.getByText("Please authenticate with a music service to continue.")
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Connect with Spotify" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText("Before using Spotify with Nonna.fm, please note:")).toHaveCSS(
+    "text-align",
+    "left"
+  );
+  await dialog.getByRole("button", { name: "Close dialog" }).click();
+  await expect(dialog).not.toBeVisible();
+});

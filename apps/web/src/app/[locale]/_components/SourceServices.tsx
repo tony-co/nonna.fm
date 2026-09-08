@@ -94,15 +94,20 @@ export function SourceServices() {
           </button>
         ))}
       </div>
-      {/* Deezer Modal */}
-      <DeezerConnectModal isOpen={isDeezerModalOpen} onClose={() => setIsDeezerModalOpen(false)} />
+      <div className="text-left">
+        {/* Deezer Modal */}
+        <DeezerConnectModal
+          isOpen={isDeezerModalOpen}
+          onClose={() => setIsDeezerModalOpen(false)}
+        />
 
-      {/* Spotify Consent Modal */}
-      <SpotifyConsentModal
-        isOpen={isSpotifyConsentModalOpen}
-        onClose={() => setIsSpotifyConsentModalOpen(false)}
-        onAgree={handleSpotifyConsent}
-      />
+        {/* Spotify Consent Modal */}
+        <SpotifyConsentModal
+          isOpen={isSpotifyConsentModalOpen}
+          onClose={() => setIsSpotifyConsentModalOpen(false)}
+          onAgree={handleSpotifyConsent}
+        />
+      </div>
     </>
   );
 }

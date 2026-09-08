@@ -22,6 +22,9 @@ Search Console for the `nonna.fm` domain reported:
   indexed examples included `/es`, `/it`, `/pt`, and obsolete library routes.
 - The sitemap index was read successfully on September 7 and reported seven
   discovered pages.
+- URL Inspection for `/fr` (last crawl August 20) confirmed that the page
+  was indexed despite declaring `/en` as canonical: Google selected `/fr`.
+  It also detected a review snippet from the unsubstantiated rating markup.
 
 Production HTTP inspection found an empty homepage loading boundary in the
 initial HTML, English metadata across locales, and a canonical URL pointing
