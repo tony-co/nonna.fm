@@ -74,3 +74,21 @@ test("homepage auth errors and consent still work after hydration", async ({ pag
   await dialog.getByRole("button", { name: "Close dialog" }).click();
   await expect(dialog).not.toBeVisible();
 });
+
+test("guide connection buttons use the correct source and fit on mobile", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto("/en/spotify-to-apple-music");
+  await page.getByRole("button", { name: "Connect with Spotify" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.getByRole("button", { name: "Close dialog" }).click();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+  await expect(page.getByRole("button", { name: "Connect with Apple Music" })).toHaveCount(0);
+  await page.goto("/en/apple-music-to-spotify");
+  await expect(page.getByRole("button", { name: "Connect with Apple Music" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Connect with Spotify" })).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(
+    false
+  );
+  expect(errors).toEqual([]);
+});

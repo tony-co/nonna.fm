@@ -1,7 +1,7 @@
 {
   "HomePage": {
-    "title": "Transfer your music",
-    "subtitle": "Transfer your playlists between streaming platforms <strong>easily</strong>.",
+    "title": "Transfer playlists between Spotify and Apple Music for free",
+    "subtitle": "<strong>Open source.</strong> Review matches before copying. Up to 500 transfers every 24 hours.",
     "selectSource": "Select your source:",
     "connectWith": "Connect with",
     "loading": "Loading...",
@@ -48,6 +48,14 @@
       "matching": {
         "question": "Why might a song not transfer?",
         "answer": "Music catalogs differ by service and country. Some songs or versions may be unavailable on the destination service. Review the suggested matches before transferring; you can change a match or skip an item."
+      },
+      "count": {
+        "question": "What counts as one transfer?",
+        "answer": "Each successfully added playlist track, saved song or saved album counts as one transfer. A 100-track playlist uses 100 transfers. Copying the same song in two playlists counts twice."
+      },
+      "reset": {
+        "question": "When does the free allowance reset?",
+        "answer": "Your 500-transfer allowance resets 24 hours after your first successful transfer is recorded, not at midnight. The allowance applies to your destination account. Check the remaining transfers and reset countdown in the app; choose fewer items or wait if your selection exceeds the allowance."
       }
     }
   },

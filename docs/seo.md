@@ -1,8 +1,35 @@
 # Web SEO
 
-The public search surface is the homepage in seven languages: `/en`, `/fr`,
-`/es`, `/pt`, `/it`, `/de`, and `/ja`. Transfer sessions and OAuth callbacks
-are application screens and must not be indexed.
+The public search surface includes the homepage in seven languages: `/en`, `/fr`,
+`/es`, `/pt`, `/it`, `/de`, and `/ja`, plus two transfer guides in English and French:
+`/{en,fr}/spotify-to-apple-music` and `/{en,fr}/apple-music-to-spotify`.
+Transfer sessions and OAuth callbacks are application screens and must not be indexed.
+
+## Search expansion, September 24, 2026
+
+Search Console, inspected on September 24, reported 3 clicks and 23 impressions
+for June 22–September 23. Its September 21 indexing report listed all seven
+homepages as indexed, with their last crawl on September 8. The Links report
+listed two external links, from GitHub and AlternativeTo. These reports are
+limited samples, not a complete backlink inventory or evidence of competitive
+non-brand rankings.
+
+The directional guides provide public instructions, source-specific connection
+buttons, transfer behavior, requirements, limitations, ownership and support.
+They link to each other and are linked from their language's homepage. Only
+English and French guide URLs are published, linked as language alternatives,
+and included in the sitemap (11 URLs total). Other guide locales return 404.
+Guide content is rendered in the initial HTML, including when JavaScript is disabled.
+
+All seven homepage headlines now name Spotify and Apple Music. Their FAQs explain
+the allowance: each successfully added playlist track, saved song or saved album
+counts as one item, with a 24-hour window starting at the first recorded success.
+The guides distinguish Apple Music library additions from Apple Music Favorites.
+Update these descriptions when the transfer or quota implementation changes.
+
+After publication, inspect and request indexing for the four new guide URLs in
+Search Console. Compare non-brand impressions, guide clicks and completed
+transfers over the next four weeks. Indexing and rankings are not guaranteed.
 
 ## Baseline, September 8, 2026
 
@@ -69,7 +96,7 @@ It also checks static assets, trailing-slash redirects and obsolete URLs.
    Console. Confirm content is rendered, indexing is allowed, and each
    user-declared canonical matches the inspected locale.
 2. Request indexing for the corrected homepages after the production checks
-   pass. Confirm the sitemap remains successful and contains seven pages.
+   pass. Confirm the sitemap remains successful and contains all public pages.
 3. Inspect obsolete library examples and confirm a real 404 response. For
    supported library routes, confirm the noindex directive. Then validate
    relevant Page indexing fixes; redirects are expected exclusions.

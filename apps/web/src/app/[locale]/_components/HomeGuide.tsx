@@ -1,5 +1,11 @@
 import { getTranslations } from "next-intl/server";
 import { routing } from "@/i18n/routing";
+import {
+  guideCopy,
+  guideSlugs,
+  isGuideLocale,
+  transferGuides,
+} from "@/lib/content/transfer-guides";
 import type { Locale } from "@/lib/seo/config/base";
 
 const languageNames: Record<Locale, string> = {
@@ -17,6 +23,28 @@ export async function HomeGuide({ locale }: { locale: Locale }) {
 
   return (
     <div className="mx-auto max-w-5xl space-y-16 px-4 pb-16 text-zinc-800 dark:text-stone-200">
+      {isGuideLocale(locale) && (
+        <nav aria-label={guideCopy[locale].guideLinks}>
+          <h2 className="mb-6 text-3xl font-semibold">{guideCopy[locale].guideLinks}</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {guideSlugs.map(slug => (
+              <a
+                key={slug}
+                href={`/${locale}/${slug}`}
+                className="rounded-2xl border border-indigo-200/60 bg-white/50 p-6 transition-colors hover:bg-indigo-100 dark:border-indigo-800/50 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/50"
+              >
+                <h3 className="mb-3 text-xl font-semibold">
+                  {transferGuides[locale][slug].sourceName} →{" "}
+                  {transferGuides[locale][slug].targetName}
+                </h3>
+                <p className="leading-relaxed text-zinc-600 dark:text-stone-400">
+                  {transferGuides[locale][slug].description}
+                </p>
+              </a>
+            ))}
+          </div>
+        </nav>
+      )}
       <section aria-label={t("guide.title")}>
         <h2 className="mb-6 text-3xl font-semibold">{t("guide.title")}</h2>
         <p className="mb-6 text-lg text-zinc-600 dark:text-stone-400">{t("description")}</p>
@@ -30,14 +58,16 @@ export async function HomeGuide({ locale }: { locale: Locale }) {
       <section aria-label={t("faq.title")}>
         <h2 className="mb-6 text-3xl font-semibold">{t("faq.title")}</h2>
         <div className="space-y-8">
-          {(["services", "free", "originals", "matching"] as const).map(question => (
-            <div key={question}>
-              <h3 className="mb-2 text-xl font-semibold">{t(`faq.${question}.question`)}</h3>
-              <p className="text-lg text-zinc-600 dark:text-stone-400">
-                {t(`faq.${question}.answer`)}
-              </p>
-            </div>
-          ))}
+          {(["services", "free", "count", "reset", "originals", "matching"] as const).map(
+            question => (
+              <div key={question}>
+                <h3 className="mb-2 text-xl font-semibold">{t(`faq.${question}.question`)}</h3>
+                <p className="text-lg text-zinc-600 dark:text-stone-400">
+                  {t(`faq.${question}.answer`)}
+                </p>
+              </div>
+            )
+          )}
         </div>
       </section>
 

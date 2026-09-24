@@ -3,6 +3,7 @@
  * Generates XML sitemaps per locale with proper structure and indexing
  */
 
+import { guideLocales, guideSlugs } from "@/lib/content/transfer-guides";
 import type { Locale } from "../config/base";
 import { SEO_CONFIG } from "../config/base";
 import { generateLocalizedPath } from "../utils/hreflang";
@@ -66,6 +67,15 @@ export function generatePublicSitemap(): SitemapUrl[] {
     });
   });
 
+  for (const locale of guideLocales) {
+    for (const slug of guideSlugs) {
+      urls.push({
+        url: `${baseUrl}/${locale}/${slug}`,
+        alternateRefs: generateAlternateRefs(`/${slug}`, guideLocales),
+      });
+    }
+  }
+
   return urls;
 }
 
@@ -107,10 +117,13 @@ export function generateTransferSitemap(): SitemapUrl[] {
 /**
  * Generate alternate references for hreflang
  */
-function generateAlternateRefs(path: string): Array<{ hreflang: string; href: string }> {
+function generateAlternateRefs(
+  path: string,
+  locales: readonly Locale[] = SEO_CONFIG.supportedLocales
+): Array<{ hreflang: string; href: string }> {
   const alternates: Array<{ hreflang: string; href: string }> = [];
 
-  SEO_CONFIG.supportedLocales.forEach(locale => {
+  locales.forEach(locale => {
     const localizedPath = generateLocalizedPath(path, locale);
     alternates.push({
       hreflang: locale,
