@@ -26,6 +26,7 @@ function getGoogleSiteVerification(): string {
 
 export interface MetadataOptions {
   locale: Locale;
+  availableLocales?: readonly Locale[];
   title?: string;
   description?: string;
   keywords?: string[];
@@ -47,6 +48,7 @@ export interface MetadataOptions {
 export function generateMetadata(options: MetadataOptions): Metadata {
   const {
     locale,
+    availableLocales = SEO_CONFIG.supportedLocales,
     title,
     description,
     keywords = [],
@@ -68,7 +70,7 @@ export function generateMetadata(options: MetadataOptions): Metadata {
 
   // Generate URLs
   const canonicalUrl = generateCanonicalUrl(pathname, locale);
-  const hreflangs = generateHreflang(pathname);
+  const hreflangs = generateHreflang(pathname, availableLocales);
 
   // Generate OpenGraph image
   const ogImage = generateOGImage(locale, pathname, params, openGraph?.image);
@@ -108,7 +110,7 @@ export function generateMetadata(options: MetadataOptions): Metadata {
       url: canonicalUrl,
       siteName: SEO_CONFIG.brand.name,
       locale: locale,
-      alternateLocale: SEO_CONFIG.supportedLocales.filter(l => l !== locale),
+      alternateLocale: availableLocales.filter(l => l !== locale),
       images: [
         {
           url: ogImage,

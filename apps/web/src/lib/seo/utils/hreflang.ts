@@ -14,11 +14,14 @@ export interface HrefLangEntry {
 /**
  * Generate hreflang alternate links for all supported locales
  */
-export function generateHreflang(pathname: string): Record<string, string> {
+export function generateHreflang(
+  pathname: string,
+  locales: readonly Locale[] = SEO_CONFIG.supportedLocales
+): Record<string, string> {
   const hreflangs: Record<string, string> = {};
 
   // Add all supported locales
-  SEO_CONFIG.supportedLocales.forEach(locale => {
+  locales.forEach(locale => {
     const localizedPath = generateLocalizedPath(pathname, locale);
     hreflangs[locale] = `${SEO_CONFIG.brand.url}${localizedPath}`;
   });

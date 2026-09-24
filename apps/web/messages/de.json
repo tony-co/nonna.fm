@@ -1,7 +1,7 @@
 {
   "HomePage": {
-    "title": "Übertrage deine Musik",
-    "subtitle": "Übertrage deine Playlists zwischen Streaming-Plattformen <strong>einfach</strong>.",
+    "title": "Playlists kostenlos zwischen Spotify und Apple Music übertragen",
+    "subtitle": "<strong>Open Source.</strong> Treffer vor dem Kopieren prüfen. Bis zu 500 Übertragungen alle 24 Stunden.",
     "selectSource": "Wähle deine Quelle:",
     "connectWith": "Verbinden mit",
     "loading": "Lädt...",
@@ -48,6 +48,14 @@
       "matching": {
         "question": "Warum wird ein Song möglicherweise nicht übertragen?",
         "answer": "Musikkataloge unterscheiden sich je nach Dienst und Land. Manche Songs oder Versionen sind beim Zieldienst eventuell nicht verfügbar. Prüfe die Treffer vor der Übertragung: Du kannst sie ändern oder einen Eintrag überspringen."
+      },
+      "count": {
+        "question": "Was zählt als eine Übertragung?",
+        "answer": "Jeder erfolgreich hinzugefügte Playlist-Titel, gespeicherte Song oder gespeicherte Album-Eintrag zählt als eine Übertragung. Eine Playlist mit 100 Titeln verbraucht 100 Übertragungen. Derselbe Song in zwei Playlists zählt zweimal."
+      },
+      "reset": {
+        "question": "Wann wird das kostenlose Kontingent zurückgesetzt?",
+        "answer": "Das Kontingent von 500 Übertragungen wird 24 Stunden nach der ersten erfassten erfolgreichen Übertragung zurückgesetzt, nicht um Mitternacht. Es gilt für das Zielkonto. Die App zeigt verbleibende Übertragungen und den Countdown an. Wähle weniger Elemente aus oder warte, wenn deine Auswahl das Kontingent überschreitet."
       }
     }
   },

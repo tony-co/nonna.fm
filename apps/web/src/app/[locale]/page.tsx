@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { AudioEqualizer } from "@/components/shared/AudioEqualizer";
 import { routing } from "@/i18n/routing";
+import { guideSlugs, isGuideLocale, transferGuides } from "@/lib/content/transfer-guides";
 import { generateMetadata as generateSEOMetadata } from "@/lib/seo/generators/metadata";
 import { HomepageStructuredData } from "@/lib/seo/generators/structured-data";
 import { HomeGuide } from "./_components/HomeGuide";
@@ -45,7 +46,7 @@ export default async function HomePage({ params }: PageProps) {
             <div className="mx-auto max-w-4xl text-center">
               <div className="mb-2">
                 <h1
-                  className="mb-4 bg-gradient-to-br from-indigo-500 to-purple-600 bg-clip-text text-5xl font-bold tracking-tight text-transparent lg:text-7xl dark:from-stone-50 dark:to-indigo-600"
+                  className="mb-5 bg-gradient-to-br from-indigo-500 to-purple-600 bg-clip-text text-4xl font-bold leading-tight tracking-tight text-transparent sm:text-5xl lg:text-6xl dark:from-stone-50 dark:to-indigo-600"
                   style={{
                     contain: "content",
                   }}
@@ -63,13 +64,27 @@ export default async function HomePage({ params }: PageProps) {
                     strong: chunks => <strong>{chunks}</strong>,
                   })}
                 </p>
+                {isGuideLocale(locale) && (
+                  <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm font-medium text-indigo-700 dark:text-indigo-300">
+                    {guideSlugs.map(slug => (
+                      <a
+                        key={slug}
+                        href={`/${locale}/${slug}`}
+                        className="underline decoration-indigo-300 underline-offset-4 hover:decoration-current"
+                      >
+                        {transferGuides[locale][slug].sourceName} →{" "}
+                        {transferGuides[locale][slug].targetName}
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <Suspense fallback={null}>
                 <HomeAuthState />
               </Suspense>
 
-              <div className="mb-22">
+              <div className="mb-10">
                 <AudioEqualizer className="opacity-90" />
               </div>
 

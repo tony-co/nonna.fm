@@ -1,7 +1,7 @@
 {
   "HomePage": {
-    "title": "Transférez votre musique",
-    "subtitle": "Transférez vos playlists entre plateformes de streaming <strong>facilement</strong>.",
+    "title": "Transférez vos playlists entre Spotify et Apple Music gratuitement",
+    "subtitle": "<strong>Open source.</strong> Vérifiez les correspondances avant la copie. Jusqu’à 500 transferts toutes les 24 heures.",
     "selectSource": "Sélectionnez votre source :",
     "connectWith": "Se connecter avec",
     "loading": "Chargement...",
@@ -48,6 +48,14 @@
       "matching": {
         "question": "Pourquoi un titre peut-il ne pas être transféré ?",
         "answer": "Les catalogues varient selon le service et le pays. Certains titres ou certaines versions peuvent être indisponibles sur le service de destination. Vérifiez les correspondances proposées avant le transfert : vous pouvez les modifier ou ignorer un élément."
+      },
+      "count": {
+        "question": "Qu’est-ce qui compte comme un transfert ?",
+        "answer": "Chaque titre de playlist, morceau enregistré ou album enregistré ajouté avec succès compte pour un transfert. Une playlist de 100 titres utilise 100 transferts. Copier le même morceau dans deux playlists compte deux fois."
+      },
+      "reset": {
+        "question": "Quand la limite gratuite est-elle réinitialisée ?",
+        "answer": "Votre limite de 500 transferts est réinitialisée 24 heures après l’enregistrement du premier transfert réussi, et non à minuit. Elle s’applique au compte de destination. Consultez le nombre de transferts restants et le compte à rebours dans l’application ; réduisez votre sélection ou attendez si elle dépasse la limite."
       }
     }
   },
